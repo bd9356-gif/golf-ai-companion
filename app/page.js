@@ -8,56 +8,71 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [keywords, setKeywords] = useState('')
   const [searchInput, setSearchInput] = useState('')
+  const [initialized, setInitialized] = useState(false)
 
   const tiers = ['all', 'beginner', 'intermediate', 'advanced']
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedTier = localStorage.getItem('golf_skill_tier') || 'all'
-      const savedKeywords = localStorage.getItem('golf_keywords') || ''
       setSelectedTier(savedTier)
-      setKeywords(savedKeywords)
-      setSearchInput(savedKeywords)
+      setKeywords('')
+      setSearchInput('')
+      localStorage.removeItem('golf_keywords')
     }
+    setInitialized(true)
   }, [])
 
-  useEffect(() => { fetchVideos() }, [selectedTier, keywords])
+  useEffect(() => {
+    if (initialized) fetchVideos()
+  }, [selectedTier, keywords, initialized])
 
   async function fetchVideos() {
     setLoading(true)
 
-    let videoIds = null
-
     if (keywords.trim()) {
-      const searchQuery = keywords.trim().split(' ').join(' | ')
-      const { data: metaData, error: metaError } = await supabase
-        .from('video_metadata')
-        .select('video_id')
-        .textSearch('search_vector', searchQuery)
-        .limit(50)
+      const searchQuery = keywords.trim().split(' ').filter(w => w.length > 2).join(' | ')
+      
+      if (searchQuery) {
+        const { data: metaData, error: metaError } = await supabase
+          .from('video_metadata')
+          .select('video_id')
+          .textSearch('search_vector', searchQuery)
+          .limit(50)
 
-      if (!metaError && metaData?.length > 0) {
-        videoIds = metaData.map(m => m.video_id)
+        if (!metaError && metaData?.length > 0) {
+          const videoIds = metaData.map(m => m.video_id)
+          const { data, error } = await supabase
+            .from('videos')
+            .select(`id, title, url, thumbnail_url, channel_name, video_metadata (skill_tiers, topics, ai_summary, quality_score)`)
+            .in('id', videoIds)
+            .limit(24)
+
+          if (!error) {
+            let filtered = data.filter(v => v.video_metadata?.length > 0)
+            if (selectedTier !== 'all') filtered = filtered.filter(v => v.video_metadata[0]?.skill_tiers?.includes(selectedTier))
+            setVideos(filtered)
+            setLoading(false)
+            return
+          }
+        } else {
+          setVideos([])
+          setLoading(false)
+          return
+        }
       }
     }
 
-    let query = supabase
+    const { data, error } = await supabase
       .from('videos')
       .select(`id, title, url, thumbnail_url, channel_name, video_metadata (skill_tiers, topics, ai_summary, quality_score)`)
       .not('video_metadata', 'is', null)
       .limit(24)
 
-    if (videoIds && videoIds.length > 0) {
-      query = query.in('id', videoIds)
-    }
-
-    const { data, error } = await query
     if (error) { console.error(error); setLoading(false); return }
 
     let filtered = data.filter(v => v.video_metadata?.length > 0)
-    if (selectedTier !== 'all') {
-      filtered = filtered.filter(v => v.video_metadata[0]?.skill_tiers?.includes(selectedTier))
-    }
+    if (selectedTier !== 'all') filtered = filtered.filter(v => v.video_metadata[0]?.skill_tiers?.includes(selectedTier))
 
     setVideos(filtered)
     setLoading(false)
@@ -65,7 +80,6 @@ export default function Home() {
 
   function handleSearch() {
     setKeywords(searchInput)
-    localStorage.setItem('golf_keywords', searchInput)
   }
 
   function clearSearch() {
@@ -110,8 +124,8 @@ export default function Home() {
           <div style={{ textAlign: 'center', padding: '4rem', color: '#8a9bb0' }}>Loading videos...</div>
         ) : videos.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '4rem', color: '#8a9bb0' }}>
-            <p>No videos found for "{keywords}".</p>
-            <button onClick={clearSearch} style={{ marginTop: '1rem', padding: '0.5rem 1.5rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: '#8a9bb0', cursor: 'pointer' }}>Show all videos</button>
+            <p>No videos found{keywords ? ` for "${keywords}"` : ''}.</p>
+            {keywords && <button onClick={clearSearch} style={{ marginTop: '1rem', padding: '0.5rem 1.5rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: '#8a9bb0', cursor: 'pointer' }}>Show all videos</button>}
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
