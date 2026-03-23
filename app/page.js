@@ -37,7 +37,7 @@ export default function Home() {
               .from('videos')
               .select('id, title, url, thumbnail_url, channel_name, video_metadata (skill_tiers, topics, ai_summary, quality_score)')
               .in('id', videoIds)
-              .limit(24)
+              .limit(100)
 
             if (!error) {
               let filtered = data.filter(v => v.video_metadata?.length > 0)
