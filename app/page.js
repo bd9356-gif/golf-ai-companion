@@ -1,6 +1,5 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
 
 export default function Home() {
   const [videos, setVideos] = useState([])
@@ -8,7 +7,6 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [keywords, setKeywords] = useState('')
   const [searchInput, setSearchInput] = useState('')
-  const [initialized, setInitialized] = useState(false)
 
   const tiers = ['all', 'beginner', 'intermediate', 'advanced']
 
@@ -16,76 +14,40 @@ export default function Home() {
     if (typeof window !== 'undefined') {
       const savedTier = localStorage.getItem('golf_skill_tier') || 'all'
       setSelectedTier(savedTier)
-      setKeywords('')
-      setSearchInput('')
-      localStorage.removeItem('golf_keywords')
     }
-    setInitialized(true)
+    fetchVideos('all', '')
   }, [])
 
-  useEffect(() => {
-    if (initialized) fetchVideos()
-  }, [selectedTier, keywords, initialized])
-
-  async function fetchVideos() {
+  async function fetchVideos(tier, kw) {
     setLoading(true)
-
-    if (keywords.trim()) {
-      const searchQuery = keywords.trim().split(' ').filter(w => w.length > 2).join(' | ')
-      
-      if (searchQuery) {
-        const { data: metaData, error: metaError } = await supabase
-          .from('video_metadata')
-          .select('video_id')
-          .textSearch('search_vector', searchQuery)
-          .limit(50)
-
-        if (!metaError && metaData?.length > 0) {
-          const videoIds = metaData.map(m => m.video_id)
-          const { data, error } = await supabase
-            .from('videos')
-            .select(`id, title, url, thumbnail_url, channel_name, video_metadata (skill_tiers, topics, ai_summary, quality_score)`)
-            .in('id', videoIds)
-            .limit(24)
-
-          if (!error) {
-            let filtered = data.filter(v => v.video_metadata?.length > 0)
-            if (selectedTier !== 'all') filtered = filtered.filter(v => v.video_metadata[0]?.skill_tiers?.includes(selectedTier))
-            setVideos(filtered)
-            setLoading(false)
-            return
-          }
-        } else {
-          setVideos([])
-          setLoading(false)
-          return
-        }
-      }
+    try {
+      const params = new URLSearchParams()
+      if (tier && tier !== 'all') params.set('tier', tier)
+      if (kw && kw.trim()) params.set('keywords', kw.trim())
+      const response = await fetch(`/api/videos?${params.toString()}`)
+      const data = await response.json()
+      setVideos(data.videos || [])
+    } catch (err) {
+      console.error(err)
+      setVideos([])
     }
-
-    const { data, error } = await supabase
-      .from('videos')
-      .select(`id, title, url, thumbnail_url, channel_name, video_metadata (skill_tiers, topics, ai_summary, quality_score)`)
-      .not('video_metadata', 'is', null)
-      .limit(24)
-
-    if (error) { console.error(error); setLoading(false); return }
-
-    let filtered = data.filter(v => v.video_metadata?.length > 0)
-    if (selectedTier !== 'all') filtered = filtered.filter(v => v.video_metadata[0]?.skill_tiers?.includes(selectedTier))
-
-    setVideos(filtered)
     setLoading(false)
+  }
+
+  function handleTierChange(tier) {
+    setSelectedTier(tier)
+    fetchVideos(tier, keywords)
   }
 
   function handleSearch() {
     setKeywords(searchInput)
+    fetchVideos(selectedTier, searchInput)
   }
 
   function clearSearch() {
     setKeywords('')
     setSearchInput('')
-    localStorage.removeItem('golf_keywords')
+    fetchVideos(selectedTier, '')
   }
 
   return (
@@ -105,7 +67,7 @@ export default function Home() {
           <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8a9bb0' }}>Skill Level</p>
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
             {tiers.map(tier => (
-              <button key={tier} onClick={() => setSelectedTier(tier)} style={{ padding: '0.4rem 1rem', borderRadius: '20px', border: selectedTier === tier ? '1px solid #d4af37' : '1px solid rgba(255,255,255,0.15)', background: selectedTier === tier ? 'rgba(212,175,55,0.2)' : 'transparent', color: selectedTier === tier ? '#d4af37' : '#8a9bb0', cursor: 'pointer', fontSize: '0.85rem', textTransform: 'capitalize' }}>{tier}</button>
+              <button key={tier} onClick={() => handleTierChange(tier)} style={{ padding: '0.4rem 1rem', borderRadius: '20px', border: selectedTier === tier ? '1px solid #d4af37' : '1px solid rgba(255,255,255,0.15)', background: selectedTier === tier ? 'rgba(212,175,55,0.2)' : 'transparent', color: selectedTier === tier ? '#d4af37' : '#8a9bb0', cursor: 'pointer', fontSize: '0.85rem', textTransform: 'capitalize' }}>{tier}</button>
             ))}
           </div>
         </div>
