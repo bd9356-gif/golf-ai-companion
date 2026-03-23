@@ -7,24 +7,78 @@ const supabase = createClient(
 )
 
 const SEARCH_QUERIES = [
-  // By instructor
-  'Rick Shiels golf lesson',
-  'Me and My Golf tips',
-  'Danny Maude golf swing',
-  'Mark Crossfield golf',
-  'Peter Finch golf',
-  // Intermediate techniques
-  'golf lag and release',
-  'golf hip rotation downswing',
+  // === BEGINNER — Core Swing Basics ===
+  'golf swing basics for beginners',
+  'simple golf swing explained',
+  'beginner golf setup and posture',
+  'how to grip a golf club beginner',
+  'easy takeaway drill',
+  'golf swing arc explained',
+  'how to stop topping the ball beginner',
+  'how to aim in golf beginner',
+  'golf ball position basics',
+  'how to read a slope putt beginner',
+
+  // === BEGINNER — Contact & Consistency ===
+  'how to hit irons solid beginner',
+  'how to stop slicing driver beginner',
+  'beginner chipping basics',
+  'simple putting setup beginner',
+
+  // === BEGINNER — Short Clear Lessons ===
+  'golf swing made simple',
+  'golf swing step by step beginner',
+
+  // === INTERMEDIATE — Ball Striking & Compression ===
+  'how to compress irons',
+  'shallow the club simple drill',
+  'stop early extension golf',
+  'improve low point control golf',
+  'rotate not sway golf swing',
+  'lag in golf swing drill',
+  'how to stop chunking irons',
   'golf weight transfer drill',
-  'golf tempo and rhythm',
-  'golf impact position drill',
-  // Advanced techniques
-  'golf swing plane drill advanced',
-  'golf flop shot technique',
-  'golf knockdown shot',
-  'golf driver distance advanced',
-  'golf wedge distance control'
+
+  // === INTERMEDIATE — Sequencing & Power ===
+  'golf downswing sequence like pros',
+  'lead hip rotation drill',
+  'how to start the downswing lower body',
+  'golf transition drill simple',
+
+  // === INTERMEDIATE — Wedge & Short Game ===
+  'high bounce wedge technique soft sand',
+  'bermuda grass chipping technique',
+  'tight lie wedge drill',
+  'bunker shot vs fairway bunker technique',
+
+  // === INTERMEDIATE — Driver Control ===
+  'fix over the top driver',
+  'hit driver straighter not harder',
+  'driver setup for accuracy',
+
+  // === ADVANCED — Tour Mechanics ===
+  'tour level golf swing sequence',
+  'pressure shift golf swing force plates explained',
+  'pelvis rotation golf swing drill',
+  'hand path and shallowing advanced',
+  'golf kinematic sequence',
+
+  // === ADVANCED — Speed & Efficiency ===
+  'increase clubhead speed without swinging harder',
+  'ground reaction forces golf swing',
+  'lead wrist flexion bowing drill',
+
+  // === ADVANCED — Shot Shaping ===
+  'how to hit a controlled fade',
+  'tour draw setup and path',
+  'flighted wedge technique',
+  'how to hit stinger shot',
+  'advanced course management strategy',
+
+  // === ADVANCED — Short Game ===
+  'spin wedge technique tour',
+  'low launch high spin wedge drill',
+  'tight lie lob shot technique'
 ]
 
 export async function GET() {
@@ -59,15 +113,15 @@ export async function GET() {
       }
     }
 
-    return NextResponse.json({ 
-      success: true, 
-      message: `Fetched and saved ${totalInserted} videos` 
+    return NextResponse.json({
+      success: true,
+      message: `Fetched and saved ${totalInserted} videos`
     })
 
   } catch (error) {
-    return NextResponse.json({ 
-      success: false, 
-      error: error.message 
+    return NextResponse.json({
+      success: false,
+      error: error.message
     }, { status: 500 })
   }
 }
