@@ -29,7 +29,7 @@ export default function Home() {
             .from('video_metadata')
             .select('video_id')
             .textSearch('search_vector', searchQuery)
-            .limit(50)
+            .limit(100)
 
           if (metaData?.length > 0) {
             const videoIds = metaData.map(m => m.video_id)
