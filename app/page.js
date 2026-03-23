@@ -58,7 +58,7 @@ export default function Home() {
         .from('videos')
         .select('id, title, url, thumbnail_url, channel_name, video_metadata (skill_tiers, topics, ai_summary, quality_score)')
         .not('video_metadata', 'is', null)
-        .limit(24)
+        .limit(100)
 
       if (error) { console.error(error); setLoading(false); return }
 
