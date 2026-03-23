@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { supabase } from '../lib/supabase'
 
 export default function Home() {
   const [videos, setVideos] = useState([])
@@ -21,12 +22,49 @@ export default function Home() {
   async function fetchVideos(tier, kw) {
     setLoading(true)
     try {
-      const params = new URLSearchParams()
-      if (tier && tier !== 'all') params.set('tier', tier)
-      if (kw && kw.trim()) params.set('keywords', kw.trim())
-      const response = await fetch(`/api/videos?${params.toString()}`)
-      const data = await response.json()
-      setVideos(data.videos || [])
+      if (kw && kw.trim()) {
+        const searchQuery = kw.trim().split(' ').filter(w => w.length > 2).join(' | ')
+        if (searchQuery) {
+          const { data: metaData } = await supabase
+            .from('video_metadata')
+            .select('video_id')
+            .textSearch('search_vector', searchQuery)
+            .limit(50)
+
+          if (metaData?.length > 0) {
+            const videoIds = metaData.map(m => m.video_id)
+            const { data, error } = await supabase
+              .from('videos')
+              .select('id, title, url, thumbnail_url, channel_name, video_metadata (skill_tiers, topics, ai_summary, quality_score)')
+              .in('id', videoIds)
+              .limit(24)
+
+            if (!error) {
+              let filtered = data.filter(v => v.video_metadata?.length > 0)
+              if (tier !== 'all') filtered = filtered.filter(v => v.video_metadata[0]?.skill_tiers?.includes(tier))
+              setVideos(filtered)
+              setLoading(false)
+              return
+            }
+          } else {
+            setVideos([])
+            setLoading(false)
+            return
+          }
+        }
+      }
+
+      const { data, error } = await supabase
+        .from('videos')
+        .select('id, title, url, thumbnail_url, channel_name, video_metadata (skill_tiers, topics, ai_summary, quality_score)')
+        .not('video_metadata', 'is', null)
+        .limit(24)
+
+      if (error) { console.error(error); setLoading(false); return }
+
+      let filtered = data.filter(v => v.video_metadata?.length > 0)
+      if (tier !== 'all') filtered = filtered.filter(v => v.video_metadata[0]?.skill_tiers?.includes(tier))
+      setVideos(filtered)
     } catch (err) {
       console.error(err)
       setVideos([])
