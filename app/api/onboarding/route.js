@@ -1,73 +1,73 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import Anthropic from '@anthropic-ai/sdk'
 
-const SYSTEM_PROMPT = `You are a friendly golf coach helping assess a golfer's skill level and main problem area. Your job is to have a natural conversation to determine their skill tier and their biggest challenge.
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-Ask questions naturally one at a time. Good questions include:
-- Have they played a full round before?
-- What is their approximate score or handicap?
-- What part of their game frustrates them most?
-- Can they consistently get the ball airborne?
-- Do they have a specific shot problem like a slice, hook, or fat shots?
+const SYSTEM_PROMPT = `You are a friendly golf AI assistant running a short skill assessment inside MyGolf Companion, an app that recommends golf instruction videos.
 
-After 3-4 exchanges you should have enough information to assign a tier and extract search keywords.
+Your job is to assess the user's skill level through a natural 3-5 message conversation, then tell them which tier their content will be filtered to.
 
 The three tiers are:
-- beginner: never played or under 1 year, struggles with basics, no consistent contact
-- intermediate: plays regularly, scores 90-110, working on consistency
-- advanced: single digit or low handicap, plays competitively, works on shot shaping
+- beginner (label: "Getting Started") — for players new to golf, still learning basics
+- intermediate (label: "Building Consistency") — for players who can get around the course but want to lower their scores
+- advanced (label: "Sharpening Your Game") — for lower-handicap players focused on refinement
 
-When you are confident, end your message with exactly this format on a new line:
-TIER:beginner
-KEYWORDS:slice swing path open clubface
+Ask friendly, concise questions to understand:
+1. Their experience (rounds played, years playing)
+2. Their current level (e.g. can they break 100? 90? 80?)
+3. Their main challenge areas
 
-The KEYWORDS should be 3-5 words that describe their main problem and would appear in video summaries. For example:
-- slice or fade = "slice swing path open clubface"
-- hook or draw = "hook swing path closed clubface"
-- fat shots = "fat shots ground contact impact position"
-- putting = "putting stroke green reading distance control"
-- chipping = "chipping short game contact chip shot"
-- bunker = "bunker sand shot explosion"
-- distance = "driver distance power swing speed"
-- consistency = "consistency contact ball striking impact"
+After 3-4 exchanges, conclude with a warm summary like:
+"Great! Based on your answers, I'm matching you to our [TIER_LABEL] content. Head back to the main page to see your personalized videos!"
 
-Do not assign a tier until you have asked at least 3 questions. Be warm, encouraging and conversational. Keep responses brief and friendly.`
+IMPORTANT: When you deliver the final assessment, include this exact JSON block on its own line at the end of your message (hidden from display), so the app can parse it:
+<<<SKILL_LEVEL:beginner>>> or <<<SKILL_LEVEL:intermediate>>> or <<<SKILL_LEVEL:advanced>>>
 
-export async function POST(request) {
+Keep responses short (2-3 sentences), conversational, and encouraging. Ask one question at a time.`
+
+function parseSkillLevel(text: string): { reply: string; skillLevel: string | null } {
+  const match = text.match(/<<<SKILL_LEVEL:(beginner|intermediate|advanced)>>>/)
+  if (match) {
+    const skillLevel = match[1]
+    const reply = text.replace(/<<<SKILL_LEVEL:[^>]+>>>/, '').trim()
+    return { reply, skillLevel }
+  }
+  return { reply: text, skillLevel: null }
+}
+
+export async function POST(req: NextRequest) {
   try {
-    const { messages } = await request.json()
+    const { messages } = await req.json()
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        system: SYSTEM_PROMPT,
-        messages: messages.map(m => ({ role: m.role, content: m.content }))
-      })
+    const response = await client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 400,
+      system: SYSTEM_PROMPT,
+      messages:
+        messages.length === 0
+          ? [{ role: 'user', content: 'Start the assessment' }]
+          : messages.map((m: { role: string; content: string }) => ({
+              role: m.role as 'user' | 'assistant',
+              content: m.content,
+            })),
     })
 
-    const data = await response.json()
-    const text = data.content[0].text
+    const rawText =
+      response.content[0].type === 'text'
+        ? response.content[0].text
+        : 'Hi! I had trouble connecting. Have you ever played a full 18-hole round?'
 
-    const tierMatch = text.match(/TIER:(beginner|intermediate|advanced)/)
-    const keywordsMatch = text.match(/KEYWORDS:(.+)/)
+    const { reply, skillLevel } = parseSkillLevel(rawText)
 
-    const tier = tierMatch ? tierMatch[1] : null
-    const keywords = keywordsMatch ? keywordsMatch[1].trim() : null
-
-    const cleanMessage = text
-      .replace(/TIER:(beginner|intermediate|advanced)/, '')
-      .replace(/KEYWORDS:.+/, '')
-      .trim()
-
-    return NextResponse.json({ message: cleanMessage, tier, keywords })
-
-  } catch (error) {
-    return NextResponse.json({ message: 'Sorry, something went wrong. Please try again.', tier: null, keywords: null }, { status: 500 })
+    return NextResponse.json({ reply, skillLevel })
+  } catch (err) {
+    console.error('Onboarding API error:', err)
+    return NextResponse.json(
+      {
+        reply:
+          "Hi! I'm your Golf AI Companion. Let's find the right content for your game. Have you ever played a full 18-hole round of golf?",
+        skillLevel: null,
+      },
+      { status: 200 }
+    )
   }
-}

@@ -1,68 +1,195 @@
 'use client'
-import { useState } from 'react'
+
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
-export default function Onboarding() {
-  const router = useRouter()
-  const [messages, setMessages] = useState([{ role: 'assistant', content: "Hi! I'm your Golf AI Companion. I'll ask a few quick questions to match you with the right content. First — have you ever played a full 18 hole round of golf?" }])
+const SKILL_KEYWORDS = {
+  beginner: ['beginner', 'new to golf', 'just started', 'never played', 'getting started', 'novice'],
+  intermediate: ['intermediate', 'building consistency', 'some experience', 'played a few years'],
+  advanced: ['advanced', 'low handicap', 'scratch', 'tournament', 'sharpening'],
+}
+
+function detectSkillLevel(text) {
+  const lower = text.toLowerCase()
+  for (const [level, keywords] of Object.entries(SKILL_KEYWORDS)) {
+    if (keywords.some((kw) => lower.includes(kw))) return level
+  }
+  return null
+}
+
+export default function OnboardingPage() {
+  const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
-  const [tier, setTier] = useState(null)
-  const [keywords, setKeywords] = useState(null)
+  const [complete, setComplete] = useState(false)
+  const router = useRouter()
+  const bottomRef = useRef(null)
+
+  useEffect(() => {
+    startConversation()
+  }, [])
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
+
+  async function startConversation() {
+    setLoading(true)
+    try {
+      const res = await fetch('/api/onboarding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: [] }),
+      })
+      const data = await res.json()
+      setMessages([{ role: 'assistant', content: data.reply }])
+    } catch {
+      setMessages([
+        {
+          role: 'assistant',
+          content:
+            "Hi! I'm your Golf AI Companion. Let's find the right content for your game. Have you ever played a full 18-hole round of golf?",
+        },
+      ])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  function saveSkillLevel(level) {
+    localStorage.setItem('golf_skill_level', level)
+  }
 
   async function sendMessage() {
     if (!input.trim() || loading) return
-    const userMessage = { role: 'user', content: input }
-    const updatedMessages = [...messages, userMessage]
-    setMessages(updatedMessages)
+    const userMsg = { role: 'user', content: input.trim() }
+    const newMessages = [...messages, userMsg]
+    setMessages(newMessages)
     setInput('')
     setLoading(true)
-    const response = await fetch('/api/onboarding', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: updatedMessages }) })
-    const data = await response.json()
-    setMessages(prev => [...prev, { role: 'assistant', content: data.message }])
-    if (data.tier) { setTier(data.tier); localStorage.setItem('golf_skill_tier', data.tier) }
-    if (data.keywords) { setKeywords(data.keywords); localStorage.setItem('golf_keywords', data.keywords) }
-    setLoading(false)
+
+    try {
+      const res = await fetch('/api/onboarding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: newMessages }),
+      })
+      const data = await res.json()
+      const reply = data.reply
+
+      setMessages([...newMessages, { role: 'assistant', content: reply }])
+
+      if (data.skillLevel) {
+        saveSkillLevel(data.skillLevel)
+        setComplete(true)
+      } else {
+        const detected = detectSkillLevel(reply)
+        if (
+          detected &&
+          (reply.toLowerCase().includes('recommend') ||
+            reply.toLowerCase().includes('match') ||
+            reply.toLowerCase().includes('video'))
+        ) {
+          saveSkillLevel(detected)
+          setComplete(true)
+        }
+      }
+    } catch {
+      setMessages([
+        ...newMessages,
+        { role: 'assistant', content: "Sorry, something went wrong. Let's try again." },
+      ])
+    } finally {
+      setLoading(false)
+    }
   }
 
-  function handleKeyDown(e) { if (e.key === 'Enter') sendMessage() }
+  function handleKeyDown(e) {
+    if (e.key === 'Enter') sendMessage()
+  }
 
   return (
-    <main style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0a1628 0%, #0d2137 50%, #0a1628 100%)', fontFamily: 'Georgia, serif', color: '#e8e0d0', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
-      <div style={{ width: '100%', maxWidth: '600px' }}>
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <h1 style={{ fontSize: '2rem', color: '#d4af37', margin: '0 0 0.5rem' }}>My Golf AI Companion</h1>
-          <p style={{ color: '#8a9bb0', margin: 0 }}>Let's find the right content for your game</p>
+    <div className="min-h-screen bg-white flex flex-col">
+      <header className="border-b border-gray-100 px-4 py-4">
+        <div className="max-w-2xl mx-auto">
+          <h1 className="text-lg font-semibold text-gray-900">⛳ MyGolf Companion</h1>
+          <p className="text-xs text-gray-500">Let's find the right content for your game</p>
         </div>
-        <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '1.5rem', marginBottom: '1rem', minHeight: '350px', maxHeight: '450px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      </header>
+
+      <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-6 flex flex-col">
+        <div className="flex-1 space-y-4 overflow-y-auto pb-4">
           {messages.map((msg, i) => (
-            <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
-              <div style={{ maxWidth: '80%', padding: '0.75rem 1rem', borderRadius: msg.role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px', background: msg.role === 'user' ? 'rgba(212,175,55,0.2)' : 'rgba(255,255,255,0.06)', border: msg.role === 'user' ? '1px solid rgba(212,175,55,0.3)' : '1px solid rgba(255,255,255,0.08)', color: msg.role === 'user' ? '#d4af37' : '#e8e0d0', fontSize: '0.9rem', lineHeight: '1.5' }}>
+            <div
+              key={i}
+              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            >
+              {msg.role === 'assistant' && (
+                <span className="mr-2 mt-1 shrink-0">⛳</span>
+              )}
+              <div
+                className={`max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${
+                  msg.role === 'user'
+                    ? 'bg-green-700 text-white rounded-br-sm'
+                    : 'bg-gray-100 text-gray-800 rounded-bl-sm'
+                }`}
+              >
                 {msg.content}
               </div>
             </div>
           ))}
+
           {loading && (
-            <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-              <div style={{ padding: '0.75rem 1rem', borderRadius: '16px 16px 16px 4px', background: 'rgba(255,255,255,0.06)', color: '#8a9bb0', fontSize: '0.9rem' }}>Thinking...</div>
+            <div className="flex justify-start">
+              <span className="mr-2 mt-1">⛳</span>
+              <div className="bg-gray-100 px-4 py-3 rounded-2xl rounded-bl-sm">
+                <div className="flex gap-1 items-center h-4">
+                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:0ms]" />
+                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:150ms]" />
+                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:300ms]" />
+                </div>
+              </div>
             </div>
           )}
+
+          <div ref={bottomRef} />
         </div>
-        {tier && (
-          <div style={{ background: 'rgba(212,175,55,0.1)', border: '1px solid rgba(212,175,55,0.4)', borderRadius: '12px', padding: '1rem 1.5rem', marginBottom: '1rem', textAlign: 'center' }}>
-            <p style={{ margin: '0 0 0.5rem', color: '#8a9bb0', fontSize: '0.85rem' }}>Your skill level</p>
-            <p style={{ margin: '0 0 0.25rem', color: '#d4af37', fontSize: '1.25rem', textTransform: 'capitalize', fontWeight: 'bold' }}>{tier}</p>
-            {keywords && <p style={{ margin: '0 0 1rem', color: '#8a9bb0', fontSize: '0.85rem' }}>Finding videos for: {keywords}</p>}
-            <button onClick={() => router.push('/')} style={{ background: '#d4af37', color: '#0a1628', border: 'none', borderRadius: '8px', padding: '0.75rem 2rem', fontSize: '0.95rem', fontWeight: 'bold', cursor: 'pointer' }}>Show My Content</button>
+
+        {complete ? (
+          <div className="text-center pt-6 border-t border-gray-100">
+            <p className="text-sm text-gray-600 mb-4">
+              Your skill level has been saved. Ready to see your personalized videos?
+            </p>
+            <button
+              onClick={() => router.push('/')}
+              className="px-6 py-3 bg-green-700 text-white rounded-xl font-medium hover:bg-green-800 transition-colors"
+            >
+              View My Videos →
+            </button>
+          </div>
+        ) : (
+          <div className="border-t border-gray-100 pt-4 flex gap-2">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Type your answer…"
+              disabled={loading}
+              className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-300"
+            />
+            <button
+              onClick={sendMessage}
+              disabled={!input.trim() || loading}
+              className="h-11 w-11 shrink-0 bg-green-700 text-white rounded-xl flex items-center justify-center hover:bg-green-800 disabled:opacity-40 transition-colors"
+            >
+              <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
           </div>
         )}
-        {!tier && (
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
-            <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown} placeholder="Type your answer..." style={{ flex: 1, padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.05)', color: '#e8e0d0', fontSize: '0.9rem', outline: 'none' }} />
-            <button onClick={sendMessage} disabled={loading} style={{ padding: '0.75rem 1.5rem', borderRadius: '8px', border: 'none', background: '#d4af37', color: '#0a1628', fontWeight: 'bold', cursor: 'pointer', fontSize: '0.9rem' }}>Send</button>
-          </div>
-        )}
-      </div>
-    </main>
+      </main>
+    </div>
   )
 }
