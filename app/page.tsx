@@ -62,7 +62,6 @@ export default function Home() {
     const { data, error } = await supabase
       .from('videos')
       .select('*')
-      .order('created_at', { ascending: false })
 
     if (!error && data) setVideos(data)
     setLoading(false)
