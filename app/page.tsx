@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import AskCompanionTab from '@/components/AskCompanionTab'
 
@@ -18,21 +18,28 @@ const TIER_LABELS: Record<string, string> = {
 
 const TIER_VALUES = ['all', 'beginner', 'intermediate', 'advanced']
 
-type Video = {
+type VideoRow = {
   id: string
   title: string
   url: string
+  thumbnail_url: string
+  youtube_video_id: string
+  channel_name: string
   description: string
-  skill_level: string
-  tags: string[]
-  score?: number
+  published_at: string
+  video_metadata: {
+    skill_tiers: string[]
+    topics: string[]
+    ai_summary: string
+    quality_score: number
+  } | null
 }
 
 type Tab = 'videos' | 'ask'
 
 export default function Home() {
-  const [videos, setVideos] = useState<Video[]>([])
-  const [filtered, setFiltered] = useState<Video[]>([])
+  const [videos, setVideos] = useState<VideoRow[]>([])
+  const [filtered, setFiltered] = useState<VideoRow[]>([])
   const [loading, setLoading] = useState(true)
   const [skillFilter, setSkillFilter] = useState('all')
   const [search, setSearch] = useState('')
@@ -41,7 +48,7 @@ export default function Home() {
   const [playingId, setPlayingId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<Tab>('videos')
 
-  // Auto-filter from assessment result saved in localStorage
+  // Auto-filter from assessment saved in localStorage
   useEffect(() => {
     const stored = localStorage.getItem('golf_skill_level')
     if (stored && TIER_VALUES.includes(stored)) {
@@ -61,26 +68,59 @@ export default function Home() {
     setLoading(true)
     const { data, error } = await supabase
       .from('videos')
-      .select('*')
+      .select(`
+        id,
+        title,
+        url,
+        thumbnail_url,
+        youtube_video_id,
+        channel_name,
+        description,
+        published_at,
+        video_metadata (
+          skill_tiers,
+          topics,
+          ai_summary,
+          quality_score
+        )
+      `)
+      .order('published_at', { ascending: false })
 
-    if (!error && data) setVideos(data)
+    if (error) {
+      console.error('Supabase error:', error)
+    } else if (data) {
+      // Sort by quality_score descending where available
+      const sorted = [...data].sort((a, b) => {
+        const aScore = a.video_metadata?.quality_score ?? 0
+        const bScore = b.video_metadata?.quality_score ?? 0
+        return bScore - aScore
+      })
+      setVideos(sorted)
+    }
     setLoading(false)
   }
 
   function applyFilters() {
     let result = [...videos]
+
     if (skillFilter !== 'all') {
-      result = result.filter((v) => v.skill_level === skillFilter)
+      result = result.filter((v) =>
+        v.video_metadata?.skill_tiers?.includes(skillFilter)
+      )
     }
+
     if (search.trim()) {
       const q = search.toLowerCase()
       result = result.filter(
         (v) =>
           v.title?.toLowerCase().includes(q) ||
           v.description?.toLowerCase().includes(q) ||
-          v.tags?.some((t) => t.toLowerCase().includes(q))
+          v.video_metadata?.ai_summary?.toLowerCase().includes(q) ||
+          v.video_metadata?.topics?.some((t) => t.toLowerCase().includes(q)) ||
+          v.channel_name?.toLowerCase().includes(q)
       )
     }
+
     setFiltered(result)
     setShowCount(10)
   }
@@ -93,8 +133,11 @@ export default function Home() {
     })
   }
 
-  function getYouTubeId(url: string): string | null {
-    const match = url?.match(
+  function getYouTubeId(video: VideoRow): string | null {
+    // Use stored youtube_video_id first
+    if (video.youtube_video_id) return video.youtube_video_id
+    // Fall back to parsing the URL
+    const match = video.url?.match(
       /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
     )
     return match ? match[1] : null
@@ -214,9 +257,13 @@ export default function Home() {
             ) : (
               <div className="space-y-3">
                 {visibleVideos.map((video) => {
-                  const ytId = getYouTubeId(video.url)
+                  const ytId = getYouTubeId(video)
                   const isPlaying = playingId === video.id
                   const isExpanded = expandedIds.has(video.id)
+                  const meta = video.video_metadata
+                  const skillTiers = meta?.skill_tiers ?? []
+                  const topics = meta?.topics ?? []
+                  const summary = meta?.ai_summary
 
                   return (
                     <div
@@ -249,7 +296,7 @@ export default function Home() {
                           aria-label={`Play ${video.title}`}
                         >
                           <img
-                            src={`https://img.youtube.com/vi/${ytId}/mqdefault.jpg`}
+                            src={video.thumbnail_url || `https://img.youtube.com/vi/${ytId}/mqdefault.jpg`}
                             alt={video.title}
                             className="w-full object-cover h-44 sm:h-52"
                           />
@@ -270,9 +317,18 @@ export default function Home() {
                             <h3 className="font-medium text-gray-900 text-sm leading-snug">
                               {video.title}
                             </h3>
-                            <span className="inline-block mt-1 text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">
-                              {TIER_LABELS[video.skill_level] ?? video.skill_level}
-                            </span>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {skillTiers.map((tier) => (
+                                <span key={tier} className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">
+                                  {TIER_LABELS[tier] ?? tier}
+                                </span>
+                              ))}
+                              {video.channel_name && (
+                                <span className="text-xs bg-gray-50 text-gray-500 px-2 py-0.5 rounded-full">
+                                  {video.channel_name}
+                                </span>
+                              )}
+                            </div>
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
                             {!isPlaying && (
@@ -296,25 +352,29 @@ export default function Home() {
                           </div>
                         </div>
 
-                        {/* Expandable description */}
-                        {isExpanded && video.description && (
-                          <p className="mt-3 text-sm text-gray-600 leading-relaxed border-t border-gray-100 pt-3">
-                            {video.description}
-                          </p>
-                        )}
-
-                        {/* Clickable tags */}
-                        {isExpanded && video.tags?.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5 mt-2">
-                            {video.tags.map((tag) => (
-                              <button
-                                key={tag}
-                                onClick={() => setSearch(tag)}
-                                className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full hover:bg-gray-200 transition-colors"
-                              >
-                                {tag}
-                              </button>
-                            ))}
+                        {/* Expandable section */}
+                        {isExpanded && (
+                          <div className="mt-3 border-t border-gray-100 pt-3 space-y-2">
+                            {/* AI summary takes priority over raw description */}
+                            {(summary || video.description) && (
+                              <p className="text-sm text-gray-600 leading-relaxed">
+                                {summary || video.description}
+                              </p>
+                            )}
+                            {/* Clickable topic tags */}
+                            {topics.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5">
+                                {topics.map((topic) => (
+                                  <button
+                                    key={topic}
+                                    onClick={() => setSearch(topic)}
+                                    className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full hover:bg-gray-200 transition-colors"
+                                  >
+                                    {topic}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
