@@ -27,12 +27,7 @@ type VideoRow = {
   channel_name: string
   description: string
   published_at: string
-  video_metadata: {
-    skill_tiers: string[]
-    topics: string[]
-    ai_summary: string
-    quality_score: number
-  } | null
+  video_metadata: any
 }
 
 type Tab = 'videos' | 'ask'
@@ -77,7 +72,7 @@ export default function Home() {
         channel_name,
         description,
         published_at,
-        video_metadata (
+        video_metadata!video_metadata_video_id_fkey (
           skill_tiers,
           topics,
           ai_summary,
@@ -90,20 +85,20 @@ export default function Home() {
       console.error('Supabase error:', error)
     } else if (data) {
       const sorted = [...data].sort((a, b) => {
-        const aMeta = Array.isArray(a.video_metadata) ? (a.video_metadata as any[])[0] : a.video_metadata
-        const bMeta = Array.isArray(b.video_metadata) ? (b.video_metadata as any[])[0] : b.video_metadata
-        const aScore = (aMeta as any)?.quality_score ?? 0
-        const bScore = (bMeta as any)?.quality_score ?? 0
+        const aMeta = getMeta(a as VideoRow)
+        const bMeta = getMeta(b as VideoRow)
+        const aScore = aMeta?.quality_score ?? 0
+        const bScore = bMeta?.quality_score ?? 0
         return bScore - aScore
       })
-      setVideos(sorted as unknown as VideoRow[])
+      setVideos(sorted as VideoRow[])
     }
     setLoading(false)
   }
 
-  // Supabase returns video_metadata as array when FK is on child table
+  // Supabase returns video_metadata as array or object depending on FK direction
   function getMeta(video: VideoRow) {
-    const m = video.video_metadata as any
+    const m = video.video_metadata
     if (!m) return null
     return Array.isArray(m) ? m[0] ?? null : m
   }
@@ -272,9 +267,9 @@ export default function Home() {
                   const isPlaying = playingId === video.id
                   const isExpanded = expandedIds.has(video.id)
                   const meta = getMeta(video)
-                  const skillTiers = meta?.skill_tiers ?? []
-                  const topics = meta?.topics ?? []
-                  const summary = meta?.ai_summary
+                  const skillTiers: string[] = meta?.skill_tiers ?? []
+                  const topics: string[] = meta?.topics ?? []
+                  const summary: string = meta?.ai_summary ?? ''
 
                   return (
                     <div
