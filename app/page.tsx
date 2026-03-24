@@ -90,8 +90,10 @@ export default function Home() {
       console.error('Supabase error:', error)
     } else if (data) {
       const sorted = [...data].sort((a, b) => {
-        const aScore = (a.video_metadata as any)?.quality_score ?? 0
-        const bScore = (b.video_metadata as any)?.quality_score ?? 0
+        const aMeta = Array.isArray(a.video_metadata) ? (a.video_metadata as any[])[0] : a.video_metadata
+        const bMeta = Array.isArray(b.video_metadata) ? (b.video_metadata as any[])[0] : b.video_metadata
+        const aScore = (aMeta as any)?.quality_score ?? 0
+        const bScore = (bMeta as any)?.quality_score ?? 0
         return bScore - aScore
       })
       setVideos(sorted as unknown as VideoRow[])
@@ -99,12 +101,20 @@ export default function Home() {
     setLoading(false)
   }
 
+  // Supabase returns video_metadata as array when FK is on child table
+  function getMeta(video: VideoRow) {
+    const m = video.video_metadata as any
+    if (!m) return null
+    return Array.isArray(m) ? m[0] ?? null : m
+  }
+
   function applyFilters() {
     let result = [...videos]
 
     if (skillFilter !== 'all') {
       result = result.filter((v) => {
-        const tiers = v.video_metadata?.skill_tiers
+        const meta = getMeta(v)
+        const tiers = meta?.skill_tiers
         if (!tiers || tiers.length === 0) return false
         return tiers.includes(skillFilter)
       })
@@ -112,14 +122,16 @@ export default function Home() {
 
     if (search.trim()) {
       const q = search.toLowerCase()
-      result = result.filter(
-        (v) =>
+      result = result.filter((v) => {
+        const meta = getMeta(v)
+        return (
           v.title?.toLowerCase().includes(q) ||
           v.description?.toLowerCase().includes(q) ||
-          v.video_metadata?.ai_summary?.toLowerCase().includes(q) ||
-          v.video_metadata?.topics?.some((t) => t.toLowerCase().includes(q)) ||
+          meta?.ai_summary?.toLowerCase().includes(q) ||
+          meta?.topics?.some((t: string) => t.toLowerCase().includes(q)) ||
           v.channel_name?.toLowerCase().includes(q)
-      )
+        )
+      })
     }
 
     setFiltered(result)
@@ -259,7 +271,7 @@ export default function Home() {
                   const ytId = getYouTubeId(video)
                   const isPlaying = playingId === video.id
                   const isExpanded = expandedIds.has(video.id)
-                  const meta = video.video_metadata
+                  const meta = getMeta(video)
                   const skillTiers = meta?.skill_tiers ?? []
                   const topics = meta?.topics ?? []
                   const summary = meta?.ai_summary
