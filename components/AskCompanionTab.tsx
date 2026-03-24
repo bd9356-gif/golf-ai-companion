@@ -9,6 +9,7 @@ type Message = {
 
 type Props = {
   skillLevel?: string
+  onBack?: () => void
 }
 
 const TIER_LABELS: Record<string, string> = {
@@ -27,7 +28,7 @@ const SUGGESTED_QUESTIONS = [
   'What should I work on to break 90?',
 ]
 
-export default function AskCompanionTab({ skillLevel = 'all' }: Props) {
+export default function AskCompanionTab({ skillLevel = 'all', onBack }: Props) {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -50,23 +51,15 @@ export default function AskCompanionTab({ skillLevel = 'all' }: Props) {
       const res = await fetch('/api/ask-companion', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: newMessages,
-          skillLevel,
-        }),
+        body: JSON.stringify({ messages: newMessages, skillLevel }),
       })
-
       if (!res.ok) throw new Error('API error')
       const data = await res.json()
       setMessages([...newMessages, { role: 'assistant', content: data.reply }])
     } catch {
       setMessages([
         ...newMessages,
-        {
-          role: 'assistant',
-          content:
-            "Sorry, I couldn't connect right now. Please try again in a moment.",
-        },
+        { role: 'assistant', content: "Sorry, I couldn't connect right now. Please try again in a moment." },
       ])
     } finally {
       setLoading(false)
@@ -84,15 +77,26 @@ export default function AskCompanionTab({ skillLevel = 'all' }: Props) {
 
   return (
     <div className="flex flex-col" style={{ height: 'calc(100vh - 160px)', minHeight: 500 }}>
-      {/* Context banner */}
-      <div className="flex items-center gap-2 mb-4 px-3 py-2 bg-green-50 border border-green-100 rounded-xl text-sm text-green-800">
-        <span className="text-base">🏌️</span>
-        <span>
-          Chatting as a <strong>{tierLabel}</strong> golfer ·{' '}
-          <a href="/onboarding" className="underline hover:no-underline text-green-700">
-            retake assessment
-          </a>
-        </span>
+
+      {/* Context banner with back button */}
+      <div className="flex items-center justify-between gap-2 mb-4 px-3 py-2 bg-green-50 border border-green-100 rounded-xl text-sm text-green-800">
+        <div className="flex items-center gap-2">
+          <span className="text-base">🏌️</span>
+          <span>
+            Chatting as a <strong>{tierLabel}</strong> golfer ·{' '}
+            <a href="/onboarding" className="underline hover:no-underline text-green-700">
+              retake assessment
+            </a>
+          </span>
+        </div>
+        {messages.length > 0 && (
+          <button
+            onClick={() => setMessages([])}
+            className="text-xs text-green-600 hover:text-green-800 whitespace-nowrap"
+          >
+            Clear chat
+          </button>
+        )}
       </div>
 
       {/* Messages */}
@@ -117,13 +121,8 @@ export default function AskCompanionTab({ skillLevel = 'all' }: Props) {
         )}
 
         {messages.map((msg, i) => (
-          <div
-            key={i}
-            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
-            {msg.role === 'assistant' && (
-              <span className="mr-2 mt-1 text-base shrink-0">⛳</span>
-            )}
+          <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            {msg.role === 'assistant' && <span className="mr-2 mt-1 text-base shrink-0">⛳</span>}
             <div
               className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
                 msg.role === 'user'
@@ -154,6 +153,14 @@ export default function AskCompanionTab({ skillLevel = 'all' }: Props) {
 
       {/* Input area */}
       <div className="border-t border-gray-100 pt-4">
+        {messages.length > 0 && (
+          <button
+            onClick={() => onBack?.()}
+            className="w-full mb-3 text-sm text-green-700 border border-green-200 rounded-xl py-2 hover:bg-green-50 transition-colors"
+          >
+            ← Back to Video Library
+          </button>
+        )}
         <div className="flex gap-2 items-end">
           <textarea
             ref={inputRef}
