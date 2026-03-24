@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
@@ -20,12 +20,12 @@ Ask friendly, concise questions to understand:
 After 3-4 exchanges, conclude with a warm summary like:
 "Great! Based on your answers, I'm matching you to our [TIER_LABEL] content. Head back to the main page to see your personalized videos!"
 
-IMPORTANT: When you deliver the final assessment, include this exact JSON block on its own line at the end of your message (hidden from display), so the app can parse it:
+IMPORTANT: When you deliver the final assessment, include this exact marker on its own line at the end of your message:
 <<<SKILL_LEVEL:beginner>>> or <<<SKILL_LEVEL:intermediate>>> or <<<SKILL_LEVEL:advanced>>>
 
 Keep responses short (2-3 sentences), conversational, and encouraging. Ask one question at a time.`
 
-function parseSkillLevel(text: string): { reply: string; skillLevel: string | null } {
+function parseSkillLevel(text) {
   const match = text.match(/<<<SKILL_LEVEL:(beginner|intermediate|advanced)>>>/)
   if (match) {
     const skillLevel = match[1]
@@ -35,7 +35,7 @@ function parseSkillLevel(text: string): { reply: string; skillLevel: string | nu
   return { reply: text, skillLevel: null }
 }
 
-export async function POST(req: NextRequest) {
+export async function POST(req) {
   try {
     const { messages } = await req.json()
 
@@ -46,8 +46,8 @@ export async function POST(req: NextRequest) {
       messages:
         messages.length === 0
           ? [{ role: 'user', content: 'Start the assessment' }]
-          : messages.map((m: { role: string; content: string }) => ({
-              role: m.role as 'user' | 'assistant',
+          : messages.map((m) => ({
+              role: m.role,
               content: m.content,
             })),
     })
@@ -55,19 +55,16 @@ export async function POST(req: NextRequest) {
     const rawText =
       response.content[0].type === 'text'
         ? response.content[0].text
-        : 'Hi! I had trouble connecting. Have you ever played a full 18-hole round?'
+        : "Hi! I had trouble connecting. Have you ever played a full 18-hole round?"
 
     const { reply, skillLevel } = parseSkillLevel(rawText)
 
     return NextResponse.json({ reply, skillLevel })
   } catch (err) {
     console.error('Onboarding API error:', err)
-    return NextResponse.json(
-      {
-        reply:
-          "Hi! I'm your Golf AI Companion. Let's find the right content for your game. Have you ever played a full 18-hole round of golf?",
-        skillLevel: null,
-      },
-      { status: 200 }
-    )
+    return NextResponse.json({
+      reply: "Hi! I'm your Golf AI Companion. Let's find the right content for your game. Have you ever played a full 18-hole round of golf?",
+      skillLevel: null,
+    })
   }
+}
