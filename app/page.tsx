@@ -89,13 +89,12 @@ export default function Home() {
     if (error) {
       console.error('Supabase error:', error)
     } else if (data) {
-      // Sort by quality_score descending where available
       const sorted = [...data].sort((a, b) => {
-        const aScore = a.video_metadata?.quality_score ?? 0
-        const bScore = b.video_metadata?.quality_score ?? 0
+        const aScore = (a.video_metadata as any)?.quality_score ?? 0
+        const bScore = (b.video_metadata as any)?.quality_score ?? 0
         return bScore - aScore
       })
-      setVideos(sorted)
+      setVideos(sorted as VideoRow[])
     }
     setLoading(false)
   }
@@ -136,9 +135,7 @@ export default function Home() {
   }
 
   function getYouTubeId(video: VideoRow): string | null {
-    // Use stored youtube_video_id first
     if (video.youtube_video_id) return video.youtube_video_id
-    // Fall back to parsing the URL
     const match = video.url?.match(
       /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
     )
@@ -361,13 +358,11 @@ export default function Home() {
                         {/* Expandable section */}
                         {isExpanded && (
                           <div className="mt-3 border-t border-gray-100 pt-3 space-y-2">
-                            {/* AI summary takes priority over raw description */}
                             {(summary || video.description) && (
                               <p className="text-sm text-gray-600 leading-relaxed">
                                 {summary || video.description}
                               </p>
                             )}
-                            {/* Clickable topic tags */}
                             {topics.length > 0 && (
                               <div className="flex flex-wrap gap-1.5">
                                 {topics.map((topic) => (
