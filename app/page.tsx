@@ -94,7 +94,7 @@ export default function Home() {
         const bScore = (b.video_metadata as any)?.quality_score ?? 0
         return bScore - aScore
       })
-      setVideos(sorted as VideoRow[])
+      setVideos(sorted as unknown as VideoRow[])
     }
     setLoading(false)
   }
