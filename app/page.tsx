@@ -104,9 +104,11 @@ export default function Home() {
     let result = [...videos]
 
     if (skillFilter !== 'all') {
-      result = result.filter((v) =>
-        v.video_metadata?.skill_tiers?.includes(skillFilter)
-      )
+      result = result.filter((v) => {
+        const tiers = v.video_metadata?.skill_tiers
+        if (!tiers || tiers.length === 0) return false
+        return tiers.includes(skillFilter)
+      })
     }
 
     if (search.trim()) {
@@ -318,11 +320,15 @@ export default function Home() {
                               {video.title}
                             </h3>
                             <div className="flex flex-wrap gap-1 mt-1">
-                              {skillTiers.map((tier) => (
+                              {skillTiers.length > 0 ? skillTiers.map((tier) => (
                                 <span key={tier} className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">
                                   {TIER_LABELS[tier] ?? tier}
                                 </span>
-                              ))}
+                              )) : (
+                                <span className="text-xs bg-gray-50 text-gray-400 px-2 py-0.5 rounded-full">
+                                  All levels
+                                </span>
+                              )}
                               {video.channel_name && (
                                 <span className="text-xs bg-gray-50 text-gray-500 px-2 py-0.5 rounded-full">
                                   {video.channel_name}
