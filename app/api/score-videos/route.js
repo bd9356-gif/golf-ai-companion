@@ -97,7 +97,7 @@ export async function GET() {
     }
 
     // Step 4: Fetch details for first 10 unscored videos
-    const batch = unscoredIds.slice(0, 10)
+    const batch = unscoredIds.slice(0, 3)
     const { data: videos, error: fetchError } = await supabase
       .from('videos')
       .select('id, title, description, channel_name')
