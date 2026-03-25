@@ -18,6 +18,21 @@ const TIER_LABELS: Record<string, string> = {
 
 const TIER_VALUES = ['all', 'beginner', 'intermediate', 'advanced']
 
+// Maps assessment problem answers to topic keywords in video_metadata
+const TOPIC_MAP: Record<string, string[]> = {
+  driver: ['driver', 'tee shot', 'driving', 'off the tee', 'tee'],
+  irons: ['iron', 'ball striking', 'approach', 'contact', 'impact'],
+  shortgame: ['chip', 'pitch', 'short game', 'around the green', 'wedge'],
+  putting: ['putt', 'putting', 'green', 'read'],
+}
+
+const GOAL_MAP: Record<string, string[]> = {
+  consistency: ['consistency', 'consistent', 'solid contact', 'mishit'],
+  distance: ['distance', 'power', 'speed', 'longer'],
+  strategy: ['course management', 'strategy', 'mental', 'decision'],
+  handicap: ['scoring', 'handicap', 'lower scores', 'mistakes'],
+}
+
 type VideoRow = {
   id: string
   title: string
@@ -44,13 +59,22 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<Tab>('videos')
   const [assessmentTopics, setAssessmentTopics] = useState<string[]>([])
 
-  // Load assessment results from localStorage
   useEffect(() => {
     const stored = localStorage.getItem('golf_skill_level')
     if (stored && TIER_VALUES.includes(stored)) setSkillFilter(stored)
-    const topics = localStorage.getItem('golf_topics')
-    if (topics) {
-      try { setAssessmentTopics(JSON.parse(topics)) } catch {}
+
+    // Build topic keywords from assessment answers
+    const answersRaw = localStorage.getItem('golf_answers')
+    if (answersRaw) {
+      try {
+        const answers = JSON.parse(answersRaw)
+        const keywords: string[] = [
+          ...(TOPIC_MAP[answers.problem] ?? []),
+          ...(GOAL_MAP[answers.goal] ?? []),
+        ]
+        setAssessmentTopics(keywords)
+        localStorage.setItem('golf_topics', JSON.stringify(keywords))
+      } catch {}
     }
   }, [])
 
@@ -79,19 +103,25 @@ export default function Home() {
         return (bMeta?.quality_score ?? 0) - (aMeta?.quality_score ?? 0)
       }) as unknown as VideoRow[]
 
+      // Featured first video
       const top20 = sorted.slice(0, 20)
-      const storedTopics = localStorage.getItem('golf_topics')
-      const assessedTopics: string[] = storedTopics ? JSON.parse(storedTopics) : []
+      const storedAnswers = localStorage.getItem('golf_answers')
+      const assessedTopics: string[] = storedAnswers
+        ? [
+            ...(TOPIC_MAP[JSON.parse(storedAnswers).problem] ?? []),
+            ...(GOAL_MAP[JSON.parse(storedAnswers).goal] ?? []),
+          ]
+        : []
 
-      // Personalized: find best topic match from top 20
       let featured: VideoRow | null = assessedTopics.length > 0
         ? top20.find((v) => {
             const vt: string[] = (Array.isArray(v.video_metadata) ? v.video_metadata[0] : v.video_metadata)?.topics ?? []
-            return assessedTopics.some((at) => vt.some((t) => t.toLowerCase().includes(at.toLowerCase())))
+            return assessedTopics.some((at) =>
+              vt.some((t) => t.toLowerCase().includes(at.toLowerCase()))
+            )
           }) ?? null
         : null
 
-      // Fallback: random from top 20
       if (!featured) featured = top20[Math.floor(Math.random() * top20.length)]
 
       const rest = sorted.filter((v) => v.id !== featured!.id)
@@ -106,6 +136,19 @@ export default function Home() {
     return Array.isArray(m) ? m[0] ?? null : m
   }
 
+  function videoMatchesTopics(video: VideoRow, keywords: string[]): boolean {
+    if (keywords.length === 0) return false
+    const meta = getMeta(video)
+    const vTopics: string[] = meta?.topics ?? []
+    const title = video.title?.toLowerCase() ?? ''
+    const summary = meta?.ai_summary?.toLowerCase() ?? ''
+    return keywords.some((kw) =>
+      vTopics.some((t) => t.toLowerCase().includes(kw)) ||
+      title.includes(kw) ||
+      summary.includes(kw)
+    )
+  }
+
   function applyFilters() {
     let result = [...videos]
 
@@ -115,19 +158,6 @@ export default function Home() {
         const tiers = getMeta(v)?.skill_tiers
         return tiers?.includes(skillFilter) ?? false
       })
-    }
-
-    // If assessment gave us topics, boost/filter by those first
-    if (assessmentTopics.length > 0 && skillFilter !== 'all' && !search.trim()) {
-      const topicMatches = result.filter((v) => {
-        const topics: string[] = getMeta(v)?.topics ?? []
-        return assessmentTopics.some((at) =>
-          topics.some((t) => t.toLowerCase().includes(at.toLowerCase()))
-        )
-      })
-      // Put topic matches first, then the rest
-      const rest = result.filter((v) => !topicMatches.includes(v))
-      result = [...topicMatches, ...rest]
     }
 
     // Search filter
@@ -143,6 +173,11 @@ export default function Home() {
           v.channel_name?.toLowerCase().includes(q)
         )
       })
+    } else if (assessmentTopics.length > 0) {
+      // No search active — sort topic matches to top, strictly
+      const topicMatches = result.filter((v) => videoMatchesTopics(v, assessmentTopics))
+      const rest = result.filter((v) => !topicMatches.includes(v))
+      result = [...topicMatches, ...rest]
     }
 
     setFiltered(result)
@@ -166,48 +201,54 @@ export default function Home() {
   const visibleVideos = filtered.slice(0, showCount)
   const hasMore = filtered.length > showCount
 
+  // Human-readable label for assessment focus
+  const focusLabel = assessmentTopics.slice(0, 2).join(', ')
+
   return (
     <div className="min-h-screen bg-white">
 
       {/* Header */}
       <header className="border-b border-gray-100 bg-white sticky top-0 z-40">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 leading-tight">
+        <div className="max-w-4xl mx-auto px-4 pt-5 pb-3">
+          {/* Branding row */}
+          <div className="mb-3">
+            <h1 className="text-3xl font-bold text-gray-900 leading-tight tracking-tight">
               ⛳ MyGolf Companion
             </h1>
-            <p className="text-sm text-gray-500 mt-0.5">Your AI guide to better golf</p>
+            <p className="text-base text-gray-500 mt-1">Your AI guide to better golf</p>
           </div>
-          <a
-            href="/onboarding"
-            className="text-sm font-medium text-white bg-green-700 rounded-xl px-4 py-2.5 hover:bg-green-800 transition-colors whitespace-nowrap"
-          >
-            Get My Video Plan
-          </a>
-        </div>
 
-        {/* Tabs */}
-        <div className="max-w-4xl mx-auto px-4 flex gap-1">
-          <button
-            onClick={() => setActiveTab('videos')}
-            className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${
-              activeTab === 'videos'
-                ? 'text-green-800 border-green-700'
-                : 'text-gray-500 border-transparent hover:text-gray-700'
-            }`}
-          >
-            Video Library
-          </button>
-          <button
-            onClick={() => setActiveTab('ask')}
-            className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${
-              activeTab === 'ask'
-                ? 'text-green-800 border-green-700'
-                : 'text-gray-500 border-transparent hover:text-gray-700'
-            }`}
-          >
-            Ask Your Golf AI Companion
-          </button>
+          {/* Nav row — tabs + Get My Video Plan together */}
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setActiveTab('videos')}
+              className={`px-4 py-2 text-sm font-semibold border-b-2 transition-colors ${
+                activeTab === 'videos'
+                  ? 'text-green-800 border-green-700'
+                  : 'text-gray-500 border-transparent hover:text-gray-700'
+              }`}
+            >
+              Video Library
+            </button>
+            <button
+              onClick={() => setActiveTab('ask')}
+              className={`px-4 py-2 text-sm font-semibold border-b-2 transition-colors ${
+                activeTab === 'ask'
+                  ? 'text-green-800 border-green-700'
+                  : 'text-gray-500 border-transparent hover:text-gray-700'
+              }`}
+            >
+              Ask Your Golf AI Companion
+            </button>
+            <div className="ml-auto">
+              <a
+                href="/onboarding"
+                className="text-sm font-semibold text-white bg-green-700 rounded-xl px-4 py-2 hover:bg-green-800 transition-colors whitespace-nowrap"
+              >
+                Get My Video Plan
+              </a>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -216,17 +257,17 @@ export default function Home() {
           <AskCompanionTab skillLevel={skillFilter} onBack={() => setActiveTab('videos')} />
         ) : (
           <>
-            {/* Assessment topic banner */}
-            {assessmentTopics.length > 0 && skillFilter !== 'all' && (
-              <div className="mb-4 px-4 py-3 bg-green-50 border border-green-100 rounded-xl text-sm text-green-800 flex items-center justify-between">
-                <span>
-                  🎯 Showing videos matched to your game ·{' '}
-                  <span className="font-medium">{assessmentTopics.join(', ')}</span>
+            {/* Assessment focus banner */}
+            {assessmentTopics.length > 0 && (
+              <div className="mb-5 px-4 py-3 bg-green-50 border border-green-100 rounded-xl flex items-center justify-between">
+                <span className="text-sm text-green-800">
+                  🎯 Ranked for your focus: <span className="font-semibold">{focusLabel}</span>
                 </span>
                 <button
                   onClick={() => {
                     setAssessmentTopics([])
                     localStorage.removeItem('golf_topics')
+                    localStorage.removeItem('golf_answers')
                   }}
                   className="text-xs text-green-600 hover:text-green-800 ml-3 whitespace-nowrap"
                 >
@@ -253,7 +294,7 @@ export default function Home() {
             </div>
 
             {/* Search */}
-            <div className="relative mb-6">
+            <div className="relative mb-5">
               <input
                 type="text"
                 value={search}
@@ -271,23 +312,23 @@ export default function Home() {
               )}
             </div>
 
-            {/* Result count */}
+            {/* Result count — prominent */}
             {!loading && (
-              <p className="text-base text-gray-500 mb-4">
-                {filtered.length === 0
-                  ? 'No videos found'
-                  : `Showing ${Math.min(showCount, filtered.length)} of ${filtered.length} video${filtered.length !== 1 ? 's' : ''}`}
-                {skillFilter !== 'all' && (
-                  <span className="ml-1">
-                    · <span className="text-green-700 font-medium">{TIER_LABELS[skillFilter]}</span>
-                  </span>
-                )}
-              </p>
+              <div className="mb-5">
+                <p className="text-lg font-bold text-gray-800">
+                  {filtered.length === 0
+                    ? 'No videos found'
+                    : `Showing ${Math.min(showCount, filtered.length)} of ${filtered.length} videos`}
+                  {skillFilter !== 'all' && (
+                    <span className="text-green-700"> · {TIER_LABELS[skillFilter]}</span>
+                  )}
+                </p>
+              </div>
             )}
 
             {/* Video list */}
             {loading ? (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <div key={i} className="h-28 bg-gray-100 rounded-xl animate-pulse" />
                 ))}
@@ -302,11 +343,16 @@ export default function Home() {
                   const skillTiers: string[] = meta?.skill_tiers ?? []
                   const topics: string[] = meta?.topics ?? []
                   const summary: string = meta?.ai_summary ?? ''
+                  const isTopicMatch = videoMatchesTopics(video, assessmentTopics)
 
                   return (
                     <div
                       key={video.id}
-                      className="border border-gray-200 rounded-xl overflow-hidden hover:border-gray-300 transition-colors"
+                      className={`border rounded-xl overflow-hidden transition-colors ${
+                        isTopicMatch && assessmentTopics.length > 0
+                          ? 'border-green-200 hover:border-green-300'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
                     >
                       {/* Inline video player */}
                       {isPlaying && ytId && (
@@ -368,6 +414,11 @@ export default function Home() {
                               {video.channel_name && (
                                 <span className="text-xs bg-gray-50 text-gray-500 px-2.5 py-1 rounded-full">
                                   {video.channel_name}
+                                </span>
+                              )}
+                              {isTopicMatch && assessmentTopics.length > 0 && (
+                                <span className="text-xs bg-green-100 text-green-700 px-2.5 py-1 rounded-full font-medium">
+                                  🎯 Recommended
                                 </span>
                               )}
                             </div>
