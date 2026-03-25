@@ -18,19 +18,21 @@ const TIER_LABELS: Record<string, string> = {
 
 const TIER_VALUES = ['all', 'beginner', 'intermediate', 'advanced']
 
-// Maps assessment problem answers to topic keywords in video_metadata
+// Maps assessment answers to actual topic values in video_metadata
+// Topics in DB: bunker, chipping, course management, equipment, fitness,
+//               grip, mental game, pitching, putting, rules, stance, swing
 const TOPIC_MAP: Record<string, string[]> = {
-  driver: ['driver', 'tee shot', 'driving', 'off the tee', 'tee'],
-  irons: ['iron', 'ball striking', 'approach', 'contact', 'impact'],
-  shortgame: ['chip', 'pitch', 'short game', 'around the green', 'wedge'],
-  putting: ['putt', 'putting', 'green', 'read'],
+  driver:    ['swing', 'grip', 'stance'],
+  irons:     ['swing', 'grip', 'stance'],
+  shortgame: ['chipping', 'pitching', 'bunker'],
+  putting:   ['putting'],
 }
 
 const GOAL_MAP: Record<string, string[]> = {
-  consistency: ['consistency', 'consistent', 'solid contact', 'mishit'],
-  distance: ['distance', 'power', 'speed', 'longer'],
-  strategy: ['course management', 'strategy', 'mental', 'decision'],
-  handicap: ['scoring', 'handicap', 'lower scores', 'mistakes'],
+  consistency: ['swing', 'grip', 'stance'],
+  distance:    ['swing', 'fitness'],
+  strategy:    ['course management', 'mental game', 'rules'],
+  handicap:    ['course management', 'mental game'],
 }
 
 type VideoRow = {
@@ -119,14 +121,9 @@ export default function Home() {
   function videoMatchesTopics(video: VideoRow, keywords: string[]): boolean {
     if (keywords.length === 0) return false
     const meta = getMeta(video)
-    const vTopics: string[] = meta?.topics ?? []
-    const title = video.title?.toLowerCase() ?? ''
-    const summary = meta?.ai_summary?.toLowerCase() ?? ''
-    return keywords.some((kw) =>
-      vTopics.some((t) => t.toLowerCase().includes(kw)) ||
-      title.includes(kw) ||
-      summary.includes(kw)
-    )
+    const vTopics: string[] = (meta?.topics ?? []).map((t: string) => t.toLowerCase())
+    // Use exact topic match since topics are controlled vocabulary
+    return keywords.some((kw) => vTopics.includes(kw.toLowerCase()))
   }
 
   function applyFilters() {
