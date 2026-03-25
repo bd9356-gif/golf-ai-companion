@@ -427,23 +427,34 @@ export default function Home() {
                         {/* Expandable section */}
                         {isExpanded && (
                           <div className="mt-3 border-t border-gray-100 pt-3 space-y-3">
-                            {(summary || video.description) && (
-                              <p className="text-base text-gray-600 leading-relaxed">
-                                {summary || video.description}
-                              </p>
-                            )}
-                            {topics.length > 0 && (
-                              <div className="flex flex-wrap gap-2">
-                                {topics.map((topic) => (
-                                  <button
-                                    key={topic}
-                                    onClick={() => setSearch(topic)}
-                                    className="text-sm bg-gray-100 text-gray-500 px-3 py-1 rounded-full hover:bg-gray-200 transition-colors"
-                                  >
-                                    {topic}
-                                  </button>
-                                ))}
-                              </div>
+                            {/* Show AI summary for plan users, basic description for everyone else */}
+                            {assessmentTopics.length > 0 ? (
+                              <>
+                                {summary && (
+                                  <p className="text-base text-gray-600 leading-relaxed">
+                                    {summary}
+                                  </p>
+                                )}
+                                {topics.length > 0 && (
+                                  <div className="flex flex-wrap gap-2">
+                                    {topics.map((topic) => (
+                                      <button
+                                        key={topic}
+                                        onClick={() => setSearch(topic)}
+                                        className="text-sm bg-gray-100 text-gray-500 px-3 py-1 rounded-full hover:bg-gray-200 transition-colors"
+                                      >
+                                        {topic}
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                              </>
+                            ) : (
+                              video.description && (
+                                <p className="text-base text-gray-600 leading-relaxed">
+                                  {video.description}
+                                </p>
+                              )
                             )}
                           </div>
                         )}
