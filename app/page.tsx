@@ -61,6 +61,8 @@ export default function Home() {
   const [playingId, setPlayingId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<Tab>('videos')
   const [assessmentTopics, setAssessmentTopics] = useState<string[]>([])
+  const [matchedPool, setMatchedPool] = useState<VideoRow[]>([])
+  const [planPage, setPlanPage] = useState(0)
 
   useEffect(() => {
     // Do NOT auto-set skill filter — always default to All Levels on load
@@ -143,11 +145,12 @@ export default function Home() {
         )
       })
     } else if (assessmentTopics.length > 0) {
-      // Exact keyword match only — filter strictly to matching videos
+      // Exact keyword match only — build a pool, show 10 at a time
       const exactMatches = result.filter((v) => videoMatchesTopics(v, assessmentTopics))
       if (exactMatches.length > 0) {
-        // Shuffle the matching set so the 10 shown rotate each visit
-        result = exactMatches.sort(() => Math.random() - 0.5)
+        const shuffled = exactMatches.sort(() => Math.random() - 0.5)
+        setMatchedPool(shuffled)
+        result = shuffled
       }
       // If no exact matches found, fall through to show all (shuffled)
     }
@@ -155,6 +158,7 @@ export default function Home() {
 
     setFiltered(result)
     setShowCount(10)
+    setPlanPage(0)
   }
 
   function toggleExpanded(id: string) {
@@ -448,8 +452,24 @@ export default function Home() {
               </div>
             )}
 
-            {/* Show More */}
-            {hasMore && (
+            {/* Show More / Get 10 More */}
+            {assessmentTopics.length > 0 && matchedPool.length > 10 ? (
+              <div className="mt-6 text-center">
+                <button
+                  onClick={() => {
+                    const reshuffled = [...matchedPool].sort(() => Math.random() - 0.5)
+                    setMatchedPool(reshuffled)
+                    setFiltered(reshuffled)
+                    setShowCount(10)
+                    window.scrollTo({ top: 0, behavior: 'smooth' })
+                  }}
+                  className="px-8 py-3 bg-green-700 text-white rounded-xl text-base font-semibold hover:bg-green-800 transition-colors"
+                >
+                  Get 10 More Videos →
+                </button>
+                <p className="text-sm text-gray-400 mt-2">{matchedPool.length} videos match your focus area</p>
+              </div>
+            ) : hasMore ? (
               <div className="mt-6 text-center">
                 <button
                   onClick={() => setShowCount((c) => c + 10)}
@@ -458,7 +478,7 @@ export default function Home() {
                   Show More ({filtered.length - showCount} remaining)
                 </button>
               </div>
-            )}
+            ) : null}
 
             {/* Empty state */}
             {!loading && filtered.length === 0 && (
