@@ -63,15 +63,13 @@ export default function Home() {
   const [assessmentTopics, setAssessmentTopics] = useState<string[]>([])
 
   useEffect(() => {
-    const stored = localStorage.getItem('golf_skill_level')
-    if (stored && TIER_VALUES.includes(stored)) setSkillFilter(stored)
+    // Do NOT auto-set skill filter — always default to All Levels on load
 
     // Build topic keywords from assessment answers
     const answersRaw = localStorage.getItem('golf_answers')
     if (answersRaw) {
       try {
         const answers = JSON.parse(answersRaw)
-        // Deduplicate keywords
         const raw = [
           ...(TOPIC_MAP[answers.problem] ?? []),
           ...(GOAL_MAP[answers.goal] ?? []),
@@ -102,15 +100,9 @@ export default function Home() {
     if (error) {
       console.error('Supabase error:', error)
     } else if (data) {
-      const sorted = [...data].sort((a, b) => {
-        const aMeta = Array.isArray(a.video_metadata) ? a.video_metadata[0] : a.video_metadata
-        const bMeta = Array.isArray(b.video_metadata) ? b.video_metadata[0] : b.video_metadata
-        return (bMeta?.quality_score ?? 0) - (aMeta?.quality_score ?? 0)
-      }) as unknown as VideoRow[]
-
-      // Just store sorted — featured pinning happens in applyFilters
-      // after assessmentTopics state is populated from localStorage
-      setVideos(sorted)
+      // Shuffle randomly so the opening 10 rotate on every load
+      const shuffled = [...data].sort(() => Math.random() - 0.5) as unknown as VideoRow[]
+      setVideos(shuffled)
     }
     setLoading(false)
   }
@@ -154,19 +146,15 @@ export default function Home() {
         )
       })
     } else if (assessmentTopics.length > 0) {
-      // Sort all topic matches to the top
-      const topicMatches = result.filter((v) => videoMatchesTopics(v, assessmentTopics))
-      const rest = result.filter((v) => !topicMatches.includes(v))
-      result = [...topicMatches, ...rest]
-    } else {
-      // No assessment - pin a random video from top 20 as the first slot
-      if (result.length > 1) {
-        const top20 = result.slice(0, Math.min(20, result.length))
-        const featured = top20[Math.floor(Math.random() * top20.length)]
-        const rest = result.filter((v) => v.id !== featured.id)
-        result = [featured, ...rest]
+      // Exact keyword match only — filter strictly to matching videos
+      const exactMatches = result.filter((v) => videoMatchesTopics(v, assessmentTopics))
+      if (exactMatches.length > 0) {
+        // Shuffle the matching set so the 10 shown rotate each visit
+        result = exactMatches.sort(() => Math.random() - 0.5)
       }
+      // If no exact matches found, fall through to show all (shuffled)
     }
+    // Always shuffle so the opening 10 rotate
 
     setFiltered(result)
     setShowCount(10)
