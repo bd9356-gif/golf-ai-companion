@@ -296,15 +296,12 @@ export default function Home() {
                   {filtered.length === 0
                     ? 'No videos found'
                     : assessmentTopics.length > 0 && matchedPool.length > 0
-                      ? `10 videos matched to your focus area`
+                      ? `Showing ${Math.min(showCount, matchedPool.length)} of ${matchedPool.length} videos matched to your focus`
                       : `Showing ${Math.min(showCount, filtered.length)} of ${filtered.length} videos`}
                   {skillFilter !== 'all' && !assessmentTopics.length && (
                     <span className="text-green-700"> · {TIER_LABELS[skillFilter]}</span>
                   )}
                 </p>
-                {assessmentTopics.length > 0 && matchedPool.length > 0 && (
-                  <p className="text-sm text-gray-500 mt-0.5">{matchedPool.length} total videos match your focus</p>
-                )}
               </div>
             )}
 
@@ -458,16 +455,10 @@ export default function Home() {
             )}
 
             {/* Show More / Get 10 More */}
-            {assessmentTopics.length > 0 && matchedPool.length > 10 ? (
+            {assessmentTopics.length > 0 && matchedPool.length > showCount ? (
               <div className="mt-6 text-center">
                 <button
-                  onClick={() => {
-                    const reshuffled = [...matchedPool].sort(() => Math.random() - 0.5)
-                    setMatchedPool(reshuffled)
-                    setFiltered(reshuffled)
-                    setShowCount(10)
-                    window.scrollTo({ top: 0, behavior: 'smooth' })
-                  }}
+                  onClick={() => setShowCount((c) => Math.min(c + 10, matchedPool.length))}
                   className="px-8 py-3 bg-green-700 text-white rounded-xl text-base font-semibold hover:bg-green-800 transition-colors"
                 >
                   Get 10 More Videos →
