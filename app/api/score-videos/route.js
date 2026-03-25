@@ -6,36 +6,11 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
-export async function GET() {
-  try {
-    // Get unscored videos using a left join approach
-    // Fetch videos that don't have a matching video_metadata row
-    const { data: videos, error } = await supabase
-      .from('videos')
-      .select(`
-        id, title, description, channel_name,
-        video_metadata!left ( video_id )
-      `)
-      .is('video_metadata.video_id', null)
-      .limit(10)
+const PROMPT_TEMPLATE = (title, channel, description) => `You are a golf instruction expert. Analyze this YouTube video and return ONLY a JSON object with no markdown or backticks.
 
-    if (error) {
-      console.error('Query error:', error)
-      throw error
-    }
-
-    if (!videos || videos.length === 0) {
-      return NextResponse.json({ success: true, message: 'No unscored videos found' })
-    }
-
-    let totalScored = 0
-
-    for (const video of videos) {
-      const prompt = `You are a golf instruction expert. Analyze this YouTube video and return ONLY a JSON object with no markdown or backticks.
-
-Video title: ${video.title}
-Channel: ${video.channel_name}
-Description: ${video.description}
+Video title: ${title}
+Channel: ${channel}
+Description: ${description}
 
 Return this exact JSON structure:
 {"skill_tiers": ["beginner"], "topics": ["driving"], "ai_summary": "summary here", "quality_score": 7.5}
@@ -72,6 +47,74 @@ Rules:
 
 - Return ONLY the JSON, nothing else`
 
+export async function GET() {
+  try {
+    // Step 1: Get all scored video_ids in batches (handles large sets)
+    const scoredIds = new Set()
+    let page = 0
+    const pageSize = 1000
+
+    while (true) {
+      const { data, error } = await supabase
+        .from('video_metadata')
+        .select('video_id')
+        .range(page * pageSize, (page + 1) * pageSize - 1)
+
+      if (error) throw error
+      if (!data || data.length === 0) break
+
+      data.forEach(r => scoredIds.add(r.video_id))
+      if (data.length < pageSize) break
+      page++
+    }
+
+    // Step 2: Get all video IDs
+    const allVideoIds = []
+    page = 0
+
+    while (true) {
+      const { data, error } = await supabase
+        .from('videos')
+        .select('id')
+        .range(page * pageSize, (page + 1) * pageSize - 1)
+
+      if (error) throw error
+      if (!data || data.length === 0) break
+
+      data.forEach(r => allVideoIds.push(r.id))
+      if (data.length < pageSize) break
+      page++
+    }
+
+    // Step 3: Find unscored IDs
+    const unscoredIds = allVideoIds.filter(id => !scoredIds.has(id))
+
+    if (unscoredIds.length === 0) {
+      return NextResponse.json({
+        success: true,
+        message: `All ${allVideoIds.length} videos are scored. Nothing to do.`
+      })
+    }
+
+    // Step 4: Fetch details for first 10 unscored videos
+    const batch = unscoredIds.slice(0, 10)
+    const { data: videos, error: fetchError } = await supabase
+      .from('videos')
+      .select('id, title, description, channel_name')
+      .in('id', batch)
+
+    if (fetchError) throw fetchError
+
+    // Step 5: Score each video
+    let totalScored = 0
+
+    for (const video of videos) {
+      const prompt = PROMPT_TEMPLATE(
+        video.title,
+        video.channel_name,
+        video.description
+      )
+
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
@@ -94,7 +137,6 @@ Rules:
       try {
         result = JSON.parse(text)
       } catch {
-        console.error('JSON parse failed for:', video.title, text)
         continue
       }
 
@@ -110,10 +152,12 @@ Rules:
         })
 
       if (!insertError) totalScored++
-      else console.error('Insert error:', insertError)
     }
 
-    return NextResponse.json({ success: true, message: `Scored ${totalScored} of ${videos.length} videos` })
+    return NextResponse.json({
+      success: true,
+      message: `Scored ${totalScored} videos. ${unscoredIds.length - totalScored} still remaining.`
+    })
 
   } catch (error) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 })
