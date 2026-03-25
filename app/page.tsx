@@ -70,10 +70,12 @@ export default function Home() {
     if (answersRaw) {
       try {
         const answers = JSON.parse(answersRaw)
-        const keywords: string[] = [
+        // Deduplicate keywords
+        const raw = [
           ...(TOPIC_MAP[answers.problem] ?? []),
           ...(GOAL_MAP[answers.goal] ?? []),
         ]
+        const keywords = [...new Set(raw)]
         setAssessmentTopics(keywords)
         localStorage.setItem('golf_topics', JSON.stringify(keywords))
       } catch {}
@@ -187,7 +189,7 @@ export default function Home() {
   const hasMore = filtered.length > showCount
 
   // Human-readable label for assessment focus
-  const focusLabel = assessmentTopics.slice(0, 2).join(', ')
+  const focusLabel = [...new Set(assessmentTopics)].join(', ')
 
   return (
     <div className="min-h-screen bg-white">
