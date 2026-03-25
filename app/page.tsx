@@ -77,8 +77,25 @@ export default function Home() {
         const aMeta = Array.isArray(a.video_metadata) ? a.video_metadata[0] : a.video_metadata
         const bMeta = Array.isArray(b.video_metadata) ? b.video_metadata[0] : b.video_metadata
         return (bMeta?.quality_score ?? 0) - (aMeta?.quality_score ?? 0)
-      })
-      setVideos(sorted as unknown as VideoRow[])
+      }) as unknown as VideoRow[]
+
+      const top20 = sorted.slice(0, 20)
+      const storedTopics = localStorage.getItem('golf_topics')
+      const assessedTopics: string[] = storedTopics ? JSON.parse(storedTopics) : []
+
+      // Personalized: find best topic match from top 20
+      let featured: VideoRow | null = assessedTopics.length > 0
+        ? top20.find((v) => {
+            const vt: string[] = (Array.isArray(v.video_metadata) ? v.video_metadata[0] : v.video_metadata)?.topics ?? []
+            return assessedTopics.some((at) => vt.some((t) => t.toLowerCase().includes(at.toLowerCase())))
+          }) ?? null
+        : null
+
+      // Fallback: random from top 20
+      if (!featured) featured = top20[Math.floor(Math.random() * top20.length)]
+
+      const rest = sorted.filter((v) => v.id !== featured!.id)
+      setVideos([featured!, ...rest])
     }
     setLoading(false)
   }
