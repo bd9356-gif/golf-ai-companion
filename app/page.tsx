@@ -402,7 +402,7 @@ export default function Home() {
                               )}
                             </div>
                           </div>
-                          <div className="flex items-center gap-3 shrink-0">
+                          <div className="flex items-center gap-2 shrink-0">
                             {!isPlaying && (
                               <a
                                 href={video.url}
@@ -414,15 +414,15 @@ export default function Home() {
                                 ↗
                               </a>
                             )}
-                            <button
-                              onClick={() => toggleExpanded(video.id)}
-                              className="text-sm text-gray-400 hover:text-gray-600 transition-colors"
-                              aria-label={isExpanded ? 'Hide description' : 'Show description'}
-                            >
-                              {isExpanded ? '▲' : '▼'}
-                            </button>
                           </div>
                         </div>
+                        {/* See Details link below badges */}
+                        <button
+                          onClick={() => toggleExpanded(video.id)}
+                          className="mt-2 text-sm text-green-700 hover:text-green-900 font-medium transition-colors"
+                        >
+                          {isExpanded ? 'Hide Details ▲' : 'See Details ▼'}
+                        </button>
 
                         {/* Expandable section */}
                         {isExpanded && (
