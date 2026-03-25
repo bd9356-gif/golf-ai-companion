@@ -18,19 +18,20 @@ const TIER_LABELS: Record<string, string> = {
 
 const TIER_VALUES = ['all', 'beginner', 'intermediate', 'advanced']
 
-// Maps assessment answers to actual topic values in video_metadata
-// Topics in DB: bunker, chipping, course management, equipment, fitness,
-//               grip, mental game, pitching, putting, rules, stance, swing
+// Maps assessment answers to topic values in video_metadata
+// New specific topics: driving, iron play, short game
+// Plus existing: bunker, chipping, course management, equipment, fitness,
+//                grip, mental game, pitching, putting, rules, stance, swing
 const TOPIC_MAP: Record<string, string[]> = {
-  driver:    ['swing', 'grip', 'stance'],
-  irons:     ['swing', 'grip', 'stance'],
-  shortgame: ['chipping', 'pitching', 'bunker'],
+  driver:    ['driving', 'swing', 'grip', 'stance'],
+  irons:     ['iron play', 'swing', 'grip', 'stance'],
+  shortgame: ['short game', 'chipping', 'pitching', 'bunker'],
   putting:   ['putting'],
 }
 
 const GOAL_MAP: Record<string, string[]> = {
   consistency: ['swing', 'grip', 'stance'],
-  distance:    ['swing', 'fitness'],
+  distance:    ['driving', 'swing', 'fitness'],
   strategy:    ['course management', 'mental game', 'rules'],
   handicap:    ['course management', 'mental game'],
 }
