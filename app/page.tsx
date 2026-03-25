@@ -66,15 +66,12 @@ export default function Home() {
     // Do NOT auto-set skill filter — always default to All Levels on load
 
     // Build topic keywords from assessment answers
+    // Only use PROBLEM area topics for video filtering — goal is too broad
     const answersRaw = localStorage.getItem('golf_answers')
     if (answersRaw) {
       try {
         const answers = JSON.parse(answersRaw)
-        const raw = [
-          ...(TOPIC_MAP[answers.problem] ?? []),
-          ...(GOAL_MAP[answers.goal] ?? []),
-        ]
-        const keywords = [...new Set(raw)]
+        const keywords = [...new Set(TOPIC_MAP[answers.problem] ?? [])]
         setAssessmentTopics(keywords)
         localStorage.setItem('golf_topics', JSON.stringify(keywords))
       } catch {}
