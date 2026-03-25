@@ -103,29 +103,9 @@ export default function Home() {
         return (bMeta?.quality_score ?? 0) - (aMeta?.quality_score ?? 0)
       }) as unknown as VideoRow[]
 
-      // Featured first video
-      const top20 = sorted.slice(0, 20)
-      const storedAnswers = localStorage.getItem('golf_answers')
-      const assessedTopics: string[] = storedAnswers
-        ? [
-            ...(TOPIC_MAP[JSON.parse(storedAnswers).problem] ?? []),
-            ...(GOAL_MAP[JSON.parse(storedAnswers).goal] ?? []),
-          ]
-        : []
-
-      let featured: VideoRow | null = assessedTopics.length > 0
-        ? top20.find((v) => {
-            const vt: string[] = (Array.isArray(v.video_metadata) ? v.video_metadata[0] : v.video_metadata)?.topics ?? []
-            return assessedTopics.some((at) =>
-              vt.some((t) => t.toLowerCase().includes(at.toLowerCase()))
-            )
-          }) ?? null
-        : null
-
-      if (!featured) featured = top20[Math.floor(Math.random() * top20.length)]
-
-      const rest = sorted.filter((v) => v.id !== featured!.id)
-      setVideos([featured!, ...rest])
+      // Just store sorted — featured pinning happens in applyFilters
+      // after assessmentTopics state is populated from localStorage
+      setVideos(sorted)
     }
     setLoading(false)
   }
@@ -174,10 +154,18 @@ export default function Home() {
         )
       })
     } else if (assessmentTopics.length > 0) {
-      // No search active — sort topic matches to top, strictly
+      // Sort all topic matches to the top
       const topicMatches = result.filter((v) => videoMatchesTopics(v, assessmentTopics))
       const rest = result.filter((v) => !topicMatches.includes(v))
       result = [...topicMatches, ...rest]
+    } else {
+      // No assessment - pin a random video from top 20 as the first slot
+      if (result.length > 1) {
+        const top20 = result.slice(0, Math.min(20, result.length))
+        const featured = top20[Math.floor(Math.random() * top20.length)]
+        const rest = result.filter((v) => v.id !== featured.id)
+        result = [featured, ...rest]
+      }
     }
 
     setFiltered(result)
