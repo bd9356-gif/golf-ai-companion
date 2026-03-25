@@ -295,11 +295,16 @@ export default function Home() {
                 <p className="text-lg font-bold text-gray-800">
                   {filtered.length === 0
                     ? 'No videos found'
-                    : `Showing ${Math.min(showCount, filtered.length)} of ${filtered.length} videos`}
-                  {skillFilter !== 'all' && (
+                    : assessmentTopics.length > 0 && matchedPool.length > 0
+                      ? `10 videos matched to your focus area`
+                      : `Showing ${Math.min(showCount, filtered.length)} of ${filtered.length} videos`}
+                  {skillFilter !== 'all' && !assessmentTopics.length && (
                     <span className="text-green-700"> · {TIER_LABELS[skillFilter]}</span>
                   )}
                 </p>
+                {assessmentTopics.length > 0 && matchedPool.length > 0 && (
+                  <p className="text-sm text-gray-500 mt-0.5">{matchedPool.length} total videos match your focus</p>
+                )}
               </div>
             )}
 
