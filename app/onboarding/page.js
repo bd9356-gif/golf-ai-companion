@@ -1,194 +1,171 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-const SKILL_KEYWORDS = {
-  beginner: ['beginner', 'new to golf', 'just started', 'never played', 'getting started', 'novice'],
-  intermediate: ['intermediate', 'building consistency', 'some experience', 'played a few years'],
-  advanced: ['advanced', 'low handicap', 'scratch', 'tournament', 'sharpening'],
+const QUESTIONS = [
+  {
+    id: 'experience',
+    question: 'How long have you been playing golf?',
+    options: [
+      { label: 'Brand new — never played', value: 'new' },
+      { label: 'Less than 2 years', value: 'casual' },
+      { label: '2–5 years', value: 'some' },
+      { label: '5+ years', value: 'experienced' },
+    ],
+  },
+  {
+    id: 'score',
+    question: 'What do you typically score for 18 holes?',
+    options: [
+      { label: "I'm still learning the basics", value: 'learning' },
+      { label: 'Over 100', value: 'over100' },
+      { label: '85–100', value: '85to100' },
+      { label: 'Under 85', value: 'under85' },
+    ],
+  },
+  {
+    id: 'problem',
+    question: "What's your biggest challenge right now?",
+    options: [
+      { label: 'Driver & tee shots', value: 'driver' },
+      { label: 'Iron play & ball striking', value: 'irons' },
+      { label: 'Short game (chipping & pitching)', value: 'shortgame' },
+      { label: 'Putting', value: 'putting' },
+    ],
+  },
+  {
+    id: 'goal',
+    question: 'What do you most want to improve?',
+    options: [
+      { label: 'Consistency — fewer bad shots', value: 'consistency' },
+      { label: 'Distance — hit it farther', value: 'distance' },
+      { label: 'Course management & strategy', value: 'strategy' },
+      { label: 'Lower my handicap', value: 'handicap' },
+    ],
+  },
+]
+
+function deriveSkillLevel(answers) {
+  const { experience, score } = answers
+  if (experience === 'new' || score === 'learning') return 'beginner'
+  if (score === 'over100' || experience === 'casual') return 'beginner'
+  if (score === '85to100' || experience === 'some') return 'intermediate'
+  if (score === 'under85' || experience === 'experienced') return 'advanced'
+  return 'beginner'
 }
 
-function detectSkillLevel(text) {
-  const lower = text.toLowerCase()
-  for (const [level, keywords] of Object.entries(SKILL_KEYWORDS)) {
-    if (keywords.some((kw) => lower.includes(kw))) return level
+function deriveTopics(answers) {
+  const topics = []
+  const problemMap = {
+    driver: 'driver',
+    irons: 'iron',
+    shortgame: 'chipping',
+    putting: 'putting',
   }
-  return null
+  const goalMap = {
+    consistency: 'consistency',
+    distance: 'distance',
+    strategy: 'course management',
+    handicap: 'scoring',
+  }
+  if (answers.problem) topics.push(problemMap[answers.problem])
+  if (answers.goal) topics.push(goalMap[answers.goal])
+  return topics.filter(Boolean)
 }
 
 export default function OnboardingPage() {
-  const [messages, setMessages] = useState([])
-  const [input, setInput] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [complete, setComplete] = useState(false)
+  const [step, setStep] = useState(0)
+  const [answers, setAnswers] = useState({})
+  const [selected, setSelected] = useState(null)
   const router = useRouter()
-  const bottomRef = useRef(null)
 
-  useEffect(() => {
-    startConversation()
-  }, [])
+  const current = QUESTIONS[step]
+  const isLast = step === QUESTIONS.length - 1
+  const progress = ((step) / QUESTIONS.length) * 100
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  function handleSelect(value) {
+    setSelected(value)
+  }
 
-  async function startConversation() {
-    setLoading(true)
-    try {
-      const res = await fetch('/api/onboarding', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: [] }),
-      })
-      const data = await res.json()
-      setMessages([{ role: 'assistant', content: data.reply }])
-    } catch {
-      setMessages([
-        {
-          role: 'assistant',
-          content:
-            "Hi! I'm your Golf AI Companion. Let's find the right content for your game. Have you ever played a full 18-hole round of golf?",
-        },
-      ])
-    } finally {
-      setLoading(false)
+  function handleNext() {
+    if (!selected) return
+    const newAnswers = { ...answers, [current.id]: selected }
+    setAnswers(newAnswers)
+    setSelected(null)
+
+    if (isLast) {
+      const skillLevel = deriveSkillLevel(newAnswers)
+      const topics = deriveTopics(newAnswers)
+      localStorage.setItem('golf_skill_level', skillLevel)
+      localStorage.setItem('golf_topics', JSON.stringify(topics))
+      localStorage.setItem('golf_answers', JSON.stringify(newAnswers))
+      router.push('/')
+    } else {
+      setStep(step + 1)
     }
-  }
-
-  function saveSkillLevel(level) {
-    localStorage.setItem('golf_skill_level', level)
-  }
-
-  async function sendMessage() {
-    if (!input.trim() || loading) return
-    const userMsg = { role: 'user', content: input.trim() }
-    const newMessages = [...messages, userMsg]
-    setMessages(newMessages)
-    setInput('')
-    setLoading(true)
-
-    try {
-      const res = await fetch('/api/onboarding', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: newMessages }),
-      })
-      const data = await res.json()
-      const reply = data.reply
-
-      setMessages([...newMessages, { role: 'assistant', content: reply }])
-
-      if (data.skillLevel) {
-        saveSkillLevel(data.skillLevel)
-        setComplete(true)
-      } else {
-        const detected = detectSkillLevel(reply)
-        if (
-          detected &&
-          (reply.toLowerCase().includes('recommend') ||
-            reply.toLowerCase().includes('match') ||
-            reply.toLowerCase().includes('video'))
-        ) {
-          saveSkillLevel(detected)
-          setComplete(true)
-        }
-      }
-    } catch {
-      setMessages([
-        ...newMessages,
-        { role: 'assistant', content: "Sorry, something went wrong. Let's try again." },
-      ])
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  function handleKeyDown(e) {
-    if (e.key === 'Enter') sendMessage()
   }
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
+      {/* Header */}
       <header className="border-b border-gray-100 px-4 py-4">
         <div className="max-w-2xl mx-auto">
-          <h1 className="text-lg font-semibold text-gray-900">⛳ MyGolf Companion</h1>
-          <p className="text-xs text-gray-500">Let's find the right content for your game</p>
+          <h1 className="text-xl font-semibold text-gray-900">⛳ MyGolf Companion</h1>
         </div>
       </header>
 
-      <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-6 flex flex-col">
-        <div className="flex-1 space-y-4 overflow-y-auto pb-4">
-          {messages.map((msg, i) => (
-            <div
-              key={i}
-              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              {msg.role === 'assistant' && (
-                <span className="mr-2 mt-1 shrink-0">⛳</span>
-              )}
-              <div
-                className={`max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${
-                  msg.role === 'user'
-                    ? 'bg-green-700 text-white rounded-br-sm'
-                    : 'bg-gray-100 text-gray-800 rounded-bl-sm'
-                }`}
-              >
-                {msg.content}
-              </div>
-            </div>
-          ))}
-
-          {loading && (
-            <div className="flex justify-start">
-              <span className="mr-2 mt-1">⛳</span>
-              <div className="bg-gray-100 px-4 py-3 rounded-2xl rounded-bl-sm">
-                <div className="flex gap-1 items-center h-4">
-                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:0ms]" />
-                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:150ms]" />
-                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:300ms]" />
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div ref={bottomRef} />
-        </div>
-
-        {complete ? (
-          <div className="text-center pt-6 border-t border-gray-100">
-            <p className="text-sm text-gray-600 mb-4">
-              Your skill level has been saved. Ready to see your personalized videos?
+      <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-10 flex flex-col">
+        {/* Intro */}
+        {step === 0 && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-semibold text-gray-900 mb-2">Get My Video Plan</h2>
+            <p className="text-gray-500">
+              Answer a few quick questions and I'll recommend the best videos for your game.
             </p>
-            <button
-              onClick={() => router.push('/')}
-              className="px-6 py-3 bg-green-700 text-white rounded-xl font-medium hover:bg-green-800 transition-colors"
-            >
-              View My Videos →
-            </button>
-          </div>
-        ) : (
-          <div className="border-t border-gray-100 pt-4 flex gap-2">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Type your answer…"
-              disabled={loading}
-              className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-300"
-            />
-            <button
-              onClick={sendMessage}
-              disabled={!input.trim() || loading}
-              className="h-11 w-11 shrink-0 bg-green-700 text-white rounded-xl flex items-center justify-center hover:bg-green-800 disabled:opacity-40 transition-colors"
-            >
-              <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
           </div>
         )}
+
+        {/* Progress bar */}
+        <div className="w-full bg-gray-100 rounded-full h-1.5 mb-8">
+          <div
+            className="bg-green-600 h-1.5 rounded-full transition-all duration-300"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+
+        {/* Question */}
+        <div className="flex-1">
+          <p className="text-sm text-gray-400 mb-2">Question {step + 1} of {QUESTIONS.length}</p>
+          <h3 className="text-xl font-semibold text-gray-900 mb-6">{current.question}</h3>
+
+          <div className="space-y-3">
+            {current.options.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => handleSelect(opt.value)}
+                className={`w-full text-left px-5 py-4 rounded-xl border-2 transition-all text-base font-medium ${
+                  selected === opt.value
+                    ? 'border-green-600 bg-green-50 text-green-800'
+                    : 'border-gray-200 text-gray-700 hover:border-green-300 hover:bg-green-50'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Next button */}
+        <div className="mt-8">
+          <button
+            onClick={handleNext}
+            disabled={!selected}
+            className="w-full py-4 bg-green-700 text-white rounded-xl text-base font-semibold hover:bg-green-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            {isLast ? 'Get My Video Plan →' : 'Next →'}
+          </button>
+        </div>
       </main>
     </div>
   )

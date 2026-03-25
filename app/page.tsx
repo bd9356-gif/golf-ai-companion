@@ -42,41 +42,30 @@ export default function Home() {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
   const [playingId, setPlayingId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<Tab>('videos')
+  const [assessmentTopics, setAssessmentTopics] = useState<string[]>([])
 
-  // Auto-filter from assessment saved in localStorage
+  // Load assessment results from localStorage
   useEffect(() => {
     const stored = localStorage.getItem('golf_skill_level')
-    if (stored && TIER_VALUES.includes(stored)) {
-      setSkillFilter(stored)
+    if (stored && TIER_VALUES.includes(stored)) setSkillFilter(stored)
+    const topics = localStorage.getItem('golf_topics')
+    if (topics) {
+      try { setAssessmentTopics(JSON.parse(topics)) } catch {}
     }
   }, [])
 
-  useEffect(() => {
-    fetchVideos()
-  }, [])
-
-  useEffect(() => {
-    applyFilters()
-  }, [videos, skillFilter, search])
+  useEffect(() => { fetchVideos() }, [])
+  useEffect(() => { applyFilters() }, [videos, skillFilter, search, assessmentTopics])
 
   async function fetchVideos() {
     setLoading(true)
     const { data, error } = await supabase
       .from('videos')
       .select(`
-        id,
-        title,
-        url,
-        thumbnail_url,
-        youtube_video_id,
-        channel_name,
-        description,
-        published_at,
+        id, title, url, thumbnail_url, youtube_video_id,
+        channel_name, description, published_at,
         video_metadata!video_metadata_video_id_fkey (
-          skill_tiers,
-          topics,
-          ai_summary,
-          quality_score
+          skill_tiers, topics, ai_summary, quality_score
         )
       `)
       .order('published_at', { ascending: false })
@@ -85,18 +74,15 @@ export default function Home() {
       console.error('Supabase error:', error)
     } else if (data) {
       const sorted = [...data].sort((a, b) => {
-        const aMeta = getMeta(a as VideoRow)
-        const bMeta = getMeta(b as VideoRow)
-        const aScore = aMeta?.quality_score ?? 0
-        const bScore = bMeta?.quality_score ?? 0
-        return bScore - aScore
+        const aMeta = Array.isArray(a.video_metadata) ? a.video_metadata[0] : a.video_metadata
+        const bMeta = Array.isArray(b.video_metadata) ? b.video_metadata[0] : b.video_metadata
+        return (bMeta?.quality_score ?? 0) - (aMeta?.quality_score ?? 0)
       })
-      setVideos(sorted as VideoRow[])
+      setVideos(sorted as unknown as VideoRow[])
     }
     setLoading(false)
   }
 
-  // Supabase returns video_metadata as array or object depending on FK direction
   function getMeta(video: VideoRow) {
     const m = video.video_metadata
     if (!m) return null
@@ -106,15 +92,28 @@ export default function Home() {
   function applyFilters() {
     let result = [...videos]
 
+    // Skill tier filter
     if (skillFilter !== 'all') {
       result = result.filter((v) => {
-        const meta = getMeta(v)
-        const tiers = meta?.skill_tiers
-        if (!tiers || tiers.length === 0) return false
-        return tiers.includes(skillFilter)
+        const tiers = getMeta(v)?.skill_tiers
+        return tiers?.includes(skillFilter) ?? false
       })
     }
 
+    // If assessment gave us topics, boost/filter by those first
+    if (assessmentTopics.length > 0 && skillFilter !== 'all' && !search.trim()) {
+      const topicMatches = result.filter((v) => {
+        const topics: string[] = getMeta(v)?.topics ?? []
+        return assessmentTopics.some((at) =>
+          topics.some((t) => t.toLowerCase().includes(at.toLowerCase()))
+        )
+      })
+      // Put topic matches first, then the rest
+      const rest = result.filter((v) => !topicMatches.includes(v))
+      result = [...topicMatches, ...rest]
+    }
+
+    // Search filter
     if (search.trim()) {
       const q = search.toLowerCase()
       result = result.filter((v) => {
@@ -143,9 +142,7 @@ export default function Home() {
 
   function getYouTubeId(video: VideoRow): string | null {
     if (video.youtube_video_id) return video.youtube_video_id
-    const match = video.url?.match(
-      /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
-    )
+    const match = video.url?.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
     return match ? match[1] : null
   }
 
@@ -159,16 +156,16 @@ export default function Home() {
       <header className="border-b border-gray-100 bg-white sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-xl font-semibold text-gray-900 leading-tight">
+            <h1 className="text-2xl font-bold text-gray-900 leading-tight">
               ⛳ MyGolf Companion
             </h1>
-            <p className="text-xs text-gray-500 mt-0.5">Your AI guide to better golf</p>
+            <p className="text-sm text-gray-500 mt-0.5">Your AI guide to better golf</p>
           </div>
           <a
             href="/onboarding"
-            className="text-sm text-green-700 border border-green-200 rounded-lg px-3 py-1.5 hover:bg-green-50 transition-colors whitespace-nowrap"
+            className="text-sm font-medium text-white bg-green-700 rounded-xl px-4 py-2.5 hover:bg-green-800 transition-colors whitespace-nowrap"
           >
-            Retake Assessment
+            Get My Video Plan
           </a>
         </div>
 
@@ -176,7 +173,7 @@ export default function Home() {
         <div className="max-w-4xl mx-auto px-4 flex gap-1">
           <button
             onClick={() => setActiveTab('videos')}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+            className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${
               activeTab === 'videos'
                 ? 'text-green-800 border-green-700'
                 : 'text-gray-500 border-transparent hover:text-gray-700'
@@ -186,7 +183,7 @@ export default function Home() {
           </button>
           <button
             onClick={() => setActiveTab('ask')}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+            className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${
               activeTab === 'ask'
                 ? 'text-green-800 border-green-700'
                 : 'text-gray-500 border-transparent hover:text-gray-700'
@@ -198,18 +195,36 @@ export default function Home() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-6">
-
         {activeTab === 'ask' ? (
           <AskCompanionTab skillLevel={skillFilter} onBack={() => setActiveTab('videos')} />
         ) : (
           <>
+            {/* Assessment topic banner */}
+            {assessmentTopics.length > 0 && skillFilter !== 'all' && (
+              <div className="mb-4 px-4 py-3 bg-green-50 border border-green-100 rounded-xl text-sm text-green-800 flex items-center justify-between">
+                <span>
+                  🎯 Showing videos matched to your game ·{' '}
+                  <span className="font-medium">{assessmentTopics.join(', ')}</span>
+                </span>
+                <button
+                  onClick={() => {
+                    setAssessmentTopics([])
+                    localStorage.removeItem('golf_topics')
+                  }}
+                  className="text-xs text-green-600 hover:text-green-800 ml-3 whitespace-nowrap"
+                >
+                  Clear
+                </button>
+              </div>
+            )}
+
             {/* Skill tier filter pills */}
-            <div className="flex flex-wrap gap-2 mb-4">
+            <div className="flex flex-wrap gap-2 mb-5">
               {TIER_VALUES.map((tier) => (
                 <button
                   key={tier}
                   onClick={() => setSkillFilter(tier)}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                  className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
                     skillFilter === tier
                       ? 'bg-green-700 text-white'
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -227,7 +242,7 @@ export default function Home() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search by problem or topic…"
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-green-300"
+                className="w-full border border-gray-200 rounded-xl px-4 py-3.5 pr-10 text-base focus:outline-none focus:ring-2 focus:ring-green-300"
               />
               {search && (
                 <button
@@ -241,13 +256,13 @@ export default function Home() {
 
             {/* Result count */}
             {!loading && (
-              <p className="text-sm text-gray-500 mb-4">
+              <p className="text-base text-gray-500 mb-4">
                 {filtered.length === 0
                   ? 'No videos found'
                   : `Showing ${Math.min(showCount, filtered.length)} of ${filtered.length} video${filtered.length !== 1 ? 's' : ''}`}
                 {skillFilter !== 'all' && (
                   <span className="ml-1">
-                    · <span className="text-green-700">{TIER_LABELS[skillFilter]}</span>
+                    · <span className="text-green-700 font-medium">{TIER_LABELS[skillFilter]}</span>
                   </span>
                 )}
               </p>
@@ -257,11 +272,11 @@ export default function Home() {
             {loading ? (
               <div className="space-y-3">
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="h-24 bg-gray-100 rounded-xl animate-pulse" />
+                  <div key={i} className="h-28 bg-gray-100 rounded-xl animate-pulse" />
                 ))}
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {visibleVideos.map((video) => {
                   const ytId = getYouTubeId(video)
                   const isPlaying = playingId === video.id
@@ -287,14 +302,14 @@ export default function Home() {
                           />
                           <button
                             onClick={() => setPlayingId(null)}
-                            className="absolute top-2 right-2 bg-black/60 text-white rounded-full w-7 h-7 flex items-center justify-center text-xs hover:bg-black/80"
+                            className="absolute top-2 right-2 bg-black/60 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm hover:bg-black/80"
                           >
                             ✕
                           </button>
                         </div>
                       )}
 
-                      {/* Thumbnail with play button */}
+                      {/* Thumbnail */}
                       {!isPlaying && ytId && (
                         <button
                           onClick={() => setPlayingId(video.id)}
@@ -304,11 +319,11 @@ export default function Home() {
                           <img
                             src={video.thumbnail_url || `https://img.youtube.com/vi/${ytId}/mqdefault.jpg`}
                             alt={video.title}
-                            className="w-full object-cover h-44 sm:h-52"
+                            className="w-full object-cover h-48 sm:h-56"
                           />
                           <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                            <div className="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-                              <svg viewBox="0 0 24 24" className="w-5 h-5 text-green-800 ml-0.5" fill="currentColor">
+                            <div className="w-14 h-14 bg-white/90 rounded-full flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+                              <svg viewBox="0 0 24 24" className="w-6 h-6 text-green-800 ml-0.5" fill="currentColor">
                                 <path d="M8 5v14l11-7z" />
                               </svg>
                             </div>
@@ -320,33 +335,33 @@ export default function Home() {
                       <div className="p-4">
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-medium text-gray-900 text-sm leading-snug">
+                            <h3 className="font-semibold text-gray-900 text-base leading-snug">
                               {video.title}
                             </h3>
-                            <div className="flex flex-wrap gap-1 mt-1">
+                            <div className="flex flex-wrap gap-1.5 mt-2">
                               {skillTiers.length > 0 ? skillTiers.map((tier) => (
-                                <span key={tier} className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">
+                                <span key={tier} className="text-xs bg-green-50 text-green-700 px-2.5 py-1 rounded-full font-medium">
                                   {TIER_LABELS[tier] ?? tier}
                                 </span>
                               )) : (
-                                <span className="text-xs bg-gray-50 text-gray-400 px-2 py-0.5 rounded-full">
+                                <span className="text-xs bg-gray-50 text-gray-400 px-2.5 py-1 rounded-full">
                                   All levels
                                 </span>
                               )}
                               {video.channel_name && (
-                                <span className="text-xs bg-gray-50 text-gray-500 px-2 py-0.5 rounded-full">
+                                <span className="text-xs bg-gray-50 text-gray-500 px-2.5 py-1 rounded-full">
                                   {video.channel_name}
                                 </span>
                               )}
                             </div>
                           </div>
-                          <div className="flex items-center gap-2 shrink-0">
+                          <div className="flex items-center gap-3 shrink-0">
                             {!isPlaying && (
                               <a
                                 href={video.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-xs text-gray-400 hover:text-gray-600"
+                                className="text-sm text-gray-400 hover:text-gray-600"
                                 title="Open on YouTube"
                               >
                                 ↗
@@ -354,7 +369,7 @@ export default function Home() {
                             )}
                             <button
                               onClick={() => toggleExpanded(video.id)}
-                              className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                              className="text-sm text-gray-400 hover:text-gray-600 transition-colors"
                               aria-label={isExpanded ? 'Hide description' : 'Show description'}
                             >
                               {isExpanded ? '▲' : '▼'}
@@ -364,19 +379,19 @@ export default function Home() {
 
                         {/* Expandable section */}
                         {isExpanded && (
-                          <div className="mt-3 border-t border-gray-100 pt-3 space-y-2">
+                          <div className="mt-3 border-t border-gray-100 pt-3 space-y-3">
                             {(summary || video.description) && (
-                              <p className="text-sm text-gray-600 leading-relaxed">
+                              <p className="text-base text-gray-600 leading-relaxed">
                                 {summary || video.description}
                               </p>
                             )}
                             {topics.length > 0 && (
-                              <div className="flex flex-wrap gap-1.5">
+                              <div className="flex flex-wrap gap-2">
                                 {topics.map((topic) => (
                                   <button
                                     key={topic}
                                     onClick={() => setSearch(topic)}
-                                    className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full hover:bg-gray-200 transition-colors"
+                                    className="text-sm bg-gray-100 text-gray-500 px-3 py-1 rounded-full hover:bg-gray-200 transition-colors"
                                   >
                                     {topic}
                                   </button>
@@ -397,7 +412,7 @@ export default function Home() {
               <div className="mt-6 text-center">
                 <button
                   onClick={() => setShowCount((c) => c + 10)}
-                  className="px-6 py-2.5 bg-green-700 text-white rounded-xl text-sm font-medium hover:bg-green-800 transition-colors"
+                  className="px-8 py-3 bg-green-700 text-white rounded-xl text-base font-semibold hover:bg-green-800 transition-colors"
                 >
                   Show More ({filtered.length - showCount} remaining)
                 </button>
@@ -408,11 +423,11 @@ export default function Home() {
             {!loading && filtered.length === 0 && (
               <div className="text-center py-16">
                 <p className="text-4xl mb-3">⛳</p>
-                <p className="text-gray-600 font-medium">No videos found</p>
-                <p className="text-sm text-gray-400 mt-1">Try a different search or skill level</p>
+                <p className="text-gray-600 font-semibold text-lg">No videos found</p>
+                <p className="text-base text-gray-400 mt-1">Try a different search or skill level</p>
                 <button
                   onClick={() => { setSearch(''); setSkillFilter('all') }}
-                  className="mt-4 text-sm text-green-700 hover:underline"
+                  className="mt-4 text-base text-green-700 hover:underline"
                 >
                   Clear filters
                 </button>
