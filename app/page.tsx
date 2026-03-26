@@ -209,13 +209,9 @@ export default function Home() {
             </button>
             <button
               onClick={() => setActiveTab('ask')}
-              className={`px-4 py-2 text-sm font-semibold border-b-2 transition-colors ${
-                activeTab === 'ask'
-                  ? 'text-green-800 border-green-700'
-                  : 'text-gray-500 border-transparent hover:text-gray-700'
-              }`}
+              className="px-4 py-2 text-sm font-semibold text-white bg-green-700 rounded-xl hover:bg-green-800 transition-colors"
             >
-              Ask Your Golf AI Companion
+              Ask MyGolf AI
             </button>
             <div className="ml-auto">
               <a
