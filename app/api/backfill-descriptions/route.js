@@ -6,27 +6,38 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
-function cleanDescription(text) {
-  if (!text) return ''
+function cleanDescription(text, title) {
+  if (!text) return title || ''
+
   const lines = text.split('\n')
   const cleanLines = []
+
   for (const line of lines) {
     const trimmed = line.trim()
     if (
+      !trimmed ||
       trimmed.startsWith('http') ||
-      trimmed.startsWith('https') ||
+      trimmed.startsWith('#') ||           // hashtag lines
+      /^[@＠]/.test(trimmed) ||            // @mentions
       /instagram|twitter|facebook|tiktok|spotify|podcast|subscribe|follow|patreon|merch|shop|buy|book|hire|email|contact|website|youtube\.com\/channel|bit\.ly|amzn\.to|linktr/i.test(trimmed) ||
-      /---+/.test(trimmed) ||
-      /[✅🔔📱💻🎧⛳️➡️👉]/u.test(trimmed) ||
-      trimmed.length === 0
+      /---+|\.\.\.\./.test(trimmed) ||     // dividers or dot separators
+      /[✅🔔📱💻🎧➡️👉🤜🤛]/u.test(trimmed) ||
+      /turn (on|off) notifications/i.test(trimmed) ||
+      /credit:|📹|🎥/i.test(trimmed) ||
+      // Lines that are mostly hashtags
+      (trimmed.match(/#\w+/g) || []).length > 2
     ) continue
+
     cleanLines.push(trimmed)
   }
+
   const cleaned = cleanLines.join(' ').trim()
-  if (cleaned.length < 30) {
-    const firstSentence = text.split(/[.!?]/)[0]?.trim()
-    return firstSentence || text.substring(0, 200)
+
+  // If very little useful text remains, fall back to title
+  if (cleaned.length < 40) {
+    return title || cleaned || text.substring(0, 150)
   }
+
   return cleaned
 }
 
@@ -34,7 +45,7 @@ export async function GET() {
   try {
     const { data: videos, error } = await supabase
       .from('videos')
-      .select('id, youtube_video_id, description')
+      .select('id, title, youtube_video_id, description')
       .like('description', '%...')
       .limit(50)
 
@@ -55,17 +66,22 @@ export async function GET() {
 
     const descMap = {}
     for (const item of data.items) {
-      descMap[item.id] = cleanDescription(item.snippet.description)
+      descMap[item.id] = item.snippet.description
     }
 
     let totalUpdated = 0
     for (const video of videos) {
-      const fullDesc = descMap[video.youtube_video_id]
-      if (!fullDesc || fullDesc === video.description) continue
+      const rawDesc = descMap[video.youtube_video_id]
+      if (!rawDesc) continue
+
+      const cleaned = cleanDescription(rawDesc, video.title)
+      if (cleaned === video.description) continue
+
       const { error: updateError } = await supabase
         .from('videos')
-        .update({ description: fullDesc })
+        .update({ description: cleaned })
         .eq('id', video.id)
+
       if (!updateError) totalUpdated++
     }
 

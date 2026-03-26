@@ -420,38 +420,35 @@ export default function Home() {
                           {isExpanded ? 'Hide Details ▲' : 'See Details ▼'}
                         </button>
 
-                        {/* Expandable section */}
-                        {isExpanded && (
+                        {/* Expandable section — AI summary + topics for plan users only */}
+                        {isExpanded && assessmentTopics.length > 0 && (
                           <div className="mt-3 border-t border-gray-100 pt-3 space-y-3">
-                            {/* Show AI summary for plan users, basic description for everyone else */}
-                            {assessmentTopics.length > 0 ? (
-                              <>
-                                {summary && (
-                                  <p className="text-base text-gray-600 leading-relaxed">
-                                    {summary}
-                                  </p>
-                                )}
-                                {topics.length > 0 && (
-                                  <div className="flex flex-wrap gap-2">
-                                    {topics.map((topic) => (
-                                      <button
-                                        key={topic}
-                                        onClick={() => setSearch(topic)}
-                                        className="text-sm bg-gray-100 text-gray-500 px-3 py-1 rounded-full hover:bg-gray-200 transition-colors"
-                                      >
-                                        {topic}
-                                      </button>
-                                    ))}
-                                  </div>
-                                )}
-                              </>
-                            ) : (
-                              video.description && (
-                                <p className="text-base text-gray-600 leading-relaxed">
-                                  {video.description}
-                                </p>
-                              )
+                            {summary && (
+                              <p className="text-base text-gray-600 leading-relaxed">
+                                {summary}
+                              </p>
                             )}
+                            {topics.length > 0 && (
+                              <div className="flex flex-wrap gap-2">
+                                {topics.map((topic) => (
+                                  <button
+                                    key={topic}
+                                    onClick={() => setSearch(topic)}
+                                    className="text-sm bg-gray-100 text-gray-500 px-3 py-1 rounded-full hover:bg-gray-200 transition-colors"
+                                  >
+                                    {topic}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {/* Non-plan users: See Details shows nothing extra — title says it all */}
+                        {isExpanded && assessmentTopics.length === 0 && (
+                          <div className="mt-3 border-t border-gray-100 pt-3">
+                            <p className="text-sm text-gray-400 italic">
+                              Get My Video Plan to unlock AI-powered insights for this video.
+                            </p>
                           </div>
                         )}
                       </div>
