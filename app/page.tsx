@@ -207,13 +207,13 @@ export default function Home() {
             >
               Video Library
             </button>
-            <button
-              onClick={() => setActiveTab('ask')}
-              className="px-4 py-2 text-sm font-semibold text-white bg-green-700 rounded-xl hover:bg-green-800 transition-colors"
-            >
-              Ask MyGolf AI
-            </button>
-            <div className="ml-auto">
+            <div className="ml-auto flex items-center gap-2">
+              <button
+                onClick={() => setActiveTab('ask')}
+                className="px-4 py-2 text-sm font-semibold text-white bg-green-700 rounded-xl hover:bg-green-800 transition-colors whitespace-nowrap"
+              >
+                Ask MyGolf AI
+              </button>
               <a
                 href="/onboarding"
                 className="text-sm font-semibold text-white bg-green-700 rounded-xl px-4 py-2 hover:bg-green-800 transition-colors whitespace-nowrap"
