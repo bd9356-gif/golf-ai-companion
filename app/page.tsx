@@ -447,7 +447,7 @@ export default function Home() {
                         {isExpanded && assessmentTopics.length === 0 && (
                           <div className="mt-3 border-t border-gray-100 pt-3">
                             <p className="text-sm text-gray-400 italic">
-                              Get My Video Plan to unlock AI-powered insights for this video.
+                              Get My Video Plan to unlock AI-powered insights for your plan videos.
                             </p>
                           </div>
                         )}
