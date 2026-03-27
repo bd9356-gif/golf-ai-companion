@@ -132,14 +132,14 @@ export async function GET() {
 
     const { error: insertError } = await supabase
       .from('video_metadata')
-      .insert({
+      .upsert({
         video_id: unscoredVideo.id,
         skill_tiers: result.skill_tiers,
         topics: result.topics,
         ai_summary: result.ai_summary,
         quality_score: result.quality_score,
         status: 'approved'
-      })
+      }, { onConflict: 'video_id' })
 
     if (insertError) {
       return NextResponse.json({ success: false, error: insertError.message, remaining })
