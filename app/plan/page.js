@@ -172,12 +172,7 @@ export default function PlanPage() {
                   <h2 className="text-2xl font-bold text-green-900">{TIER_LABELS[skillLevel]}</h2>
                   <p className="text-green-700 mt-0.5">{TIER_SUBLABELS[skillLevel]}</p>
                 </div>
-                <a
-                  href="/"
-                  className="text-sm text-green-600 hover:text-green-800 whitespace-nowrap mt-1"
-                >
-                  Browse all →
-                </a>
+
               </div>
               {!loading && (
                 <p className="text-sm text-green-700 mt-3 font-medium">
