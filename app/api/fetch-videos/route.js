@@ -68,7 +68,33 @@ const SEARCH_QUERIES = [
   // === ADVANCED — Short Game ===
   'spin wedge technique tour',
   'low launch high spin wedge drill',
-  'tight lie lob shot technique'
+  'tight lie lob shot technique',
+  // === SENIOR — Swing & Mobility ===
+  'golf swing tips for seniors',
+  'senior golf swing made easy',
+  'golf swing for older players',
+  'senior golf driver tips',
+  'golf swing with limited flexibility seniors',
+  'effortless golf swing for seniors',
+  'senior golf swing turn drill',
+  'golf swing for bad back seniors',
+  'slow swing speed golf tips',
+  // === SENIOR — Short Game & Scoring ===
+  'senior golf short game tips',
+  'senior golf putting tips',
+  'senior golf chipping tips',
+  'golf course management for seniors',
+  // === SENIOR — Fitness & Mobility ===
+  'golf flexibility exercises for seniors',
+  'senior golfer hip rotation exercise',
+  'golf fitness over 60',
+  'golf warmup routine for seniors',
+  'golf stretches for older players',
+  // === SENIOR — General ===
+  'golf tips for players over 60',
+  'golf for players over 70',
+  'senior golf lessons',
+  'golf tips for arthritic hands',
 ]
 
 // Fetch full descriptions for a batch of video IDs
@@ -98,10 +124,7 @@ export async function GET() {
       const data = await response.json()
       if (!data.items) continue
 
-      // Collect all video IDs from this search batch
       const videoIds = data.items.map(item => item.id.videoId)
-
-      // Fetch full descriptions in one call
       const fullDescriptions = await getFullDescriptions(videoIds)
 
       for (const item of data.items) {
@@ -112,7 +135,6 @@ export async function GET() {
           thumbnail_url: item.snippet.thumbnails.high.url,
           youtube_video_id: videoId,
           channel_name: item.snippet.channelTitle,
-          // Use full description from videos endpoint, fall back to snippet
           description: fullDescriptions[videoId] || item.snippet.description,
           published_at: item.snippet.publishedAt,
         }
