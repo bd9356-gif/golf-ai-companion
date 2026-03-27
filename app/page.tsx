@@ -260,27 +260,7 @@ export default function Home() {
               </div>
             )}
 
-            {/* Skill tier filter pills */}
-            <div className="flex flex-wrap gap-2 mb-5">
-              {TIER_VALUES.map((tier) => (
-                <button
-                  key={tier}
-                  onClick={() => setSkillFilter(tier)}
-                  className={`px-3 py-2 rounded-full text-sm font-semibold transition-colors ${
-                    skillFilter === tier
-                      ? 'bg-green-700 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  {TIER_LABELS[tier]}
-                  {TIER_SUBLABELS[tier] && (
-                    <span className={`ml-1 text-xs font-normal ${skillFilter === tier ? 'text-green-100' : 'text-gray-400'}`}>
-                      · {TIER_SUBLABELS[tier]}
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
+
 
             {/* Search */}
             <div className="relative mb-5">
