@@ -46,7 +46,7 @@ export default function OnboardingPage() {
     localStorage.setItem('golf_skill_level', tier.value)
     localStorage.setItem('golf_topics', JSON.stringify(tier.topics))
     localStorage.setItem('golf_answers', JSON.stringify({ level: tier.value }))
-    router.push('/')
+    router.push('/plan')
   }
 
   return (
