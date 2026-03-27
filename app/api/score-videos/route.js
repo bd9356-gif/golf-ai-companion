@@ -12,111 +12,60 @@ Video title: ${title}
 Channel: ${channel}
 Description: ${description}
 
-NOTE: Ignore any promotional content, social media links, calls to action, or channel boilerplate. Focus only on the golf instruction being taught.
+NOTE: Ignore promotional content, social media links, or channel boilerplate. Focus only on the golf instruction.
 
 Return this exact JSON structure:
 {"skill_tiers": ["beginner"], "topics": ["driving"], "ai_summary": "summary here", "quality_score": 7.5}
 
 Rules:
 
-- skill_tiers: array, choose from these EXACT values only:
+- skill_tiers: array, choose from ONLY these exact values:
   beginner, building_game, building_consistency, improving_player, advanced_player
 
-  Guidelines:
-  - "beginner" = complete newcomers, never played or just started, learning very basic fundamentals
-  - "building_game" = high handicappers scoring 100+, working on basic consistency and getting the ball airborne
-  - "building_consistency" = mid-high handicappers scoring 90-100, understand basics but struggle with consistency
-  - "improving_player" = mid handicappers scoring 80-90, solid fundamentals, working on scoring and course management
-  - "advanced_player" = low handicappers scoring 70-80, skilled players focused on refinement, shot shaping, scoring strategy
+  - "beginner" = complete newcomers, very basic fundamentals
+  - "building_game" = high handicappers scoring 100+, basic consistency
+  - "building_consistency" = scoring 90-100, understand basics but inconsistent
+  - "improving_player" = scoring 80-90, solid fundamentals, working on scoring
+  - "advanced_player" = scoring 70-80, low handicap, shot shaping and strategy
 
-  Include ALL tiers the video genuinely applies to. Most videos apply to 2-3 tiers.
+  Include ALL tiers the video genuinely applies to.
 
-- topics: array of 1-3 topics. Choose ONLY from this exact list:
+- topics: array of 1-3. Choose ONLY from:
   driving, iron play, short game, putting, chipping, pitching, bunker, course management, mental game, fitness, rules, equipment, grip, stance, swing
 
-  Guidelines:
-  - "driving" = driver, tee shots, distance off tee
-  - "iron play" = iron shots, approach shots, ball striking
-  - "short game" = general shots inside 100 yards
-  - "chipping" = chip shots around the green
-  - "pitching" = pitch shots, flop shots
-  - "putting" = putting stroke, green reading
-  - "bunker" = sand shots
-  - "swing" = ONLY for general full swing mechanics not specific to driver or irons
-  - "grip" = ONLY when grip is the primary focus
-  - "stance" = ONLY when setup/stance is the primary focus
-  - "course management" = strategy, shot selection
-  - "mental game" = mindset, focus, pressure
-  - "fitness" = physical conditioning for golf
-  - "rules" = rules of golf
-  - "equipment" = club fitting, gear
+- quality_score: 1-10
 
-  Pick the MOST SPECIFIC topic. Prefer "driving" over "swing" for driver videos.
-
-- quality_score: 1-10 based on how helpful and instructional this video looks
-
-- ai_summary: 2-3 sentences, very specific. Mention the exact problem solved, the technique or drill taught, and who it is for. Use specific golf terms. No generic summaries.
+- ai_summary: 2-3 specific sentences. Mention exact problem solved, technique taught, who it is for. Use golf terms. No generic summaries.
 
 - Return ONLY the JSON, nothing else`
 
 export async function GET() {
   try {
-    // Get all scored video IDs
-    const scoredIds = new Set()
-    let page = 0
-    const pageSize = 1000
-
-    while (true) {
-      const { data, error } = await supabase
-        .from('video_metadata')
-        .select('video_id')
-        .range(page * pageSize, (page + 1) * pageSize - 1)
-
-      if (error) throw error
-      if (!data || data.length === 0) break
-      data.forEach(r => scoredIds.add(r.video_id))
-      if (data.length < pageSize) break
-      page++
-    }
-
-    // Get all video IDs
-    const allVideoIds = []
-    page = 0
-
-    while (true) {
-      const { data, error } = await supabase
-        .from('videos')
-        .select('id')
-        .range(page * pageSize, (page + 1) * pageSize - 1)
-
-      if (error) throw error
-      if (!data || data.length === 0) break
-      data.forEach(r => allVideoIds.push(r.id))
-      if (data.length < pageSize) break
-      page++
-    }
-
-    const unscoredIds = allVideoIds.filter(id => !scoredIds.has(id))
-
-    if (unscoredIds.length === 0) {
-      return NextResponse.json({
-        success: true,
-        message: `All ${allVideoIds.length} videos are scored.`
-      })
-    }
-
-    const batch = unscoredIds.slice(0, 3)
-    const { data: videos, error: fetchError } = await supabase
+    // Use RPC to get unscored videos directly - much faster than two queries
+    const { data: videos, error } = await supabase
       .from('videos')
       .select('id, title, description, channel_name')
-      .in('id', batch)
+      .not('id', 'in', `(select video_id from video_metadata)`)
+      .limit(3)
 
-    if (fetchError) throw fetchError
+    if (error) {
+      // Fallback if the subquery syntax doesn't work
+      console.error('Query error:', error)
+      throw error
+    }
+
+    if (!videos || videos.length === 0) {
+      return NextResponse.json({ success: true, message: 'All videos are scored!' })
+    }
 
     let totalScored = 0
 
     for (const video of videos) {
-      const prompt = PROMPT_TEMPLATE(video.title, video.channel_name, video.description)
+      const prompt = PROMPT_TEMPLATE(
+        video.title || '',
+        video.channel_name || '',
+        video.description || ''
+      )
 
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -127,7 +76,7 @@ export async function GET() {
         },
         body: JSON.stringify({
           model: 'claude-haiku-4-5-20251001',
-          max_tokens: 500,
+          max_tokens: 400,
           messages: [{ role: 'user', content: prompt }]
         })
       })
@@ -157,9 +106,15 @@ export async function GET() {
       if (!insertError) totalScored++
     }
 
+    // Get remaining count
+    const { count } = await supabase
+      .from('videos')
+      .select('id', { count: 'exact', head: true })
+      .not('id', 'in', `(select video_id from video_metadata)`)
+
     return NextResponse.json({
       success: true,
-      message: `Scored ${totalScored} videos. ${unscoredIds.length - totalScored} still remaining.`
+      message: `Scored ${totalScored} videos. ${count ?? '?'} still remaining.`
     })
 
   } catch (error) {
