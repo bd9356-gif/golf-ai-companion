@@ -34,6 +34,12 @@ const TIERS = [
     sublabel: 'Scoring 70–80, low-handicap and scoring well',
     topics: ['driving', 'iron play', 'short game', 'bunker', 'course management'],
   },
+  {
+    value: 'senior_player',
+    label: 'Senior Player',
+    sublabel: 'Prioritizing mobility, rhythm, balance, and joint-friendly mechanics',
+    topics: ['swing', 'fitness', 'course management', 'mental game', 'putting'],
+  },
 ]
 
 export default function OnboardingPage() {

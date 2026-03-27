@@ -16,6 +16,7 @@ const TIER_LABELS: Record<string, string> = {
   building_consistency: 'Building Consistency',
   improving_player: 'Improving Player',
   advanced_player: 'Advanced Player',
+  senior_player: 'Senior Player',
 }
 
 const TIER_SUBLABELS: Record<string, string> = {
@@ -25,9 +26,10 @@ const TIER_SUBLABELS: Record<string, string> = {
   building_consistency: 'Scoring 90–100',
   improving_player: 'Scoring 80–90',
   advanced_player: 'Scoring 70–80',
+  senior_player: 'Mobility, rhythm & joint-friendly mechanics',
 }
 
-const TIER_VALUES = ['all', 'beginner', 'building_game', 'building_consistency', 'improving_player', 'advanced_player']
+const TIER_VALUES = ['all', 'beginner', 'building_game', 'building_consistency', 'improving_player', 'advanced_player', 'senior_player']
 
 // Maps skill tier to relevant topics for video filtering
 const TIER_TOPICS: Record<string, string[]> = {
@@ -36,6 +38,7 @@ const TIER_TOPICS: Record<string, string[]> = {
   building_consistency: ['iron play', 'driving', 'short game', 'putting', 'mental game'],
   improving_player:     ['iron play', 'short game', 'bunker', 'course management', 'mental game'],
   advanced_player:      ['driving', 'iron play', 'short game', 'bunker', 'course management'],
+  senior_player:        ['swing', 'fitness', 'course management', 'mental game', 'putting'],
 }
 
 type VideoRow = {
@@ -67,7 +70,14 @@ export default function Home() {
   const [planPage, setPlanPage] = useState(0)
 
   useEffect(() => {
-    // Do NOT auto-set skill filter — always default to All Levels on load
+    // Check URL for skill level set by onboarding
+    const params = new URLSearchParams(window.location.search)
+    const levelFromUrl = params.get('level')
+    if (levelFromUrl && TIER_VALUES.includes(levelFromUrl)) {
+      setSkillFilter(levelFromUrl)
+      // Clean the URL without reloading
+      window.history.replaceState({}, '', '/')
+    }
 
     // Load topics from assessment — stored directly by onboarding page
     const topicsRaw = localStorage.getItem('golf_topics')

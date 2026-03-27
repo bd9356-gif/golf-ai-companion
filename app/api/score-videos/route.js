@@ -27,6 +27,7 @@ Rules:
   - "building_consistency" = scoring 90-100, inconsistent fundamentals
   - "improving_player" = scoring 80-90, solid fundamentals, working on scoring
   - "advanced_player" = scoring 70-80, low handicap, shot shaping and strategy
+  - "senior_player" = older golfers focusing on mobility, flexibility, slower swing speed, joint-friendly mechanics, rhythm over power
 
   Include ALL tiers the video genuinely applies to.
 
