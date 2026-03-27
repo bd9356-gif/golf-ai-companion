@@ -24,7 +24,7 @@ Rules:
 
   - "beginner" = complete newcomers, very basic fundamentals
   - "building_game" = high handicappers scoring 100+, basic consistency
-  - "building_consistency" = scoring 90-100, understand basics but inconsistent
+  - "building_consistency" = scoring 90-100, inconsistent fundamentals
   - "improving_player" = scoring 80-90, solid fundamentals, working on scoring
   - "advanced_player" = scoring 70-80, low handicap, shot shaping and strategy
 
@@ -35,86 +35,113 @@ Rules:
 
 - quality_score: 1-10
 
-- ai_summary: 2-3 specific sentences. Mention exact problem solved, technique taught, who it is for. Use golf terms. No generic summaries.
+- ai_summary: 2-3 specific sentences. Exact problem solved, technique taught, who it is for. No generic summaries.
 
 - Return ONLY the JSON, nothing else`
 
 export async function GET() {
   try {
-    // Use RPC to get unscored videos directly - much faster than two queries
-    const { data: videos, error } = await supabase
-      .from('videos')
-      .select('id, title, description, channel_name')
-      .not('id', 'in', `(select video_id from video_metadata)`)
-      .limit(3)
+    // Step 1: Get scored video IDs in batches
+    const scoredIds = new Set()
+    let page = 0
+    const pageSize = 1000
 
-    if (error) {
-      // Fallback if the subquery syntax doesn't work
-      console.error('Query error:', error)
-      throw error
+    while (true) {
+      const { data, error } = await supabase
+        .from('video_metadata')
+        .select('video_id')
+        .range(page * pageSize, (page + 1) * pageSize - 1)
+
+      if (error) throw error
+      if (!data || data.length === 0) break
+      data.forEach(r => scoredIds.add(r.video_id))
+      if (data.length < pageSize) break
+      page++
     }
 
-    if (!videos || videos.length === 0) {
+    // Step 2: Find ONE unscored video
+    page = 0
+    let unscoredVideo = null
+
+    outer: while (true) {
+      const { data, error } = await supabase
+        .from('videos')
+        .select('id, title, description, channel_name')
+        .range(page * pageSize, (page + 1) * pageSize - 1)
+
+      if (error) throw error
+      if (!data || data.length === 0) break
+
+      for (const video of data) {
+        if (!scoredIds.has(video.id)) {
+          unscoredVideo = video
+          break outer
+        }
+      }
+
+      if (data.length < pageSize) break
+      page++
+    }
+
+    if (!unscoredVideo) {
       return NextResponse.json({ success: true, message: 'All videos are scored!' })
     }
 
-    let totalScored = 0
+    const remaining = 715 - scoredIds.size
 
-    for (const video of videos) {
-      const prompt = PROMPT_TEMPLATE(
-        video.title || '',
-        video.channel_name || '',
-        video.description || ''
-      )
+    // Step 3: Score the single video
+    const prompt = PROMPT_TEMPLATE(
+      unscoredVideo.title || '',
+      unscoredVideo.channel_name || '',
+      unscoredVideo.description || ''
+    )
 
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': process.env.ANTHROPIC_API_KEY,
-          'anthropic-version': '2023-06-01'
-        },
-        body: JSON.stringify({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 400,
-          messages: [{ role: 'user', content: prompt }]
-        })
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': process.env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 400,
+        messages: [{ role: 'user', content: prompt }]
       })
+    })
 
-      const claudeData = await response.json()
-      const text = claudeData.content?.[0]?.text
-      if (!text) continue
+    const claudeData = await response.json()
+    const text = claudeData.content?.[0]?.text
 
-      let result
-      try {
-        result = JSON.parse(text)
-      } catch {
-        continue
-      }
-
-      const { error: insertError } = await supabase
-        .from('video_metadata')
-        .insert({
-          video_id: video.id,
-          skill_tiers: result.skill_tiers,
-          topics: result.topics,
-          ai_summary: result.ai_summary,
-          quality_score: result.quality_score,
-          status: 'approved'
-        })
-
-      if (!insertError) totalScored++
+    if (!text) {
+      return NextResponse.json({ success: false, error: 'No response from Claude', remaining })
     }
 
-    // Get remaining count
-    const { count } = await supabase
-      .from('videos')
-      .select('id', { count: 'exact', head: true })
-      .not('id', 'in', `(select video_id from video_metadata)`)
+    let result
+    try {
+      result = JSON.parse(text)
+    } catch {
+      return NextResponse.json({ success: false, error: 'JSON parse failed', raw: text, remaining })
+    }
+
+    const { error: insertError } = await supabase
+      .from('video_metadata')
+      .insert({
+        video_id: unscoredVideo.id,
+        skill_tiers: result.skill_tiers,
+        topics: result.topics,
+        ai_summary: result.ai_summary,
+        quality_score: result.quality_score,
+        status: 'approved'
+      })
+
+    if (insertError) {
+      return NextResponse.json({ success: false, error: insertError.message, remaining })
+    }
 
     return NextResponse.json({
       success: true,
-      message: `Scored ${totalScored} videos. ${count ?? '?'} still remaining.`
+      message: `Scored: "${unscoredVideo.title}". ${remaining - 1} remaining.`
     })
 
   } catch (error) {
