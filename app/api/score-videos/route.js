@@ -119,7 +119,8 @@ export async function GET() {
 
     let result
     try {
-      result = JSON.parse(text)
+      const clean = text.replace(/```json|```/g, '').trim()
+      result = JSON.parse(clean)
     } catch {
       return NextResponse.json({ success: false, error: 'JSON parse failed', raw: text, remaining })
     }
