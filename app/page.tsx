@@ -247,6 +247,39 @@ export default function Home() {
           <AskCompanionTab skillLevel={skillFilter} onBack={() => setActiveTab('videos')} />
         ) : (
           <>
+            {/* Hero section — shown only to new visitors without a plan */}
+            {!assessmentTopics.length && (
+              <div className="mb-8 py-10 text-center border-b border-gray-100">
+                <h2 className="text-3xl font-bold text-gray-900 mb-3 leading-tight">
+                  Play Better Golf.<br />
+                  <span className="text-green-700">Starting Today.</span>
+                </h2>
+                <p className="text-base text-gray-500 max-w-md mx-auto mb-6">
+                  767 curated instruction videos matched to your skill level — from beginner basics to advanced shot shaping.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <a
+                    href="/onboarding"
+                    className="px-6 py-3 bg-green-700 text-white rounded-xl font-semibold text-base hover:bg-green-800 transition-colors"
+                  >
+                    Get My Video Plan →
+                  </a>
+                  <a
+                    href="/learn"
+                    className="px-6 py-3 border border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors"
+                  >
+                    Browse Articles
+                  </a>
+                </div>
+                <div className="flex justify-center gap-8 mt-8 text-sm text-gray-400">
+                  <span>🎬 767 videos</span>
+                  <span>📖 18 articles</span>
+                  <span>🤖 AI-powered</span>
+                  <span>⛳ 6 skill levels</span>
+                </div>
+              </div>
+            )}
+
             {/* Assessment focus banner */}
             {assessmentTopics.length > 0 && (
               <div className="mb-5 px-4 py-3 bg-green-50 border border-green-100 rounded-xl flex items-center justify-between">
