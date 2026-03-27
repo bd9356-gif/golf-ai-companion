@@ -12,7 +12,7 @@ Video title: ${title}
 Channel: ${channel}
 Description: ${description}
 
-NOTE: Ignore promotional content, social media links, or channel boilerplate. Focus only on the golf instruction.
+NOTE: Ignore promotional content, social media links, or channel boilerplate. Focus only on the golf instruction. If description says '(No description available)', base your analysis entirely on the video title.
 
 Return this exact JSON structure:
 {"skill_tiers": ["beginner"], "topics": ["driving"], "ai_summary": "summary here", "quality_score": 7.5}
@@ -90,10 +90,14 @@ export async function GET() {
     const remaining = 715 - scoredIds.size
 
     // Step 3: Score the single video
+    // Clean description — if empty or too short, use title as fallback
+    const desc = (unscoredVideo.description || '').trim()
+    const cleanDesc = desc.length > 20 ? desc : '(No description available — use title only)'
+
     const prompt = PROMPT_TEMPLATE(
       unscoredVideo.title || '',
       unscoredVideo.channel_name || '',
-      unscoredVideo.description || ''
+      cleanDesc
     )
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
