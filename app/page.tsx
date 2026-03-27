@@ -10,30 +10,32 @@ const supabase = createClient(
 )
 
 const TIER_LABELS: Record<string, string> = {
-  beginner: 'Getting Started',
-  intermediate: 'Building Consistency',
-  advanced: 'Sharpening Your Game',
   all: 'All Levels',
+  beginner: 'Beginner',
+  building_game: 'Building Your Game',
+  building_consistency: 'Building Consistency',
+  improving_player: 'Improving Player',
+  advanced_player: 'Advanced Player',
 }
 
-const TIER_VALUES = ['all', 'beginner', 'intermediate', 'advanced']
-
-// Maps assessment answers to topic values in video_metadata
-// New specific topics: driving, iron play, short game
-// Plus existing: bunker, chipping, course management, equipment, fitness,
-//                grip, mental game, pitching, putting, rules, stance, swing
-const TOPIC_MAP: Record<string, string[]> = {
-  driver:    ['driving', 'swing', 'grip', 'stance'],
-  irons:     ['iron play', 'swing', 'grip', 'stance'],
-  shortgame: ['short game', 'chipping', 'pitching', 'bunker'],
-  putting:   ['putting'],
+const TIER_SUBLABELS: Record<string, string> = {
+  all: '',
+  beginner: 'Just starting, learning the basics',
+  building_game: 'Scoring 100+',
+  building_consistency: 'Scoring 90–100',
+  improving_player: 'Scoring 80–90',
+  advanced_player: 'Scoring 70–80',
 }
 
-const GOAL_MAP: Record<string, string[]> = {
-  consistency: ['swing', 'grip', 'stance'],
-  distance:    ['driving', 'swing', 'fitness'],
-  strategy:    ['course management', 'mental game', 'rules'],
-  handicap:    ['course management', 'mental game'],
+const TIER_VALUES = ['all', 'beginner', 'building_game', 'building_consistency', 'improving_player', 'advanced_player']
+
+// Maps skill tier to relevant topics for video filtering
+const TIER_TOPICS: Record<string, string[]> = {
+  beginner:             ['swing', 'grip', 'stance', 'putting', 'chipping'],
+  building_game:        ['swing', 'driving', 'chipping', 'putting', 'course management'],
+  building_consistency: ['iron play', 'driving', 'short game', 'putting', 'mental game'],
+  improving_player:     ['iron play', 'short game', 'bunker', 'course management', 'mental game'],
+  advanced_player:      ['driving', 'iron play', 'short game', 'bunker', 'course management'],
 }
 
 type VideoRow = {
@@ -67,15 +69,14 @@ export default function Home() {
   useEffect(() => {
     // Do NOT auto-set skill filter — always default to All Levels on load
 
-    // Build topic keywords from assessment answers
-    // Only use PROBLEM area topics for video filtering — goal is too broad
-    const answersRaw = localStorage.getItem('golf_answers')
-    if (answersRaw) {
+    // Load topics from assessment — stored directly by onboarding page
+    const topicsRaw = localStorage.getItem('golf_topics')
+    if (topicsRaw) {
       try {
-        const answers = JSON.parse(answersRaw)
-        const keywords = [...new Set(TOPIC_MAP[answers.problem] ?? [])]
-        setAssessmentTopics(keywords)
-        localStorage.setItem('golf_topics', JSON.stringify(keywords))
+        const topics = JSON.parse(topicsRaw)
+        if (Array.isArray(topics) && topics.length > 0) {
+          setAssessmentTopics(topics)
+        }
       } catch {}
     }
   }, [])
@@ -255,13 +256,18 @@ export default function Home() {
                 <button
                   key={tier}
                   onClick={() => setSkillFilter(tier)}
-                  className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
+                  className={`px-3 py-2 rounded-full text-sm font-semibold transition-colors ${
                     skillFilter === tier
                       ? 'bg-green-700 text-white'
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 >
                   {TIER_LABELS[tier]}
+                  {TIER_SUBLABELS[tier] && (
+                    <span className={`ml-1 text-xs font-normal ${skillFilter === tier ? 'text-green-100' : 'text-gray-400'}`}>
+                      · {TIER_SUBLABELS[tier]}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>

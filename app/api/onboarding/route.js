@@ -1,70 +1,101 @@
-import { NextResponse } from 'next/server'
-import Anthropic from '@anthropic-ai/sdk'
+'use client'
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 
-const SYSTEM_PROMPT = `You are a friendly golf AI assistant running a short skill assessment inside MyGolf Companion, an app that recommends golf instruction videos.
+const TIERS = [
+  {
+    value: 'beginner',
+    label: 'Beginner',
+    sublabel: 'Just starting, learning the basics',
+    topics: ['swing', 'grip', 'stance', 'putting', 'chipping'],
+  },
+  {
+    value: 'building_game',
+    label: 'Building Your Game',
+    sublabel: 'Scoring 100+, working on consistency',
+    topics: ['swing', 'driving', 'chipping', 'putting', 'course management'],
+  },
+  {
+    value: 'building_consistency',
+    label: 'Building Consistency',
+    sublabel: 'Scoring 90–100, improving fundamentals',
+    topics: ['iron play', 'driving', 'short game', 'putting', 'mental game'],
+  },
+  {
+    value: 'improving_player',
+    label: 'Improving Player',
+    sublabel: 'Scoring 80–90, solid intermediate skills',
+    topics: ['iron play', 'short game', 'bunker', 'course management', 'mental game'],
+  },
+  {
+    value: 'advanced_player',
+    label: 'Advanced Player',
+    sublabel: 'Scoring 70–80, low-handicap and scoring well',
+    topics: ['driving', 'iron play', 'short game', 'bunker', 'course management'],
+  },
+]
 
-Your job is to assess the user's skill level through a natural 3-5 message conversation, then tell them which tier their content will be filtered to.
+export default function OnboardingPage() {
+  const [selected, setSelected] = useState(null)
+  const router = useRouter()
 
-The three tiers are:
-- beginner (label: "Getting Started") — for players new to golf, still learning basics
-- intermediate (label: "Building Consistency") — for players who can get around the course but want to lower their scores
-- advanced (label: "Sharpening Your Game") — for lower-handicap players focused on refinement
-
-Ask friendly, concise questions to understand:
-1. Their experience (rounds played, years playing)
-2. Their current level (e.g. can they break 100? 90? 80?)
-3. Their main challenge areas
-
-After 3-4 exchanges, conclude with a warm summary like:
-"Great! Based on your answers, I'm matching you to our [TIER_LABEL] content. Head back to the main page to see your personalized videos!"
-
-IMPORTANT: When you deliver the final assessment, include this exact marker on its own line at the end of your message:
-<<<SKILL_LEVEL:beginner>>> or <<<SKILL_LEVEL:intermediate>>> or <<<SKILL_LEVEL:advanced>>>
-
-Keep responses short (2-3 sentences), conversational, and encouraging. Ask one question at a time.`
-
-function parseSkillLevel(text) {
-  const match = text.match(/<<<SKILL_LEVEL:(beginner|intermediate|advanced)>>>/)
-  if (match) {
-    const skillLevel = match[1]
-    const reply = text.replace(/<<<SKILL_LEVEL:[^>]+>>>/, '').trim()
-    return { reply, skillLevel }
+  function handleSubmit() {
+    if (!selected) return
+    const tier = TIERS.find(t => t.value === selected)
+    localStorage.setItem('golf_skill_level', tier.value)
+    localStorage.setItem('golf_topics', JSON.stringify(tier.topics))
+    localStorage.setItem('golf_answers', JSON.stringify({ level: tier.value }))
+    router.push('/')
   }
-  return { reply: text, skillLevel: null }
-}
 
-export async function POST(req) {
-  try {
-    const { messages } = await req.json()
+  return (
+    <div className="min-h-screen bg-white flex flex-col">
+      <header className="border-b border-gray-100 px-4 py-4">
+        <div className="max-w-2xl mx-auto">
+          <h1 className="text-xl font-semibold text-gray-900">⛳ MyGolf Companion</h1>
+        </div>
+      </header>
 
-    const response = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 400,
-      system: SYSTEM_PROMPT,
-      messages:
-        messages.length === 0
-          ? [{ role: 'user', content: 'Start the assessment' }]
-          : messages.map((m) => ({
-              role: m.role,
-              content: m.content,
-            })),
-    })
+      <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-10 flex flex-col">
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Get My Video Plan</h2>
+          <p className="text-gray-500 text-base">
+            Select your current skill level and I'll match you with the best videos for your game.
+          </p>
+        </div>
 
-    const rawText =
-      response.content[0].type === 'text'
-        ? response.content[0].text
-        : "Hi! I had trouble connecting. Have you ever played a full 18-hole round?"
+        <div className="space-y-3 flex-1">
+          {TIERS.map((tier) => (
+            <button
+              key={tier.value}
+              onClick={() => setSelected(tier.value)}
+              className={`w-full text-left px-5 py-4 rounded-xl border-2 transition-all ${
+                selected === tier.value
+                  ? 'border-green-600 bg-green-50'
+                  : 'border-gray-200 hover:border-green-300 hover:bg-green-50'
+              }`}
+            >
+              <p className={`font-semibold text-base ${selected === tier.value ? 'text-green-800' : 'text-gray-800'}`}>
+                {tier.label}
+              </p>
+              <p className={`text-sm mt-0.5 ${selected === tier.value ? 'text-green-600' : 'text-gray-500'}`}>
+                {tier.sublabel}
+              </p>
+            </button>
+          ))}
+        </div>
 
-    const { reply, skillLevel } = parseSkillLevel(rawText)
-
-    return NextResponse.json({ reply, skillLevel })
-  } catch (err) {
-    console.error('Onboarding API error:', err)
-    return NextResponse.json({
-      reply: "Hi! I'm your Golf AI Companion. Let's find the right content for your game. Have you ever played a full 18-hole round of golf?",
-      skillLevel: null,
-    })
-  }
+        <div className="mt-8">
+          <button
+            onClick={handleSubmit}
+            disabled={!selected}
+            className="w-full py-4 bg-green-700 text-white rounded-xl text-base font-semibold hover:bg-green-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            Get My Video Plan →
+          </button>
+        </div>
+      </main>
+    </div>
+  )
 }

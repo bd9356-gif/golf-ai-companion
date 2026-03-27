@@ -12,24 +12,36 @@ Video title: ${title}
 Channel: ${channel}
 Description: ${description}
 
+NOTE: Ignore any promotional content, social media links, calls to action, or channel boilerplate. Focus only on the golf instruction being taught.
+
 Return this exact JSON structure:
 {"skill_tiers": ["beginner"], "topics": ["driving"], "ai_summary": "summary here", "quality_score": 7.5}
 
 Rules:
 
-- skill_tiers: array, choose from: beginner, intermediate, advanced. Only include tiers this video is genuinely appropriate for.
+- skill_tiers: array, choose from these EXACT values only:
+  beginner, building_game, building_consistency, improving_player, advanced_player
+
+  Guidelines:
+  - "beginner" = complete newcomers, never played or just started, learning very basic fundamentals
+  - "building_game" = high handicappers scoring 100+, working on basic consistency and getting the ball airborne
+  - "building_consistency" = mid-high handicappers scoring 90-100, understand basics but struggle with consistency
+  - "improving_player" = mid handicappers scoring 80-90, solid fundamentals, working on scoring and course management
+  - "advanced_player" = low handicappers scoring 70-80, skilled players focused on refinement, shot shaping, scoring strategy
+
+  Include ALL tiers the video genuinely applies to. Most videos apply to 2-3 tiers.
 
 - topics: array of 1-3 topics. Choose ONLY from this exact list:
   driving, iron play, short game, putting, chipping, pitching, bunker, course management, mental game, fitness, rules, equipment, grip, stance, swing
 
   Guidelines:
-  - "driving" = driver, tee shots, hitting off the tee, distance off tee
-  - "iron play" = iron shots, approach shots, ball striking, hitting irons
-  - "short game" = shots inside 100 yards, wedge play general
+  - "driving" = driver, tee shots, distance off tee
+  - "iron play" = iron shots, approach shots, ball striking
+  - "short game" = general shots inside 100 yards
   - "chipping" = chip shots around the green
   - "pitching" = pitch shots, flop shots
-  - "putting" = putting stroke, green reading, lag putting
-  - "bunker" = sand shots, bunker play
+  - "putting" = putting stroke, green reading
+  - "bunker" = sand shots
   - "swing" = ONLY for general full swing mechanics not specific to driver or irons
   - "grip" = ONLY when grip is the primary focus
   - "stance" = ONLY when setup/stance is the primary focus
@@ -41,7 +53,7 @@ Rules:
 
   Pick the MOST SPECIFIC topic. Prefer "driving" over "swing" for driver videos.
 
-- quality_score: 1-10 based on how helpful and instructional this looks
+- quality_score: 1-10 based on how helpful and instructional this video looks
 
 - ai_summary: 2-3 sentences, very specific. Mention the exact problem solved, the technique or drill taught, and who it is for. Use specific golf terms. No generic summaries.
 
@@ -49,7 +61,7 @@ Rules:
 
 export async function GET() {
   try {
-    // Step 1: Get all scored video_ids in batches (handles large sets)
+    // Get all scored video IDs
     const scoredIds = new Set()
     let page = 0
     const pageSize = 1000
@@ -62,13 +74,12 @@ export async function GET() {
 
       if (error) throw error
       if (!data || data.length === 0) break
-
       data.forEach(r => scoredIds.add(r.video_id))
       if (data.length < pageSize) break
       page++
     }
 
-    // Step 2: Get all video IDs
+    // Get all video IDs
     const allVideoIds = []
     page = 0
 
@@ -80,23 +91,20 @@ export async function GET() {
 
       if (error) throw error
       if (!data || data.length === 0) break
-
       data.forEach(r => allVideoIds.push(r.id))
       if (data.length < pageSize) break
       page++
     }
 
-    // Step 3: Find unscored IDs
     const unscoredIds = allVideoIds.filter(id => !scoredIds.has(id))
 
     if (unscoredIds.length === 0) {
       return NextResponse.json({
         success: true,
-        message: `All ${allVideoIds.length} videos are scored. Nothing to do.`
+        message: `All ${allVideoIds.length} videos are scored.`
       })
     }
 
-    // Step 4: Fetch details for first 10 unscored videos
     const batch = unscoredIds.slice(0, 3)
     const { data: videos, error: fetchError } = await supabase
       .from('videos')
@@ -105,15 +113,10 @@ export async function GET() {
 
     if (fetchError) throw fetchError
 
-    // Step 5: Score each video
     let totalScored = 0
 
     for (const video of videos) {
-      const prompt = PROMPT_TEMPLATE(
-        video.title,
-        video.channel_name,
-        video.description
-      )
+      const prompt = PROMPT_TEMPLATE(video.title, video.channel_name, video.description)
 
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
