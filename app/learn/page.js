@@ -139,7 +139,7 @@ export default function LearnPage() {
         {/* Page title */}
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-gray-900">Golf Articles</h2>
-          <p className="text-gray-500 mt-1">Practical tips and strategies to lower your scores</p>
+          <p className="text-gray-500 mt-1">AI-Crafted Golf Articles for Every Golfer — From Your MyGolf Companion</p>
         </div>
 
         {/* Topic filter */}

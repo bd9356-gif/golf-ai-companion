@@ -66,7 +66,7 @@ export default function LandingPage() {
           {[
             { stat: '767', label: 'Instruction Videos' },
             { stat: '6', label: 'Skill Levels' },
-            { stat: '18+', label: 'Expert Articles' },
+            { stat: '40+', label: 'Expert Articles' },
             { stat: 'AI', label: 'Personalized Plans' },
           ].map(({ stat, label }) => (
             <div key={label} className="text-center">
