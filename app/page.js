@@ -32,7 +32,7 @@ export default function LandingPage() {
         <p className="text-xl text-gray-500 max-w-2xl mx-auto mb-10">
           767 curated instruction videos and expert articles — matched to your skill level by AI. From beginner basics to advanced shot shaping.
         </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
           <a
             href="/onboarding"
             className="px-8 py-4 bg-green-700 text-white rounded-xl font-bold text-lg hover:bg-green-800 transition-colors"
@@ -45,6 +45,14 @@ export default function LandingPage() {
           >
             Browse Videos
           </a>
+        </div>
+
+        {/* Nav links */}
+        <div className="flex justify-center gap-8 mb-12 text-sm text-gray-400">
+          <a href="/videos" className="hover:text-green-700 transition-colors">🎬 Videos</a>
+          <a href="/learn" className="hover:text-green-700 transition-colors">📖 Learn</a>
+          <a href="/plan" className="hover:text-green-700 transition-colors">🎯 My Plan</a>
+          <a href="/about" className="hover:text-green-700 transition-colors">ℹ️ About</a>
         </div>
 
         {/* Stats */}
