@@ -223,7 +223,7 @@ export default function VideosPage() {
                   : 'text-gray-500 border-transparent hover:text-gray-700'
               }`}
             >
-              Video Library
+              Videos
             </button>
             <a
               href="/learn"
@@ -236,13 +236,13 @@ export default function VideosPage() {
                 onClick={() => setActiveTab('ask')}
                 className="px-4 py-2 text-sm font-semibold text-white bg-green-700 rounded-xl hover:bg-green-800 transition-colors whitespace-nowrap"
               >
-                Ask MyGolf AI
+                Ask AI
               </button>
               <a
                 href="/onboarding"
                 className="text-sm font-semibold text-white bg-green-700 rounded-xl px-4 py-2 hover:bg-green-800 transition-colors whitespace-nowrap"
               >
-                Get My Video Plan
+                My Plan
               </a>
             </div>
           </div>
@@ -456,7 +456,7 @@ export default function VideosPage() {
                         {isExpanded && assessmentTopics.length === 0 && (
                           <div className="mt-3 border-t border-gray-100 pt-3">
                             <p className="text-sm text-gray-400 italic">
-                              Get My Video Plan to unlock AI-powered insights for your plan videos.
+                              My Plan to unlock AI-powered insights for your plan videos.
                             </p>
                           </div>
                         )}
