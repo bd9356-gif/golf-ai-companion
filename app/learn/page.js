@@ -211,18 +211,11 @@ export default function LearnPage() {
                       <h3 className={`font-bold text-base leading-snug text-gray-900`}>
                         {article.title}
                       </h3>
-                      ({
                         <p className="text-sm text-gray-500 mt-1 leading-relaxed">
                           {article.summary}
                         </p>
                       )}
-                      )}
-                        <p className="text-sm text-gray-400 mt-1 italic">
-                          Update your plan to access this article
-                        </p>
-                      )}
                     </div>
-                    ({
                       <span className="text-gray-400 text-lg shrink-0 mt-1">
                         {openArticle?.id === article.id ? '▲' : '▼'}
                       </span>
