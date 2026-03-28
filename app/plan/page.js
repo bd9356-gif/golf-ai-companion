@@ -299,7 +299,7 @@ export default function PlanPage() {
                           <div className="flex items-center gap-2 shrink-0">
                             <button
                               onClick={() => toggleSaved(video.id)}
-                              className={`text-lg transition-colors ${savedIds.has(video.id) ? 'text-green-600' : 'text-gray-300 hover:text-gray-400'}`}
+                              className={`text-2xl transition-colors ${savedIds.has(video.id) ? 'text-green-600' : 'text-gray-300 hover:text-gray-400'}`}
                               title={savedIds.has(video.id) ? 'Remove from saved' : 'Save video'}
                             >🔖</button>
                             {!isPlaying && (
