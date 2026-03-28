@@ -105,7 +105,7 @@ export default function LearnPage() {
                 href="/plan"
                 className="px-4 py-2 text-sm font-semibold text-white bg-green-700 rounded-xl hover:bg-green-800 transition-colors whitespace-nowrap"
               >
-                My Video Plan
+                My Plan
               </a>
               <a
                 href="/onboarding"
