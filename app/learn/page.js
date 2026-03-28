@@ -22,6 +22,8 @@ const TOPIC_LABELS = {
   'course management': 'Course Management',
   'mental game': 'Mental Game',
   fitness: 'Fitness & Mobility',
+  putting: 'Putting',
+  'short game': 'Short Game',
 }
 
 const TOPIC_ICONS = {
