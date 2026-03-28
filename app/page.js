@@ -45,6 +45,15 @@ export default function LandingPage() {
           >
             Browse Videos
           </a>
+          <a href="/learn" className="w-full px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors text-center">
+            📖 Read Articles
+          </a>
+          <a href="/plan" className="w-full px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors text-center">
+            🎯 My Plan
+          </a>
+          <a href="/about" className="w-full px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors text-center">
+            ℹ️ About
+          </a>
         </div>
 
 
