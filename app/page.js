@@ -41,7 +41,7 @@ export default function LandingPage() {
           </a>
           <a
             href="/videos"
-            className="px-8 py-4 border-2 border-gray-200 text-gray-700 rounded-xl font-bold text-lg hover:bg-gray-50 transition-colors"
+            className="w-full px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors text-center"
           >
             Browse Videos
           </a>
