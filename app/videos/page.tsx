@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import AskCompanionTab from '@/components/AskCompanionTab'
 
@@ -10,54 +10,29 @@ const supabase = createClient(
 )
 
 const TIER_LABELS: Record<string, string> = {
+  beginner: 'Getting Started',
+  intermediate: 'Building Consistency',
+  advanced: 'Sharpening Your Game',
   all: 'All Levels',
-  beginner: 'Beginner',
-  building_game: 'Building Your Game',
-  building_consistency: 'Building Consistency',
-  improving_player: 'Improving Player',
-  advanced_player: 'Advanced Player',
-  senior_player: 'Senior Player',
 }
 
-const TIER_SUBLABELS: Record<string, string> = {
-  all: '',
-  beginner: 'Just starting, learning the basics',
-  building_game: 'Scoring 100+',
-  building_consistency: 'Scoring 90–100',
-  improving_player: 'Scoring 80–90',
-  advanced_player: 'Scoring 70–80',
-  senior_player: 'Mobility, rhythm & joint-friendly mechanics',
-}
+const TIER_VALUES = ['all', 'beginner', 'intermediate', 'advanced']
 
-const TIER_VALUES = ['all', 'beginner', 'building_game', 'building_consistency', 'improving_player', 'advanced_player', 'senior_player']
-
-// Maps skill tier to relevant topics for video filtering
-const TIER_TOPICS: Record<string, string[]> = {
-  beginner:             ['swing', 'grip', 'stance', 'putting', 'chipping'],
-  building_game:        ['swing', 'driving', 'chipping', 'putting', 'course management'],
-  building_consistency: ['iron play', 'driving', 'short game', 'putting', 'mental game'],
-  improving_player:     ['iron play', 'short game', 'bunker', 'course management', 'mental game'],
-  advanced_player:      ['driving', 'iron play', 'short game', 'bunker', 'course management'],
-  senior_player:        ['swing', 'fitness', 'course management', 'mental game', 'putting'],
-}
-
-type VideoRow = {
+type Video = {
   id: string
   title: string
   url: string
-  thumbnail_url: string
-  youtube_video_id: string
-  channel_name: string
   description: string
-  published_at: string
-  video_metadata: any
+  skill_level: string
+  tags: string[]
+  score?: number
 }
 
 type Tab = 'videos' | 'ask'
 
-export default function VideosPage() {
-  const [videos, setVideos] = useState<VideoRow[]>([])
-  const [filtered, setFiltered] = useState<VideoRow[]>([])
+export default function Home() {
+  const [videos, setVideos] = useState<Video[]>([])
+  const [filtered, setFiltered] = useState<Video[]>([])
   const [loading, setLoading] = useState(true)
   const [skillFilter, setSkillFilter] = useState('all')
   const [search, setSearch] = useState('')
@@ -65,117 +40,146 @@ export default function VideosPage() {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
   const [playingId, setPlayingId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<Tab>('videos')
-  const [assessmentTopics, setAssessmentTopics] = useState<string[]>([])
-  const [matchedPool, setMatchedPool] = useState<VideoRow[]>([])
-  const [planPage, setPlanPage] = useState(0)
+
+  // Auto-filter from assessment result saved in localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem('golf_skill_level')
+    if (stored && TIER_VALUES.includes(stored)) {
+      setSkillFilter(stored)
+    }
+  }, [])
 
   useEffect(() => {
-    // Check URL for skill level set by onboarding
-    const params = new URLSearchParams(window.location.search)
-    const levelFromUrl = params.get('level')
-    if (levelFromUrl && TIER_VALUES.includes(levelFromUrl)) {
-      setSkillFilter(levelFromUrl)
-      // Clean the URL without reloading
-      window.history.replaceState({}, '', '/')
-    }
+    fetchVideos()
+  }, [])
 
-    // Load topics from assessment — stored directly by onboarding page
-    const topicsRaw = localStorage.getItem('golf_topics')
-    if (topicsRaw) {
-      try {
-        const topics = JSON.parse(topicsRaw)
-        if (Array.isArray(topics) && topics.length > 0) {
-          setAssessmentTopics(topics)
+  useEffect(() => {
+    applyFilters()
+  }, [videos, skillFilter, search])
+
+  async function fetchVideos() {
+    setLoading(true)
+    const { data, error } = await supabase
+      .from('videos')
+      .select('*')
+      .order('score', { ascending: false })
+
+    if (!error && data) setVideos(data)
+    setLoading(false)
+  }
+
+  function applyFilters() {
+    let result = [...videos]
+    if (skillFilter !== 'all') {
+      result = result.filter((v) => v.skill_level === skillFilter)
+    }
+    if (search.trim()) {
+      const q = search.toLowerCase()
+      result = result.filter(
+        (v) =>
+          v.title?.toLowerCase().includes(q) ||
+          v.description?.toLowerCase().includes(q) ||
+          v.tags?.some((t) => t.toLowerCase().includes(q))
+      )
+    }
+    setFiltered(result)
+    setShowCount(10)
+  }
+
+  function toggleExpanded(id: string) {
+    setExpandedIds((prev) => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  function getYouTubeId(url: string): string | null {
+    const match = url?.match(
+      /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+    )
+    return match ? match[1] : null
+  }
+
   const visibleVideos = filtered.slice(0, showCount)
   const hasMore = filtered.length > showCount
-
-  // Human-readable label for assessment focus
-  const focusLabel = [...new Set(assessmentTopics)].join(', ')
 
   return (
     <div className="min-h-screen bg-white">
 
       {/* Header */}
       <header className="border-b border-gray-100 bg-white sticky top-0 z-40">
-        <div className="max-w-4xl mx-auto px-4 pt-5 pb-3">
-          {/* Branding row */}
-          <div className="mb-3">
-            <h1 className="text-3xl font-bold text-gray-900 leading-tight tracking-tight">
+        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-semibold text-gray-900 leading-tight">
               ⛳ MyGolf Companion
             </h1>
-            <p className="text-base text-gray-500 mt-1">Your AI guide to better golf</p>
+            <p className="text-xs text-gray-500 mt-0.5">Your AI guide to better golf</p>
           </div>
+          <a
+            href="/onboarding"
+            className="text-sm text-green-700 border border-green-200 rounded-lg px-3 py-1.5 hover:bg-green-50 transition-colors whitespace-nowrap"
+          >
+            Retake Assessment
+          </a>
+        </div>
 
-          {/* Nav row — tabs + Get My Video Plan together */}
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setActiveTab('videos')}
-              className={`px-4 py-2 text-sm font-semibold border-b-2 transition-colors ${
-                activeTab === 'videos'
-                  ? 'text-green-800 border-green-700'
-                  : 'text-gray-500 border-transparent hover:text-gray-700'
-              }`}
-            >
-              Videos
-            </button>
-            <a
-              href="/learn"
-              className="px-4 py-2 text-sm font-semibold text-gray-500 border-b-2 border-transparent hover:text-gray-700 transition-colors"
-            >
-              Learn
-            </a>
-            <div className="ml-auto flex items-center gap-2">
-              <button
-                onClick={() => setActiveTab('ask')}
-                className="px-4 py-2 text-sm font-semibold text-white bg-green-700 rounded-xl hover:bg-green-800 transition-colors whitespace-nowrap"
-              >
-                Ask AI
-              </button>
-              <a
-                href="/onboarding"
-                className="text-sm font-semibold text-white bg-green-700 rounded-xl px-4 py-2 hover:bg-green-800 transition-colors whitespace-nowrap"
-              >
-                My Plan
-              </a>
-            </div>
-          </div>
+        {/* Tabs */}
+        <div className="max-w-4xl mx-auto px-4 flex gap-1">
+          <button
+            onClick={() => setActiveTab('videos')}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'videos'
+                ? 'text-green-800 border-green-700'
+                : 'text-gray-500 border-transparent hover:text-gray-700'
+            }`}
+          >
+            Video Library
+          </button>
+          <button
+            onClick={() => setActiveTab('ask')}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'ask'
+                ? 'text-green-800 border-green-700'
+                : 'text-gray-500 border-transparent hover:text-gray-700'
+            }`}
+          >
+            Ask Your Golf AI Companion
+          </button>
         </div>
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-6">
+
         {activeTab === 'ask' ? (
-          <AskCompanionTab skillLevel={skillFilter} onBack={() => setActiveTab('videos')} />
+          <AskCompanionTab skillLevel={skillFilter} />
         ) : (
           <>
-            {/* Assessment focus banner */}
-            {assessmentTopics.length > 0 && (
-              <div className="mb-5 px-4 py-3 bg-green-50 border border-green-100 rounded-xl flex items-center justify-between">
-                <span className="text-sm text-green-800">
-                  🎯 Ranked for your focus: <span className="font-semibold">{focusLabel}</span>
-                </span>
+            {/* Skill tier filter pills */}
+            <div className="flex flex-wrap gap-2 mb-4">
+              {TIER_VALUES.map((tier) => (
                 <button
-                  onClick={() => {
-                    setAssessmentTopics([])
-                    localStorage.removeItem('golf_topics')
-                    localStorage.removeItem('golf_answers')
-                  }}
-                  className="text-xs text-green-600 hover:text-green-800 ml-3 whitespace-nowrap"
+                  key={tier}
+                  onClick={() => setSkillFilter(tier)}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                    skillFilter === tier
+                      ? 'bg-green-700 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
                 >
-                  Clear
+                  {TIER_LABELS[tier]}
                 </button>
-              </div>
-            )}
-
-
+              ))}
+            </div>
 
             {/* Search */}
-            <div className="relative mb-5">
+            <div className="relative mb-6">
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search by problem or topic…"
-                className="w-full border border-gray-200 rounded-xl px-4 py-3.5 pr-10 text-base focus:outline-none focus:ring-2 focus:ring-green-300"
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-green-300"
               />
               {search && (
                 <button
@@ -187,49 +191,38 @@ export default function VideosPage() {
               )}
             </div>
 
-            {/* Result count — prominent */}
+            {/* Result count */}
             {!loading && (
-              <div className="mb-5">
-                <p className="text-lg font-bold text-gray-800">
-                  {filtered.length === 0
-                    ? 'No videos found'
-                    : assessmentTopics.length > 0 && matchedPool.length > 0
-                      ? `Showing ${Math.min(showCount, matchedPool.length)} of ${matchedPool.length} videos matched to your focus`
-                      : `Showing ${Math.min(showCount, filtered.length)} of ${filtered.length} videos`}
-                  {skillFilter !== 'all' && !assessmentTopics.length && (
-                    <span className="text-green-700"> · {TIER_LABELS[skillFilter]}</span>
-                  )}
-                </p>
-              </div>
+              <p className="text-sm text-gray-500 mb-4">
+                {filtered.length === 0
+                  ? 'No videos found'
+                  : `Showing ${Math.min(showCount, filtered.length)} of ${filtered.length} video${filtered.length !== 1 ? 's' : ''}`}
+                {skillFilter !== 'all' && (
+                  <span className="ml-1">
+                    · <span className="text-green-700">{TIER_LABELS[skillFilter]}</span>
+                  </span>
+                )}
+              </p>
             )}
 
             {/* Video list */}
             {loading ? (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="h-28 bg-gray-100 rounded-xl animate-pulse" />
+                  <div key={i} className="h-24 bg-gray-100 rounded-xl animate-pulse" />
                 ))}
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {visibleVideos.map((video) => {
-                  const ytId = getYouTubeId(video)
+                  const ytId = getYouTubeId(video.url)
                   const isPlaying = playingId === video.id
                   const isExpanded = expandedIds.has(video.id)
-                  const meta = getMeta(video)
-                  const skillTiers: string[] = meta?.skill_tiers ?? []
-                  const topics: string[] = meta?.topics ?? []
-                  const summary: string = meta?.ai_summary ?? ''
-                  const isTopicMatch = videoMatchesTopics(video, assessmentTopics)
 
                   return (
                     <div
                       key={video.id}
-                      className={`border rounded-xl overflow-hidden transition-colors ${
-                        isTopicMatch && assessmentTopics.length > 0
-                          ? 'border-green-200 hover:border-green-300'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
+                      className="border border-gray-200 rounded-xl overflow-hidden hover:border-gray-300 transition-colors"
                     >
                       {/* Inline video player */}
                       {isPlaying && ytId && (
@@ -242,14 +235,14 @@ export default function VideosPage() {
                           />
                           <button
                             onClick={() => setPlayingId(null)}
-                            className="absolute top-2 right-2 bg-black/60 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm hover:bg-black/80"
+                            className="absolute top-2 right-2 bg-black/60 text-white rounded-full w-7 h-7 flex items-center justify-center text-xs hover:bg-black/80"
                           >
                             ✕
                           </button>
                         </div>
                       )}
 
-                      {/* Thumbnail */}
+                      {/* Thumbnail with play button */}
                       {!isPlaying && ytId && (
                         <button
                           onClick={() => setPlayingId(video.id)}
@@ -257,13 +250,13 @@ export default function VideosPage() {
                           aria-label={`Play ${video.title}`}
                         >
                           <img
-                            src={video.thumbnail_url || `https://img.youtube.com/vi/${ytId}/mqdefault.jpg`}
+                            src={`https://img.youtube.com/vi/${ytId}/mqdefault.jpg`}
                             alt={video.title}
-                            className="w-full object-cover h-48 sm:h-56"
+                            className="w-full object-cover h-44 sm:h-52"
                           />
                           <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                            <div className="w-14 h-14 bg-white/90 rounded-full flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-                              <svg viewBox="0 0 24 24" className="w-6 h-6 text-green-800 ml-0.5" fill="currentColor">
+                            <div className="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+                              <svg viewBox="0 0 24 24" className="w-5 h-5 text-green-800 ml-0.5" fill="currentColor">
                                 <path d="M8 5v14l11-7z" />
                               </svg>
                             </div>
@@ -275,30 +268,12 @@ export default function VideosPage() {
                       <div className="p-4">
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-gray-900 text-base leading-snug">
+                            <h3 className="font-medium text-gray-900 text-sm leading-snug">
                               {video.title}
                             </h3>
-                            <div className="flex flex-wrap gap-1.5 mt-2">
-                              {skillTiers.length > 0 ? skillTiers.map((tier) => (
-                                <span key={tier} className="text-xs bg-green-50 text-green-700 px-2.5 py-1 rounded-full font-medium">
-                                  {TIER_LABELS[tier] ?? tier}
-                                </span>
-                              )) : (
-                                <span className="text-xs bg-gray-50 text-gray-400 px-2.5 py-1 rounded-full">
-                                  All levels
-                                </span>
-                              )}
-                              {video.channel_name && (
-                                <span className="text-xs bg-gray-50 text-gray-500 px-2.5 py-1 rounded-full">
-                                  {video.channel_name}
-                                </span>
-                              )}
-                              {isTopicMatch && assessmentTopics.length > 0 && (
-                                <span className="text-xs bg-green-100 text-green-700 px-2.5 py-1 rounded-full font-medium">
-                                  🎯 Recommended
-                                </span>
-                              )}
-                            </div>
+                            <span className="inline-block mt-1 text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">
+                              {TIER_LABELS[video.skill_level] ?? video.skill_level}
+                            </span>
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
                             {!isPlaying && (
@@ -306,51 +281,41 @@ export default function VideosPage() {
                                 href={video.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-sm text-gray-400 hover:text-gray-600"
+                                className="text-xs text-gray-400 hover:text-gray-600"
                                 title="Open on YouTube"
                               >
                                 ↗
                               </a>
                             )}
+                            <button
+                              onClick={() => toggleExpanded(video.id)}
+                              className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                              aria-label={isExpanded ? 'Hide description' : 'Show description'}
+                            >
+                              {isExpanded ? '▲' : '▼'}
+                            </button>
                           </div>
                         </div>
-                        {/* See Details link below badges */}
-                        <button
-                          onClick={() => toggleExpanded(video.id)}
-                          className="mt-2 text-sm text-green-700 hover:text-green-900 font-medium transition-colors"
-                        >
-                          {isExpanded ? 'Hide Details ▲' : 'See Details ▼'}
-                        </button>
 
-                        {/* Expandable section — AI summary + topics for plan users only */}
-                        {isExpanded && assessmentTopics.length > 0 && (
-                          <div className="mt-3 border-t border-gray-100 pt-3 space-y-3">
-                            {summary && (
-                              <p className="text-base text-gray-600 leading-relaxed">
-                                {summary}
-                              </p>
-                            )}
-                            {topics.length > 0 && (
-                              <div className="flex flex-wrap gap-2">
-                                {topics.map((topic) => (
-                                  <button
-                                    key={topic}
-                                    onClick={() => setSearch(topic)}
-                                    className="text-sm bg-gray-100 text-gray-500 px-3 py-1 rounded-full hover:bg-gray-200 transition-colors"
-                                  >
-                                    {topic}
-                                  </button>
-                                ))}
-                              </div>
-                            )}
-                          </div>
+                        {/* Expandable description */}
+                        {isExpanded && video.description && (
+                          <p className="mt-3 text-sm text-gray-600 leading-relaxed border-t border-gray-100 pt-3">
+                            {video.description}
+                          </p>
                         )}
-                        {/* Non-plan users: See Details shows nothing extra — title says it all */}
-                        {isExpanded && assessmentTopics.length === 0 && (
-                          <div className="mt-3 border-t border-gray-100 pt-3">
-                            <p className="text-sm text-gray-400 italic">
-                              My Plan to unlock AI-powered insights for your plan videos.
-                            </p>
+
+                        {/* Clickable tags */}
+                        {isExpanded && video.tags?.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 mt-2">
+                            {video.tags.map((tag) => (
+                              <button
+                                key={tag}
+                                onClick={() => setSearch(tag)}
+                                className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full hover:bg-gray-200 transition-colors"
+                              >
+                                {tag}
+                              </button>
+                            ))}
                           </div>
                         )}
                       </div>
@@ -360,37 +325,27 @@ export default function VideosPage() {
               </div>
             )}
 
-            {/* Show More / Get 10 More */}
-            {assessmentTopics.length > 0 && matchedPool.length > showCount ? (
-              <div className="mt-6 text-center">
-                <button
-                  onClick={() => setShowCount((c) => Math.min(c + 10, matchedPool.length))}
-                  className="px-8 py-3 bg-green-700 text-white rounded-xl text-base font-semibold hover:bg-green-800 transition-colors"
-                >
-                  Get 10 More Videos →
-                </button>
-                <p className="text-sm text-gray-400 mt-2">{matchedPool.length} videos match your focus area</p>
-              </div>
-            ) : hasMore ? (
+            {/* Show More */}
+            {hasMore && (
               <div className="mt-6 text-center">
                 <button
                   onClick={() => setShowCount((c) => c + 10)}
-                  className="px-8 py-3 bg-green-700 text-white rounded-xl text-base font-semibold hover:bg-green-800 transition-colors"
+                  className="px-6 py-2.5 bg-green-700 text-white rounded-xl text-sm font-medium hover:bg-green-800 transition-colors"
                 >
                   Show More ({filtered.length - showCount} remaining)
                 </button>
               </div>
-            ) : null}
+            )}
 
             {/* Empty state */}
             {!loading && filtered.length === 0 && (
               <div className="text-center py-16">
                 <p className="text-4xl mb-3">⛳</p>
-                <p className="text-gray-600 font-semibold text-lg">No videos found</p>
-                <p className="text-base text-gray-400 mt-1">Try a different search or skill level</p>
+                <p className="text-gray-600 font-medium">No videos found</p>
+                <p className="text-sm text-gray-400 mt-1">Try a different search or skill level</p>
                 <button
                   onClick={() => { setSearch(''); setSkillFilter('all') }}
-                  className="mt-4 text-base text-green-700 hover:underline"
+                  className="mt-4 text-sm text-green-700 hover:underline"
                 >
                   Clear filters
                 </button>
