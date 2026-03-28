@@ -65,15 +65,17 @@ export default function LearnPage() {
   }
 
   // Filter by topic
-  const topicFiltered = selectedTopic === 'all'
+  const filtered = selectedTopic === 'all'
     ? articles
     : articles.filter(a => a.topic === selectedTopic)
 
-  // Plan users see ONLY their matched articles
-  // Non-plan users see all articles
+  // Sort — plan users see their tier's articles first
   const sorted = skillLevel
-    ? topicFiltered.filter(a => a.skill_tiers?.includes(skillLevel))
-    : topicFiltered
+    ? [
+        ...filtered.filter(a => a.skill_tiers?.includes(skillLevel)),
+        ...filtered.filter(a => !a.skill_tiers?.includes(skillLevel)),
+      ]
+    : filtered
 
   const topics = ['all', ...Object.keys(TOPIC_LABELS)]
 
@@ -81,20 +83,37 @@ export default function LearnPage() {
     <div className="min-h-screen bg-white">
       {/* Header */}
       <header className="border-b border-gray-100 bg-white sticky top-0 z-40">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <a href="/" className="text-xl font-bold text-gray-900">⛳ MyGolf Companion</a>
+        <div className="max-w-4xl mx-auto px-4 pt-5 pb-3">
+          <div className="mb-3">
+            <h1 className="text-3xl font-bold text-gray-900 leading-tight tracking-tight">
+              ⛳ MyGolf Companion
+            </h1>
+            <p className="text-base text-gray-500 mt-1">Your AI guide to better golf</p>
+          </div>
           <div className="flex items-center gap-2">
-            <a href="/videos" className="text-sm font-medium text-gray-500 hover:text-gray-700 px-3 py-1.5">Videos</a>
-            <span className="text-sm font-semibold text-green-800 border-b-2 border-green-700 px-3 py-1.5">Learn</span>
-            {skillLevel ? (
-              <a href="/plan" className="text-sm font-semibold text-white bg-green-700 rounded-xl px-4 py-2 hover:bg-green-800 transition-colors whitespace-nowrap">
-                My Plan
+            <a
+              href="/"
+              className="px-4 py-2 text-sm font-semibold text-gray-500 hover:text-gray-700 border-b-2 border-transparent transition-colors"
+            >
+              Video Library
+            </a>
+            <span className="px-4 py-2 text-sm font-semibold text-green-800 border-b-2 border-green-700">
+              Learn
+            </span>
+            <div className="ml-auto flex items-center gap-2">
+              <a
+                href="/plan"
+                className="px-4 py-2 text-sm font-semibold text-white bg-green-700 rounded-xl hover:bg-green-800 transition-colors whitespace-nowrap"
+              >
+                My Video Plan
               </a>
-            ) : (
-              <a href="/onboarding" className="text-sm font-semibold text-white bg-green-700 rounded-xl px-4 py-2 hover:bg-green-800 transition-colors whitespace-nowrap">
+              <a
+                href="/onboarding"
+                className="text-sm font-semibold text-white bg-green-700 rounded-xl px-4 py-2 hover:bg-green-800 transition-colors whitespace-nowrap"
+              >
                 Get My Video Plan
               </a>
-            )}
+            </div>
           </div>
         </div>
       </header>
@@ -102,18 +121,14 @@ export default function LearnPage() {
       <main className="max-w-4xl mx-auto px-4 py-6">
 
         {/* Personalized banner */}
-        {skillLevel ? (
+        {skillLevel && (
           <div className="mb-6 px-4 py-3 bg-green-50 border border-green-100 rounded-xl text-sm text-green-800 flex items-center justify-between">
             <span>
-              🎯 Showing articles for your plan: <strong>{TIER_LABELS[skillLevel]}</strong>
+              🎯 Showing articles matched to your plan: <strong>{TIER_LABELS[skillLevel]}</strong>
             </span>
             <a href="/onboarding" className="text-xs text-green-600 hover:text-green-800 whitespace-nowrap ml-3">
               Update plan
             </a>
-          </div>
-        ) : (
-          <div className="mb-6 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-600 flex items-center justify-between">
-            <span>📖 Browsing all articles — <a href="/onboarding" className="text-green-700 font-semibold hover:underline">Get My Video Plan</a> to see articles matched to your game</span>
           </div>
         )}
 
@@ -156,11 +171,12 @@ export default function LearnPage() {
         ) : (
           <div className="space-y-4">
             {sorted.map(article => {
+              const isMatch = skillLevel && article.skill_tiers?.includes(skillLevel)
               return (
                 <div
                   key={article.id}
-                  className={`border rounded-xl p-5 transition-all cursor-pointer hover:shadow-sm ${
-                    skillLevel ? 'border-green-200 bg-green-50/40' : 'border-gray-200'
+                  className={`border rounded-xl p-5 cursor-pointer hover:shadow-sm transition-all ${
+                    isMatch ? 'border-green-200 bg-green-50/30' : 'border-gray-200'
                   }`}
                   onClick={() => setOpenArticle(openArticle?.id === article.id ? null : article)}
                 >
@@ -170,22 +186,25 @@ export default function LearnPage() {
                         <span className="text-xs bg-gray-100 text-gray-500 px-2.5 py-1 rounded-full">
                           {TOPIC_ICONS[article.topic]} {TOPIC_LABELS[article.topic] ?? article.topic}
                         </span>
-                        {skillLevel && (
-                          <span className="text-xs bg-green-600 text-white px-2.5 py-1 rounded-full font-semibold">
-                            🎯 In Your Plan
+                        {isMatch && (
+                          <span className="text-xs bg-green-100 text-green-700 px-2.5 py-1 rounded-full font-medium">
+                            🎯 Matched to your plan
                           </span>
                         )}
-                        
-                        <p className="text-sm text-gray-400 mt-1 italic">
-                          Update your plan to access this article
-                        </p>
-                      )}
+                        <span className="text-xs text-gray-400">
+                          {article.read_time_minutes} min read
+                        </span>
+                      </div>
+                      <h3 className="font-bold text-gray-900 text-base leading-snug">
+                        {article.title}
+                      </h3>
+                      <p className="text-sm text-gray-500 mt-1 leading-relaxed">
+                        {article.summary}
+                      </p>
                     </div>
-                    {(
-                      <span className="text-gray-400 text-lg shrink-0 mt-1">
-                        {openArticle?.id === article.id ? '▲' : '▼'}
-                      </span>
-                    )}
+                    <span className="text-gray-400 text-lg shrink-0 mt-1">
+                      {openArticle?.id === article.id ? '▲' : '▼'}
+                    </span>
                   </div>
 
                   {/* Full article content */}
