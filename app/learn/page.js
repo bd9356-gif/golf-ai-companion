@@ -216,7 +216,7 @@ export default function LearnPage() {
                           {article.summary}
                         </p>
                       )}
-                      ({false {isLocked && ({isLocked && ( (
+                      )}
                         <p className="text-sm text-gray-400 mt-1 italic">
                           Update your plan to access this article
                         </p>
