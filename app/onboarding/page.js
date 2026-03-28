@@ -46,6 +46,14 @@ export default function OnboardingPage() {
   const [selected, setSelected] = useState(null)
   const router = useRouter()
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const level = params.get('level')
+    if (level && TIERS.find(t => t.value === level)) {
+      setSelected(level)
+    }
+  }, [])
+
   function handleSubmit() {
     if (!selected) return
     const tier = TIERS.find(t => t.value === selected)

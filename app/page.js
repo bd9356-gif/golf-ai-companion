@@ -14,17 +14,17 @@ export default function LandingPage() {
     <div className="min-h-screen bg-white">
       {/* Minimal header */}
       <header className="border-b border-gray-100 bg-white">
-        <div className="max-w-5xl mx-auto px-4 py-6 text-center">
+        <div className="max-w-5xl mx-auto px-4 py-4 text-center">
           <h1 className="text-3xl font-bold text-gray-900">⛳ MyGolf Companion</h1>
           <p className="text-base text-gray-500 mt-1">Your AI guide to better golf</p>
+          <div className="inline-block bg-green-50 text-green-700 text-sm font-semibold px-4 py-1.5 rounded-full mt-3">
+            AI-Powered Golf Instruction
+          </div>
         </div>
       </header>
 
       {/* Hero */}
-      <section className="max-w-5xl mx-auto px-4 pt-10 pb-6 text-center">
-        <div className="inline-block bg-green-50 text-green-700 text-sm font-semibold px-4 py-1.5 rounded-full mb-6">
-          AI-Powered Golf Instruction
-        </div>
+      <section className="max-w-5xl mx-auto px-4 pt-6 pb-6 text-center">
         <h2 className="text-5xl font-bold text-gray-900 leading-tight mb-6">
           Play Better Golf.<br />
           <span className="text-green-700">Starting Today.</span>
@@ -47,18 +47,7 @@ export default function LandingPage() {
           </a>
         </div>
 
-        {/* Secondary nav buttons */}
-        <div className="flex flex-col sm:flex-row gap-3 justify-center mb-10">
-          <a href="/learn" className="px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors">
-            📖 Read Articles
-          </a>
-          <a href="/plan" className="px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors">
-            🎯 My Plan
-          </a>
-          <a href="/about" className="px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors">
-            ℹ️ About
-          </a>
-        </div>
+
 
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 max-w-2xl mx-auto">
