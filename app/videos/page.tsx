@@ -55,7 +55,7 @@ type VideoRow = {
 
 type Tab = 'videos' | 'ask'
 
-export default function Home() {
+export default function VideosPage() {
   const [videos, setVideos] = useState<VideoRow[]>([])
   const [filtered, setFiltered] = useState<VideoRow[]>([])
   const [loading, setLoading] = useState(true)
