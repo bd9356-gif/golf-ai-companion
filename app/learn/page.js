@@ -95,7 +95,7 @@ export default function LearnPage() {
               href="/"
               className="px-4 py-2 text-sm font-semibold text-gray-500 hover:text-gray-700 border-b-2 border-transparent transition-colors"
             >
-              Video Library
+              ← Back
             </a>
             <span className="px-4 py-2 text-sm font-semibold text-green-800 border-b-2 border-green-700">
               Learn
@@ -111,7 +111,7 @@ export default function LearnPage() {
                 href="/onboarding"
                 className="text-sm font-semibold text-white bg-green-700 rounded-xl px-4 py-2 hover:bg-green-800 transition-colors whitespace-nowrap"
               >
-                Get My Video Plan
+                Update My Plan
               </a>
             </div>
           </div>
