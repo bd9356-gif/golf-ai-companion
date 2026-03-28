@@ -10,9 +10,9 @@ const supabase = createClient(
 )
 
 const TIER_LABELS: Record<string, string> = {
-  beginner: 'Getting Started',
+  beginner: 'Building Your Game',
   intermediate: 'Building Consistency',
-  advanced: 'Sharpening Your Game',
+  advanced: 'Advanced Player',
   all: 'All Levels',
 }
 
@@ -120,7 +120,7 @@ export default function Home() {
             href="/onboarding"
             className="text-sm text-green-700 border border-green-200 rounded-lg px-3 py-1.5 hover:bg-green-50 transition-colors whitespace-nowrap"
           >
-            Retake Assessment
+            My Plan
           </a>
         </div>
 
