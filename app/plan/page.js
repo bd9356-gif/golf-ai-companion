@@ -16,7 +16,6 @@ const TIER_LABELS = {
   building_consistency: 'Building Consistency',
   improving_player: 'Improving Player',
   advanced_player: 'Advanced Player',
-  senior_player: 'Senior Player',
 }
 
 const TIER_SUBLABELS = {
@@ -25,7 +24,6 @@ const TIER_SUBLABELS = {
   building_consistency: 'Scoring 90–100, improving fundamentals',
   improving_player: 'Scoring 80–90, solid intermediate skills',
   advanced_player: 'Scoring 70–80, low-handicap and scoring well',
-  senior_player: 'Prioritizing mobility, rhythm, balance, and joint-friendly mechanics',
 }
 
 const TIER_TOPICS = {
@@ -34,7 +32,6 @@ const TIER_TOPICS = {
   building_consistency: ['iron play', 'driving', 'short game', 'putting', 'mental game'],
   improving_player:     ['iron play', 'short game', 'bunker', 'course management', 'mental game'],
   advanced_player:      ['driving', 'iron play', 'short game', 'bunker', 'course management'],
-  senior_player:        ['swing', 'fitness', 'course management', 'mental game', 'putting'],
 }
 
 export default function PlanPage() {
@@ -175,7 +172,12 @@ export default function PlanPage() {
                   <h2 className="text-2xl font-bold text-green-900">{TIER_LABELS[skillLevel]}</h2>
                   <p className="text-green-700 mt-0.5">{TIER_SUBLABELS[skillLevel]}</p>
                 </div>
-
+                <a
+                  href="/"
+                  className="text-sm text-green-600 hover:text-green-800 whitespace-nowrap mt-1"
+                >
+                  Browse all →
+                </a>
               </div>
               {!loading && (
                 <p className="text-sm text-green-700 mt-3 font-medium">
