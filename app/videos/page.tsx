@@ -245,7 +245,6 @@ export default function Home() {
       <main className="max-w-4xl mx-auto px-4 py-6">
         {activeTab === 'ask' ? (
           <AskCompanionTab skillLevel={skillFilter} onBack={() => setActiveTab('videos')} />
-                </span>
                 <button
                   onClick={() => {
                     setAssessmentTopics([])
