@@ -47,12 +47,17 @@ export default function LandingPage() {
           </a>
         </div>
 
-        {/* Nav links */}
-        <div className="flex justify-center gap-8 mb-12 text-sm text-gray-400">
-          <a href="/videos" className="hover:text-green-700 transition-colors">🎬 Videos</a>
-          <a href="/learn" className="hover:text-green-700 transition-colors">📖 Learn</a>
-          <a href="/plan" className="hover:text-green-700 transition-colors">🎯 My Plan</a>
-          <a href="/about" className="hover:text-green-700 transition-colors">ℹ️ About</a>
+        {/* Secondary nav buttons */}
+        <div className="flex flex-col sm:flex-row gap-3 justify-center mb-10">
+          <a href="/learn" className="px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors">
+            📖 Read Articles
+          </a>
+          <a href="/plan" className="px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors">
+            🎯 My Plan
+          </a>
+          <a href="/about" className="px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors">
+            ℹ️ About
+          </a>
         </div>
 
         {/* Stats */}
