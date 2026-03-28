@@ -73,6 +73,7 @@ export default function Home() {
     // Check URL for skill level set by onboarding
     const params = new URLSearchParams(window.location.search)
     const levelFromUrl = params.get('level')
+    if (params.get('tab') === 'ask') setActiveTab('ask')
     if (levelFromUrl && TIER_VALUES.includes(levelFromUrl)) {
       setSkillFilter(levelFromUrl)
       // Clean the URL without reloading
