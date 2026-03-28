@@ -48,6 +48,9 @@ export default function LandingPage() {
           <a href="/learn" className="w-full px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors text-center">
             📖 Read Articles
           </a>
+          <a href="/videos" className="w-full px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors text-center">
+            🤖 Ask MyGolf AI
+          </a>
           <a href="/plan" className="w-full px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors text-center">
             🎯 My Plan
           </a>
