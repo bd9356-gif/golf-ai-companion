@@ -31,6 +31,8 @@ const TOPIC_ICONS = {
   'course management': '🗺️',
   'mental game': '🧠',
   fitness: '💪',
+  putting: '⛳',
+  'short game': '🎯',
 }
 
 // Simple markdown renderer
