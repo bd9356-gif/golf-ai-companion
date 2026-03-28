@@ -3,12 +3,20 @@
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-white">
-      <header className="border-b border-gray-100 bg-white">
-        <div className="max-w-4xl mx-auto px-4 py-4 text-center">
-          <a href="/" className="hover:opacity-80 transition-opacity inline-block">
-            <h1 className="text-2xl font-bold text-gray-900">⛳ MyGolf Companion</h1>
-            <p className="text-sm text-gray-500 mt-0.5">Your AI guide to better golf</p>
+      {/* Nav */}
+      <header className="border-b border-gray-100 bg-white sticky top-0 z-40">
+        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+          <a href="/" className="hover:opacity-80 transition-opacity">
+            <h1 className="text-xl font-bold text-gray-900">⛳ MyGolf Companion</h1>
+            <p className="text-xs text-gray-500">Your AI guide to better golf</p>
           </a>
+          <div className="flex items-center gap-2">
+            <a href="/videos" className="text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-2">Videos</a>
+            <a href="/learn" className="text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-2">Learn</a>
+            <a href="/onboarding" className="text-sm font-semibold text-white bg-green-700 rounded-xl px-4 py-2 hover:bg-green-800 transition-colors">
+              Get My Plan
+            </a>
+          </div>
         </div>
       </header>
 
