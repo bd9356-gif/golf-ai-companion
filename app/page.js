@@ -1,145 +1,104 @@
 'use client'
+import { useState, useEffect } from 'react'
+import { supabase } from '../lib/supabase'
 
-import { useEffect, useState } from 'react'
+export default function Home() {
+  const [videos, setVideos] = useState([])
+  const [selectedTier, setSelectedTier] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('golf_skill_tier') || 'all'
+    }
+    return 'all'
+  })
+  const [selectedTopic, setSelectedTopic] = useState('all')
+  const [loading, setLoading] = useState(true)
 
-export default function LandingPage() {
-  const [hasPlan, setHasPlan] = useState(false)
+  const tiers = ['all', 'beginner', 'intermediate', 'advanced']
+  const topics = ['all', 'grip', 'stance', 'swing', 'putting', 'chipping', 'pitching', 'bunker', 'course management', 'mental game', 'fitness', 'rules', 'equipment']
 
-  useEffect(() => {
-    const level = localStorage.getItem('golf_skill_level')
-    if (level) setHasPlan(true)
-  }, [])
+  useEffect(() => { fetchVideos() }, [selectedTier, selectedTopic])
+
+  async function fetchVideos() {
+    setLoading(true)
+    const { data, error } = await supabase
+      .from('videos')
+      .select(`id, title, url, thumbnail_url, channel_name, video_metadata (skill_tiers, topics, ai_summary, quality_score)`)
+      .not('video_metadata', 'is', null)
+      .limit(24)
+
+    if (error) { console.error(error); setLoading(false); return }
+
+    let filtered = data.filter(v => v.video_metadata?.length > 0)
+    if (selectedTier !== 'all') filtered = filtered.filter(v => v.video_metadata[0]?.skill_tiers?.includes(selectedTier))
+    if (selectedTopic !== 'all') filtered = filtered.filter(v => v.video_metadata[0]?.topics?.includes(selectedTopic))
+
+    setVideos(filtered)
+    setLoading(false)
+  }
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Nav */}
-      <header className="border-b border-gray-100 bg-white sticky top-0 z-40">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">⛳ MyGolf Companion</h1>
-            <p className="text-xs text-gray-500">Your AI guide to better golf</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <a href="/videos" className="text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-2">Videos</a>
-            <a href="/learn" className="text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-2">Learn</a>
-            <a href="/about" className="text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-2">About</a>
-            {hasPlan ? (
-              <a href="/plan" className="text-sm font-semibold text-white bg-green-700 rounded-xl px-4 py-2 hover:bg-green-800 transition-colors">
-                My Plan
-              </a>
-            ) : (
-              <a href="/onboarding" className="text-sm font-semibold text-white bg-green-700 rounded-xl px-4 py-2 hover:bg-green-800 transition-colors">
-                Get My Plan
-              </a>
-            )}
-          </div>
+    <main style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0a1628 0%, #0d2137 50%, #0a1628 100%)', fontFamily: 'Georgia, serif', color: '#e8e0d0' }}>
+      <header style={{ padding: '2rem 3rem', borderBottom: '1px solid rgba(212,175,55,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(0,0,0,0.3)' }}>
+        <div>
+          <h1 style={{ fontSize: '2rem', fontWeight: '700', color: '#d4af37', margin: 0, letterSpacing: '0.05em' }}>⛳ My Golf AI Companion</h1>
+          <p style={{ margin: '0.25rem 0 0', color: '#8a9bb0', fontSize: '0.9rem' }}>Curated instruction matched to your game</p>
+        </div>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <div style={{ background: 'rgba(212,175,55,0.1)', border: '1px solid rgba(212,175,55,0.3)', borderRadius: '8px', padding: '0.5rem 1rem', fontSize: '0.85rem', color: '#d4af37' }}>{videos.length} videos</div>
+          <a href="/onboarding" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', padding: '0.5rem 1rem', fontSize: '0.85rem', color: '#8a9bb0', textDecoration: 'none' }}>Retake Assessment</a>
         </div>
       </header>
-
-      {/* Hero */}
-      <section className="max-w-5xl mx-auto px-4 py-20 text-center">
-        <div className="inline-block bg-green-50 text-green-700 text-sm font-semibold px-4 py-1.5 rounded-full mb-6">
-          AI-Powered Golf Instruction
-        </div>
-        <h2 className="text-5xl font-bold text-gray-900 leading-tight mb-6">
-          Play Better Golf.<br />
-          <span className="text-green-700">Starting Today.</span>
-        </h2>
-        <p className="text-xl text-gray-500 max-w-2xl mx-auto mb-10">
-          767 curated instruction videos and expert articles — matched to your skill level by AI. From beginner basics to advanced shot shaping.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-          <a
-            href="/onboarding"
-            className="px-8 py-4 bg-green-700 text-white rounded-xl font-bold text-lg hover:bg-green-800 transition-colors"
-          >
-            Get My Video Plan →
-          </a>
-          <a
-            href="/videos"
-            className="px-8 py-4 border-2 border-gray-200 text-gray-700 rounded-xl font-bold text-lg hover:bg-gray-50 transition-colors"
-          >
-            Browse Videos
-          </a>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 max-w-2xl mx-auto">
-          {[
-            { stat: '767', label: 'Instruction Videos' },
-            { stat: '6', label: 'Skill Levels' },
-            { stat: '18+', label: 'Expert Articles' },
-            { stat: 'AI', label: 'Personalized Plans' },
-          ].map(({ stat, label }) => (
-            <div key={label} className="text-center">
-              <p className="text-3xl font-bold text-green-700">{stat}</p>
-              <p className="text-sm text-gray-500 mt-1">{label}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="bg-gray-50 py-20">
-        <div className="max-w-5xl mx-auto px-4">
-          <h3 className="text-3xl font-bold text-gray-900 text-center mb-12">Everything you need to improve</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
-            {[
-              { icon: '🎬', title: 'Curated Video Library', desc: '767 hand-picked instructional videos from top coaches. Search by problem, filter by skill level, play right in the app.' },
-              { icon: '🎯', title: 'Personalized Video Plan', desc: 'Answer 1 question about your game and get a personalized plan of videos matched to your exact skill level.' },
-              { icon: '📖', title: 'Expert Articles', desc: 'AI-written articles covering swing tips, course management, mental game, and fitness — personalized to your plan.' },
-              { icon: '🤖', title: 'Ask MyGolf AI', desc: 'Got a question about your swing or strategy? Ask your personal AI golf coach anything, anytime.' },
-              { icon: '⛳', title: '6 Skill Levels', desc: 'From complete beginners to low handicappers — including a dedicated Senior Player track.' },
-              { icon: '📱', title: 'Mobile Friendly', desc: 'Built for the range and the course. Watch videos and read articles right from your phone.' },
-            ].map(({ icon, title, desc }) => (
-              <div key={title} className="bg-white rounded-2xl p-6 border border-gray-100">
-                <p className="text-3xl mb-3">{icon}</p>
-                <h4 className="font-bold text-gray-900 text-base mb-2">{title}</h4>
-                <p className="text-sm text-gray-500 leading-relaxed">{desc}</p>
-              </div>
+      <div style={{ padding: '1.5rem 3rem', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.2)' }}>
+        <div style={{ marginBottom: '1rem' }}>
+          <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8a9bb0' }}>Skill Level</p>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            {tiers.map(tier => (
+              <button key={tier} onClick={() => setSelectedTier(tier)} style={{ padding: '0.4rem 1rem', borderRadius: '20px', border: selectedTier === tier ? '1px solid #d4af37' : '1px solid rgba(255,255,255,0.15)', background: selectedTier === tier ? 'rgba(212,175,55,0.2)' : 'transparent', color: selectedTier === tier ? '#d4af37' : '#8a9bb0', cursor: 'pointer', fontSize: '0.85rem', textTransform: 'capitalize' }}>{tier}</button>
             ))}
           </div>
         </div>
-      </section>
-
-      {/* Skill levels */}
-      <section className="max-w-5xl mx-auto px-4 py-20">
-        <h3 className="text-3xl font-bold text-gray-900 text-center mb-4">Built for every golfer</h3>
-        <p className="text-gray-500 text-center mb-10">Pick your level and get a plan tailored to where you are right now</p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          {[
-            { level: 'Beginner', sub: 'Just starting out', color: 'bg-blue-50 text-blue-700 border-blue-100' },
-            { level: 'Building Your Game', sub: 'Scoring 100+', color: 'bg-yellow-50 text-yellow-700 border-yellow-100' },
-            { level: 'Building Consistency', sub: 'Scoring 90–100', color: 'bg-orange-50 text-orange-700 border-orange-100' },
-            { level: 'Improving Player', sub: 'Scoring 80–90', color: 'bg-purple-50 text-purple-700 border-purple-100' },
-            { level: 'Advanced Player', sub: 'Scoring 70–80', color: 'bg-red-50 text-red-700 border-red-100' },
-            { level: 'Senior Player', sub: 'Mobility & rhythm focus', color: 'bg-green-50 text-green-700 border-green-100' },
-          ].map(({ level, sub, color }) => (
-            <a key={level} href="/onboarding" className={`border rounded-xl p-4 hover:shadow-sm transition-all ${color}`}>
-              <p className="font-bold text-sm">{level}</p>
-              <p className="text-xs mt-0.5 opacity-75">{sub}</p>
-            </a>
-          ))}
-        </div>
-        <div className="text-center mt-8">
-          <a href="/onboarding" className="inline-block px-8 py-4 bg-green-700 text-white rounded-xl font-bold text-base hover:bg-green-800 transition-colors">
-            Get My Video Plan →
-          </a>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t border-gray-100 py-8">
-        <div className="max-w-5xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-400">
-          <p>⛳ MyGolf Companion — Your AI guide to better golf</p>
-          <div className="flex gap-6">
-            <a href="/videos" className="hover:text-gray-600">Videos</a>
-            <a href="/learn" className="hover:text-gray-600">Learn</a>
-            <a href="/plan" className="hover:text-gray-600">My Plan</a>
-            <a href="/about" className="hover:text-gray-600">About</a>
+        <div>
+          <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8a9bb0' }}>Topic</p>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            {topics.map(topic => (
+              <button key={topic} onClick={() => setSelectedTopic(topic)} style={{ padding: '0.4rem 1rem', borderRadius: '20px', border: selectedTopic === topic ? '1px solid #d4af37' : '1px solid rgba(255,255,255,0.15)', background: selectedTopic === topic ? 'rgba(212,175,55,0.2)' : 'transparent', color: selectedTopic === topic ? '#d4af37' : '#8a9bb0', cursor: 'pointer', fontSize: '0.85rem', textTransform: 'capitalize' }}>{topic}</button>
+            ))}
           </div>
         </div>
-      </footer>
-    </div>
+      </div>
+      <div style={{ padding: '2rem 3rem' }}>
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '4rem', color: '#8a9bb0' }}>Loading videos...</div>
+        ) : videos.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '4rem', color: '#8a9bb0' }}>No videos found for this filter combination.</div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
+            {videos.map(video => (
+              <a key={video.id} href={video.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', overflow: 'hidden', cursor: 'pointer' }}
+                  onMouseEnter={e => { e.currentTarget.style.border = '1px solid rgba(212,175,55,0.4)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
+                  onMouseLeave={e => { e.currentTarget.style.border = '1px solid rgba(255,255,255,0.08)'; e.currentTarget.style.transform = 'translateY(0)' }}>
+                  {video.thumbnail_url && <img src={video.thumbnail_url} alt={video.title} style={{ width: '100%', height: '170px', objectFit: 'cover' }} />}
+                  <div style={{ padding: '1rem' }}>
+                    <h3 style={{ margin: '0 0 0.5rem', fontSize: '0.95rem', color: '#e8e0d0', lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{video.title}</h3>
+                    <p style={{ margin: '0 0 0.75rem', fontSize: '0.8rem', color: '#8a9bb0' }}>{video.channel_name}</p>
+                    {video.video_metadata?.[0]?.ai_summary && <p style={{ margin: '0 0 0.75rem', fontSize: '0.8rem', color: '#a0b0c0', lineHeight: '1.5', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{video.video_metadata[0].ai_summary}</p>}
+                    <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                      {video.video_metadata?.[0]?.skill_tiers?.map(tier => (
+                        <span key={tier} style={{ padding: '0.2rem 0.6rem', borderRadius: '10px', fontSize: '0.7rem', background: 'rgba(212,175,55,0.15)', color: '#d4af37', border: '1px solid rgba(212,175,55,0.3)', textTransform: 'capitalize' }}>{tier}</span>
+                      ))}
+                      {video.video_metadata?.[0]?.topics?.slice(0, 2).map(topic => (
+                        <span key={topic} style={{ padding: '0.2rem 0.6rem', borderRadius: '10px', fontSize: '0.7rem', background: 'rgba(255,255,255,0.05)', color: '#8a9bb0', border: '1px solid rgba(255,255,255,0.1)', textTransform: 'capitalize' }}>{topic}</span>
+                      ))}
+                      {video.video_metadata?.[0]?.quality_score && <span style={{ marginLeft: 'auto', fontSize: '0.75rem', color: '#d4af37' }}>⭐ {video.video_metadata[0].quality_score}</span>}
+                    </div>
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
+    </main>
   )
 }
