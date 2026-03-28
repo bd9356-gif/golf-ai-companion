@@ -208,6 +208,7 @@ export default function Home() {
 
           {/* Nav row — tabs + Get My Video Plan together */}
           <div className="flex items-center gap-1">
+            <a href="/" className="text-sm font-medium text-gray-500 hover:text-gray-700 px-2 py-2">← Back</a>
             <button
               onClick={() => setActiveTab('videos')}
               className={`px-4 py-2 text-sm font-semibold border-b-2 transition-colors ${
@@ -216,7 +217,7 @@ export default function Home() {
                   : 'text-gray-500 border-transparent hover:text-gray-700'
               }`}
             >
-              Video Library
+              Videos
             </button>
             <a
               href="/learn"
