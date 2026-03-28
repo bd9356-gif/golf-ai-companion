@@ -66,8 +66,6 @@ export default function VideosPage() {
   const [playingId, setPlayingId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<Tab>('videos')
   const [assessmentTopics, setAssessmentTopics] = useState<string[]>([])
-  const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
-  const [showSaved, setShowSaved] = useState(false)
   const [matchedPool, setMatchedPool] = useState<VideoRow[]>([])
   const [planPage, setPlanPage] = useState(0)
 
@@ -82,8 +80,6 @@ export default function VideosPage() {
     }
 
     // Load topics from assessment — stored directly by onboarding page
-    const savedRaw = localStorage.getItem('golf_saved_videos')
-    if (savedRaw) { try { setSavedIds(new Set(JSON.parse(savedRaw))) } catch {} }
     const topicsRaw = localStorage.getItem('golf_topics')
     if (topicsRaw) {
       try {
@@ -195,7 +191,7 @@ export default function VideosPage() {
     if (!level) { alert('Get My Video Plan to save videos to your library!'); return }
     setSavedIds(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); localStorage.setItem('golf_saved_videos', JSON.stringify([...next])); return next })
   }
-  const visibleVideos = showSaved ? videos.filter(v => savedIds.has(v.id)) : filtered.slice(0, showCount)
+  const visibleVideos = filtered.slice(0, showCount)
   const hasMore = filtered.length > showCount
 
   // Human-readable label for assessment focus
