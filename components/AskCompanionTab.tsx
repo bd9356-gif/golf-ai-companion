@@ -122,7 +122,7 @@ export default function AskCompanionTab({ skillLevel = 'all', onBack }: Props) {
 
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            {msg.role === 'assistant' {msg.role === 'assistant' && <span className="mr-2 mt-1 text-base shrink-0">⛳</span>}{msg.role === 'assistant' && <span className="mr-2 mt-1 text-base shrink-0">⛳</span>} <span className="mr-2 mt-1 text-base shrink-0">⛳</span>}{msg.role === 'assistant' && <p className="text-xs text-green-700 font-semibold mb-1">Answered by Your MyGolf Companion AI</p>}
+            {msg.role === 'assistant' {msg.role === 'assistant' && <span className="mr-2 mt-1 text-base shrink-0">⛳</span>}{msg.role === 'assistant' && <p className="text-xs text-green-700 font-semibold mb-1 -mt-1">Answered by Your MyGolf Companion AI</p>}{msg.role === 'assistant' && <span className="mr-2 mt-1 text-base shrink-0">⛳</span>}{msg.role === 'assistant' && <p className="text-xs text-green-700 font-semibold mb-1 -mt-1">Answered by Your MyGolf Companion AI</p>} <span className="mr-2 mt-1 text-base shrink-0">⛳</span>}{msg.role === 'assistant' && <p className="text-xs text-green-700 font-semibold mb-1">Answered by Your MyGolf Companion AI</p>}
             <div
               className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
                 msg.role === 'user'
