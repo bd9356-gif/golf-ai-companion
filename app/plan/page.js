@@ -42,6 +42,8 @@ export default function PlanPage() {
   const [expandedIds, setExpandedIds] = useState(new Set())
   const [playingId, setPlayingId] = useState(null)
   const [activeTab, setActiveTab] = useState('videos')
+  const [savedIds, setSavedIds] = useState(new Set())
+  const [showSaved, setShowSaved] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -51,6 +53,8 @@ export default function PlanPage() {
       return
     }
     setSkillLevel(level)
+    const savedRaw = localStorage.getItem('golf_saved_videos')
+    if (savedRaw) { try { setSavedIds(new Set(JSON.parse(savedRaw))) } catch {} }
     fetchPlanVideos(level)
   }, [])
 
@@ -94,6 +98,10 @@ export default function PlanPage() {
     setLoading(false)
   }
 
+  function toggleSaved(id) {
+    setSavedIds(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); localStorage.setItem('golf_saved_videos', JSON.stringify([...next])); return next })
+  }
+
   function getMeta(video) {
     const m = video.video_metadata
     if (!m) return null
@@ -114,7 +122,7 @@ export default function PlanPage() {
     })
   }
 
-  const visibleVideos = videos.slice(0, showCount)
+  const visibleVideos = showSaved ? videos.filter(v => savedIds.has(v.id)) : videos.slice(0, showCount)
   const hasMore = videos.length > showCount
 
   if (!skillLevel) return null
