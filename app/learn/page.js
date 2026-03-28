@@ -208,21 +208,21 @@ export default function LearnPage() {
                           {article.read_time_minutes} min read
                         </span>
                       </div>
-                      <h3 className={`font-bold text-base leading-snug ${isLocked ? 'text-gray-400' : 'text-gray-900'}`}>
+                      <h3 className={`font-bold text-base leading-snug text-gray-900`}>
                         {article.title}
                       </h3>
-                      {!isLocked && (
+                      ({
                         <p className="text-sm text-gray-500 mt-1 leading-relaxed">
                           {article.summary}
                         </p>
                       )}
-                      {isLocked && (
+                      ({false {isLocked && ({isLocked && ( (
                         <p className="text-sm text-gray-400 mt-1 italic">
                           Update your plan to access this article
                         </p>
                       )}
                     </div>
-                    {!isLocked && (
+                    ({
                       <span className="text-gray-400 text-lg shrink-0 mt-1">
                         {openArticle?.id === article.id ? '▲' : '▼'}
                       </span>
@@ -230,7 +230,7 @@ export default function LearnPage() {
                   </div>
 
                   {/* Full article content */}
-                  {openArticle?.id === article.id && !isLocked && (
+                  {openArticle?.id === article.id  && (
                     <div className="mt-5 pt-5 border-t border-gray-200">
                       <div
                         className="text-base text-gray-700 leading-relaxed mb-5"
