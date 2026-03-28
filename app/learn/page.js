@@ -176,7 +176,6 @@ export default function LearnPage() {
                           </span>
                         )}
                         
-                      {isLocked && (
                         <p className="text-sm text-gray-400 mt-1 italic">
                           Update your plan to access this article
                         </p>
