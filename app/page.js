@@ -103,14 +103,14 @@ export default function LandingPage() {
         <p className="text-gray-500 text-center mb-10">Pick your level and get a plan tailored to where you are right now</p>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           {[
-            { level: 'Beginner', sub: 'Just starting out', color: 'bg-blue-50 text-blue-700 border-blue-100' },
-            { level: 'Building Your Game', sub: 'Scoring 100+', color: 'bg-yellow-50 text-yellow-700 border-yellow-100' },
-            { level: 'Building Consistency', sub: 'Scoring 90–100', color: 'bg-orange-50 text-orange-700 border-orange-100' },
-            { level: 'Improving Player', sub: 'Scoring 80–90', color: 'bg-purple-50 text-purple-700 border-purple-100' },
-            { level: 'Advanced Player', sub: 'Scoring 70–80', color: 'bg-red-50 text-red-700 border-red-100' },
-            { level: 'Senior Player', sub: 'Mobility & rhythm focus', color: 'bg-green-50 text-green-700 border-green-100' },
-          ].map(({ level, sub, color }) => (
-            <a key={level} href="/onboarding" className={`border rounded-xl p-4 hover:shadow-sm transition-all ${color}`}>
+            { level: 'Beginner', value: 'beginner', sub: 'Just starting out', color: 'bg-blue-50 text-blue-700 border-blue-100' },
+            { level: 'Building Your Game', value: 'building_game', sub: 'Scoring 100+', color: 'bg-yellow-50 text-yellow-700 border-yellow-100' },
+            { level: 'Building Consistency', value: 'building_consistency', sub: 'Scoring 90–100', color: 'bg-orange-50 text-orange-700 border-orange-100' },
+            { level: 'Improving Player', value: 'improving_player', sub: 'Scoring 80–90', color: 'bg-purple-50 text-purple-700 border-purple-100' },
+            { level: 'Advanced Player', value: 'advanced_player', sub: 'Scoring 70–80', color: 'bg-red-50 text-red-700 border-red-100' },
+            { level: 'Senior Player', value: 'senior_player', sub: 'Mobility & rhythm focus', color: 'bg-green-50 text-green-700 border-green-100' },
+          ].map(({ level, value, sub, color }) => (
+            <a key={level} href={`/onboarding?level=${value}`} className={`border rounded-xl p-4 hover:shadow-sm transition-all ${color}`}>
               <p className="font-bold text-sm">{level}</p>
               <p className="text-xs mt-0.5 opacity-75">{sub}</p>
             </a>
