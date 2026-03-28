@@ -12,27 +12,11 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Nav */}
-      <header className="border-b border-gray-100 bg-white sticky top-0 z-40">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">⛳ MyGolf Companion</h1>
-            <p className="text-xs text-gray-500">Your AI guide to better golf</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <a href="/videos" className="text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-2">Videos</a>
-            <a href="/learn" className="text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-2">Learn</a>
-            <a href="/about" className="text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-2">About</a>
-            {hasPlan ? (
-              <a href="/plan" className="text-sm font-semibold text-white bg-green-700 rounded-xl px-4 py-2 hover:bg-green-800 transition-colors">
-                My Plan
-              </a>
-            ) : (
-              <a href="/onboarding" className="text-sm font-semibold text-white bg-green-700 rounded-xl px-4 py-2 hover:bg-green-800 transition-colors">
-                Get My Plan
-              </a>
-            )}
-          </div>
+      {/* Minimal header */}
+      <header className="border-b border-gray-100 bg-white">
+        <div className="max-w-5xl mx-auto px-4 py-4 text-center">
+          <h1 className="text-xl font-bold text-gray-900">⛳ MyGolf Companion</h1>
+          <p className="text-xs text-gray-500 mt-0.5">Your AI guide to better golf</p>
         </div>
       </header>
 
