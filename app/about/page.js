@@ -11,8 +11,8 @@ export default function AboutPage() {
             <p className="text-xs text-gray-500">Your AI guide to better golf</p>
           </a>
           <div className="flex items-center gap-2">
-            <a href="/videos" className="text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-2">Videos</a>
-            <a href="/learn" className="text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-2">Learn</a>
+            <a href="/videos" className="hidden text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-2">Videos</a>
+            <a href="/learn" className="hidden text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-2">Learn</a>
             <a href="/onboarding" className="text-sm font-semibold text-white bg-green-700 rounded-xl px-4 py-2 hover:bg-green-800 transition-colors">
               Get My Plan
             </a>
