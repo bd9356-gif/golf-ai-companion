@@ -191,6 +191,8 @@ export default function VideosPage() {
   }
 
   function toggleSaved(id: string) {
+    const level = localStorage.getItem('golf_skill_level')
+    if (!level) { alert('Get My Video Plan to save videos to your library!'); return }
     setSavedIds(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); localStorage.setItem('golf_saved_videos', JSON.stringify([...next])); return next })
   }
   const visibleVideos = showSaved ? videos.filter(v => savedIds.has(v.id)) : filtered.slice(0, showCount)
