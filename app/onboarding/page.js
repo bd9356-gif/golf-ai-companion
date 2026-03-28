@@ -66,8 +66,9 @@ export default function OnboardingPage() {
   return (
     <div className="min-h-screen bg-white flex flex-col">
       <header className="border-b border-gray-100 px-4 py-4">
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-2xl mx-auto flex items-center justify-between">
           <h1 className="text-xl font-semibold text-gray-900">⛳ MyGolf Companion</h1>
+          <button onClick={() => router.back()} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
         </div>
       </header>
 

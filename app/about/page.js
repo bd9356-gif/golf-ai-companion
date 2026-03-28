@@ -23,9 +23,7 @@ export default function AboutPage() {
       <main className="max-w-3xl mx-auto px-4 py-16">
 
         {/* Back link */}
-        <a href="/" className="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-gray-600 mb-10">
-          ← Back to home
-        </a>
+        <button onClick={() => window.history.back()} className="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-gray-600 mb-10">← Back</button>
 
         {/* Hero */}
         <h2 className="text-4xl font-bold text-gray-900 mb-4">About MyGolf Companion</h2>
