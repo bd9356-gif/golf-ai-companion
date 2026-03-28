@@ -4,15 +4,10 @@ import { useEffect, useState } from 'react'
 
 export default function LandingPage() {
   const [hasPlan, setHasPlan] = useState(false)
-  const [articleCount, setArticleCount] = useState('40+')
 
   useEffect(() => {
     const level = localStorage.getItem('golf_skill_level')
     if (level) setHasPlan(true)
-    fetch('/api/generate-article').then(r => r.json()).then(d => {
-      const match = d.message?.match(/All (\d+) articles/)
-      if (match) setArticleCount(match[1] + '+')
-    }).catch(() => {})
   }, [])
 
   return (
@@ -71,7 +66,7 @@ export default function LandingPage() {
           {[
             { stat: '767', label: 'Instruction Videos' },
             { stat: '6', label: 'Skill Levels' },
-            { stat: articleCount, label: 'Expert Articles' },
+            { stat: '40+', label: 'Expert Articles' },
             { stat: 'AI', label: 'Personalized Plans' },
           ].map(({ stat, label }) => (
             <div key={label} className="text-center">
