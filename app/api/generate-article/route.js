@@ -42,6 +42,40 @@ const ARTICLE_PLAN = [
   { topic: 'fitness', tiers: ['senior_player'], title: 'Golf Fitness for Seniors: 5 Gentle Exercises to Improve Your Swing at Any Age' },
   { topic: 'fitness', tiers: ['improving_player', 'advanced_player'], title: 'Hip Mobility Drills Every Golfer Should Do Daily' },
   { topic: 'fitness', tiers: ['senior_player', 'building_game'], title: 'How to Play 18 Holes Pain-Free: Joint-Friendly Golf Tips' },
+
+  // === PUTTING ===
+  { topic: 'putting', tiers: ['beginner', 'building_game'], title: 'The 3 Putting Fundamentals Every Beginner Must Master' },
+  { topic: 'putting', tiers: ['building_consistency', 'improving_player'], title: 'How to Read Greens Like a Tour Pro' },
+  { topic: 'putting', tiers: ['improving_player', 'advanced_player'], title: 'The Distance Control Secret That Will Eliminate 3-Putts Forever' },
+  { topic: 'putting', tiers: ['senior_player'], title: 'Putting for Seniors: How to Hole More Putts with Less Physical Strain' },
+  { topic: 'putting', tiers: ['building_game', 'building_consistency'], title: 'Why You Miss Short Putts (And the Simple Fix That Works)' },
+
+  // === SHORT GAME ===
+  { topic: 'short game', tiers: ['beginner', 'building_game'], title: 'The Chip Shot Made Simple: A Beginner\'s Guide to Getting Up and Down' },
+  { topic: 'short game', tiers: ['building_consistency', 'improving_player'], title: 'How to Stop Chunking and Blading Chips Around the Green' },
+  { topic: 'short game', tiers: ['improving_player', 'advanced_player'], title: 'Mastering Trajectory Control: High, Low, and Running Chip Shots' },
+  { topic: 'short game', tiers: ['senior_player', 'building_game'], title: 'The Bump and Run: The Most Underrated Shot in Golf' },
+  { topic: 'short game', tiers: ['advanced_player'], title: 'The Tour-Level Wedge Techniques That Spin the Ball Back' },
+
+  // === MORE SWING ===
+  { topic: 'swing', tiers: ['building_consistency', 'improving_player'], title: 'How to Finally Stop Slicing Your Driver (For Good)' },
+  { topic: 'swing', tiers: ['advanced_player'], title: 'How to Shape Shots: Learning the Fade and Draw on Demand' },
+  { topic: 'swing', tiers: ['building_game', 'building_consistency'], title: 'The Takeaway: Why the First 12 Inches of Your Swing Matters Most' },
+  { topic: 'swing', tiers: ['senior_player', 'building_consistency'], title: 'The Slow Swing Secret: How Less Club Speed Creates More Consistency' },
+
+  // === MORE COURSE MANAGEMENT ===
+  { topic: 'course management', tiers: ['beginner', 'building_game'], title: 'Golf Etiquette 101: What Every New Golfer Needs to Know' },
+  { topic: 'course management', tiers: ['advanced_player'], title: 'How to Build a Game Plan for Every Course You Play' },
+  { topic: 'course management', tiers: ['building_game', 'building_consistency'], title: 'When to Lay Up and When to Go For It: A Simple Framework' },
+
+  // === MORE MENTAL GAME ===
+  { topic: 'mental game', tiers: ['building_game', 'building_consistency'], title: 'How to Bounce Back After a Bad Hole Without Losing Your Round' },
+  { topic: 'mental game', tiers: ['senior_player', 'improving_player'], title: 'Golf Mindset for Mature Players: Playing with Patience and Purpose' },
+  { topic: 'mental game', tiers: ['advanced_player'], title: 'How to Get Into the Zone: Peak Performance Strategies for Competitive Golf' },
+
+  // === MORE FITNESS ===
+  { topic: 'fitness', tiers: ['building_consistency', 'improving_player'], title: 'Core Strength for Golf: The 5 Exercises That Actually Help Your Swing' },
+  { topic: 'fitness', tiers: ['senior_player'], title: 'Shoulder Flexibility for Seniors: Stay Loose and Swing Free' },
 ]
 
 export async function GET(request) {
