@@ -22,8 +22,6 @@ const TOPIC_LABELS = {
   'course management': 'Course Management',
   'mental game': 'Mental Game',
   fitness: 'Fitness & Mobility',
-  putting: 'Putting',
-  'short game': 'Short Game',
 }
 
 const TOPIC_ICONS = {
@@ -31,31 +29,9 @@ const TOPIC_ICONS = {
   'course management': '🗺️',
   'mental game': '🧠',
   fitness: '💪',
-  putting: '⛳',
-  'short game': '🎯',
 }
 
 // Simple markdown renderer
-async function fetchRelatedVideos(article) {
-    const topic = article.topic
-    const { data } = await supabase
-      .from('videos')
-      .select('id, title, url, thumbnail_url, youtube_video_id, video_metadata!video_metadata_video_id_fkey(topics, quality_score)')
-      .limit(200)
-    if (data) {
-      const matched = data.filter(v => {
-        const meta = Array.isArray(v.video_metadata) ? v.video_metadata[0] : v.video_metadata
-        const topics = (meta?.topics ?? []).map(t => t.toLowerCase())
-        return topics.some(t => t.includes(topic.toLowerCase()) || topic.toLowerCase().includes(t))
-      }).sort((a, b) => {
-        const am = Array.isArray(a.video_metadata) ? a.video_metadata[0] : a.video_metadata
-        const bm = Array.isArray(b.video_metadata) ? b.video_metadata[0] : b.video_metadata
-        return (bm?.quality_score ?? 0) - (am?.quality_score ?? 0)
-      })
-      setRelatedVideos(matched.slice(0, 10).sort(() => Math.random() - 0.5).slice(0, 3))
-    }
-  }
-
 function renderMarkdown(text) {
   return text
     .replace(/## (.+)/g, '<h2 class="text-xl font-bold text-gray-900 mt-6 mb-2">$1</h2>')
@@ -70,7 +46,6 @@ export default function LearnPage() {
   const [skillLevel, setSkillLevel] = useState(null)
   const [selectedTopic, setSelectedTopic] = useState('all')
   const [openArticle, setOpenArticle] = useState(null)
-  const [relatedVideos, setRelatedVideos] = useState([])
 
   useEffect(() => {
     const level = localStorage.getItem('golf_skill_level')
@@ -90,15 +65,17 @@ export default function LearnPage() {
   }
 
   // Filter by topic
-  const topicFiltered = selectedTopic === 'all'
+  const filtered = selectedTopic === 'all'
     ? articles
     : articles.filter(a => a.topic === selectedTopic)
 
-  // Plan users see ONLY their matched articles
-  // Non-plan users see all articles
+  // Sort — plan users see their tier's articles first
   const sorted = skillLevel
-    ? topicFiltered.filter(a => a.skill_tiers?.includes(skillLevel))
-    : topicFiltered
+    ? [
+        ...filtered.filter(a => a.skill_tiers?.includes(skillLevel)),
+        ...filtered.filter(a => !a.skill_tiers?.includes(skillLevel)),
+      ]
+    : filtered
 
   const topics = ['all', ...Object.keys(TOPIC_LABELS)]
 
@@ -106,14 +83,37 @@ export default function LearnPage() {
     <div className="min-h-screen bg-white">
       {/* Header */}
       <header className="border-b border-gray-100 bg-white sticky top-0 z-40">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <a href="/" className="text-xl font-bold text-gray-900">⛳ MyGolf Companion</a>
+        <div className="max-w-4xl mx-auto px-4 pt-5 pb-3">
+          <div className="mb-3">
+            <h1 className="text-3xl font-bold text-gray-900 leading-tight tracking-tight">
+              ⛳ MyGolf Companion
+            </h1>
+            <p className="text-base text-gray-500 mt-1">Your AI guide to better golf</p>
+          </div>
           <div className="flex items-center gap-2">
-            <a href="/" className="text-sm font-medium text-gray-500 hover:text-gray-700 px-2 py-2">← Home</a>
-            <span className="text-sm font-semibold text-green-800 border-b-2 border-green-700 px-3 py-1.5">Learn</span>
-            <a href="/onboarding" className="text-sm font-semibold text-white bg-green-700 rounded-xl px-4 py-2 hover:bg-green-800 transition-colors whitespace-nowrap">
-              Update My Plan
+            <a
+              href="/"
+              className="px-4 py-2 text-sm font-semibold text-gray-500 hover:text-gray-700 border-b-2 border-transparent transition-colors"
+            >
+              Video Library
             </a>
+            <span className="px-4 py-2 text-sm font-semibold text-green-800 border-b-2 border-green-700">
+              Learn
+            </span>
+            <div className="ml-auto flex items-center gap-2">
+              <a
+                href="/plan"
+                className="px-4 py-2 text-sm font-semibold text-white bg-green-700 rounded-xl hover:bg-green-800 transition-colors whitespace-nowrap"
+              >
+                My Video Plan
+              </a>
+              <a
+                href="/onboarding"
+                className="text-sm font-semibold text-white bg-green-700 rounded-xl px-4 py-2 hover:bg-green-800 transition-colors whitespace-nowrap"
+              >
+                Get My Video Plan
+              </a>
+            </div>
           </div>
         </div>
       </header>
@@ -121,18 +121,14 @@ export default function LearnPage() {
       <main className="max-w-4xl mx-auto px-4 py-6">
 
         {/* Personalized banner */}
-        {skillLevel ? (
+        {skillLevel && (
           <div className="mb-6 px-4 py-3 bg-green-50 border border-green-100 rounded-xl text-sm text-green-800 flex items-center justify-between">
             <span>
-              🎯 Showing articles for your plan: <strong>{TIER_LABELS[skillLevel]}</strong>
+              🎯 Showing articles matched to your plan: <strong>{TIER_LABELS[skillLevel]}</strong>
             </span>
             <a href="/onboarding" className="text-xs text-green-600 hover:text-green-800 whitespace-nowrap ml-3">
               Update plan
             </a>
-          </div>
-        ) : (
-          <div className="mb-6 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-600 flex items-center justify-between">
-            <span>📖 Browsing all articles — <a href="/onboarding" className="text-green-700 font-semibold hover:underline">Get My Video Plan</a> to see articles matched to your game</span>
           </div>
         )}
 
@@ -175,18 +171,14 @@ export default function LearnPage() {
         ) : (
           <div className="space-y-4">
             {sorted.map(article => {
+              const isMatch = skillLevel && article.skill_tiers?.includes(skillLevel)
               return (
                 <div
                   key={article.id}
-                  className={`border rounded-xl p-5 transition-all cursor-pointer hover:shadow-sm ${
-                    skillLevel ? 'border-green-200 bg-green-50/40' : 'border-gray-200'
+                  className={`border rounded-xl p-5 cursor-pointer hover:shadow-sm transition-all ${
+                    isMatch ? 'border-green-200 bg-green-50/30' : 'border-gray-200'
                   }`}
-                  onClick={() => {
-                    const next = openArticle?.id === article.id ? null : article
-                    setOpenArticle(next)
-                    if (next) fetchRelatedVideos(next)
-                    else setRelatedVideos([])
-                  }}
+                  onClick={() => setOpenArticle(openArticle?.id === article.id ? null : article)}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
@@ -194,67 +186,35 @@ export default function LearnPage() {
                         <span className="text-xs bg-gray-100 text-gray-500 px-2.5 py-1 rounded-full">
                           {TOPIC_ICONS[article.topic]} {TOPIC_LABELS[article.topic] ?? article.topic}
                         </span>
-                        {skillLevel && (
-                          <span className="text-xs bg-green-600 text-white px-2.5 py-1 rounded-full font-semibold">
-                            🎯 In Your Plan
-                          </span>
-                        )}
-                        {false && (
-                          <span className="text-xs bg-gray-100 text-gray-400 px-2.5 py-1 rounded-full">
-                            Not in your plan
+                        {isMatch && (
+                          <span className="text-xs bg-green-100 text-green-700 px-2.5 py-1 rounded-full font-medium">
+                            🎯 Matched to your plan
                           </span>
                         )}
                         <span className="text-xs text-gray-400">
                           {article.read_time_minutes} min read
                         </span>
                       </div>
-                      <h3 className={`font-bold text-base leading-snug text-gray-900`}>
+                      <h3 className="font-bold text-gray-900 text-base leading-snug">
                         {article.title}
                       </h3>
-                        <p className="text-sm text-gray-500 mt-1 leading-relaxed">
-                          {article.summary}
-                        </p>
-                      )}
+                      <p className="text-sm text-gray-500 mt-1 leading-relaxed">
+                        {article.summary}
+                      </p>
                     </div>
-                      <span className="text-gray-400 text-lg shrink-0 mt-1">
-                        {openArticle?.id === article.id ? '▲' : '▼'}
-                      </span>
-                    )}
+                    <span className="text-gray-400 text-lg shrink-0 mt-1">
+                      {openArticle?.id === article.id ? '▲' : '▼'}
+                    </span>
                   </div>
 
                   {/* Full article content */}
-                  {openArticle?.id === article.id  && (
-                    <div className="mt-5 pt-5 border-t border-gray-200">
-                      <div
-                        className="text-base text-gray-700 leading-relaxed mb-5"
-                        dangerouslySetInnerHTML={{
-                          __html: `<p class="mb-4">${renderMarkdown(article.content)}</p>`
-                        }}
-                      />
-                      {relatedVideos.length > 0 && (
-                        <div className="border-t border-gray-100 pt-4">
-                          <p className="text-sm font-semibold text-gray-500 mb-3">🎬 Related Videos</p>
-                          <div className="space-y-2">
-                            {relatedVideos.map(v => (
-                              <a
-                                key={v.id}
-                                href={`https://www.youtube.com/watch?v=${v.youtube_video_id}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
-                              >
-                                <img
-                                  src={v.thumbnail_url || `https://img.youtube.com/vi/${v.youtube_video_id}/mqdefault.jpg`}
-                                  alt={v.title}
-                                  className="w-20 h-12 object-cover rounded-lg shrink-0"
-                                />
-                                <p className="text-sm text-gray-700 font-medium leading-snug">{v.title}</p>
-                              </a>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                  {openArticle?.id === article.id && (
+                    <div
+                      className="mt-5 pt-5 border-t border-gray-200 text-base text-gray-700 leading-relaxed"
+                      dangerouslySetInnerHTML={{
+                        __html: `<p class="mb-4">${renderMarkdown(article.content)}</p>`
+                      }}
+                    />
                   )}
                 </div>
               )
