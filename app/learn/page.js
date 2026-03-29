@@ -100,7 +100,7 @@ export default function LearnPage() {
             <span className="px-3 py-2 text-sm font-semibold text-green-800 border-b-2 border-green-700">Articles</span>
             <a href="/videos?tab=ask" className="px-3 py-2 text-sm font-semibold text-gray-500 border-b-2 border-transparent hover:text-gray-700 transition-colors">Ask AI</a>
             <div className="ml-auto">
-              <a href="/plan" className="text-sm font-semibold text-white bg-green-700 rounded-xl px-4 py-2 hover:bg-green-800 transition-colors whitespace-nowrap">My Plan</a>
+              <a href="/plan" className="text-sm font-semibold text-green-700 border-2 border-green-700 rounded-xl px-4 py-2 hover:bg-green-50 transition-colors whitespace-nowrap">My Plan</a>
             </div>
           </div>
       </header>
