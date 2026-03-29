@@ -251,12 +251,6 @@ export default function MyPlanPage() {
                                 <span className="text-xs bg-gray-50 text-gray-500 px-2.5 py-1 rounded-full">{video.channel_name}</span>
                               )}
                             </div>
-                          </div>
-                          <div className="flex items-center gap-2 shrink-0">
-                            <button
-                              onClick={() => toggleSaved(video.id)}
-                              className={`text-xl transition-colors ${isSaved ? 'text-green-600' : 'text-gray-300 hover:text-gray-500'}`}
-                              title={isSaved ? 'Remove from saved' : 'Save video'}
                             {!isPlaying && (
                               <a href={video.url} target="_blank" rel="noopener noreferrer" className="text-sm text-gray-400 hover:text-gray-600" title="Open on YouTube">↗</a>
                             )}
@@ -264,6 +258,12 @@ export default function MyPlanPage() {
                         </div>
                         <button onClick={() => toggleExpanded(video.id)} className="mt-2 text-sm text-green-700 hover:text-green-900 font-medium transition-colors">
                           {isExpanded ? 'Hide Details ▲' : 'See Details ▼'}
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); toggleSaved(video.id) }}
+                          className={`mt-1 text-sm font-semibold transition-colors ${isSaved ? 'text-green-600' : 'text-gray-400 hover:text-gray-600'}`}
+                        >
+                          {isSaved ? '🔖 Saved to Library' : '🔖 Save to Library'}
                         </button>
                         {isExpanded && (
                           <div className="mt-3 border-t border-gray-100 pt-3 space-y-3">
