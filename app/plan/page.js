@@ -160,6 +160,12 @@ export default function PlanPage() {
             >
               🔖 Saved{savedIds.size > 0 ? ` (${savedIds.size})` : ''}
             </button>
+            
+              href="/learn"
+              className="px-3 py-2 text-sm font-semibold text-gray-500 border-b-2 border-transparent hover:text-gray-700 transition-colors whitespace-nowrap"
+            >
+              📖 Articles
+            </a>
             <div className="ml-auto flex items-center gap-2">
               <button
                 onClick={() => setActiveTab('ask')}
