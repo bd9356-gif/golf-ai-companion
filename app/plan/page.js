@@ -299,7 +299,7 @@ export default function MyPlanPage() {
                               onClick={() => toggleSaved(video.id)}
                               className={`text-xl transition-colors ${savedIds.has(video.id) ? 'text-green-600' : 'text-gray-300 hover:text-gray-500'}`}
                               title={savedIds.has(video.id) ? 'Remove from saved' : 'Save video'}
-                            >{savedIds.has(video.id) ? '★' : '☆'}</button>
+                            >🔖</button>
                             {!isPlaying && (
                               <a
                                 href={video.url}
