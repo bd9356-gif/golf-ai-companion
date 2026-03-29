@@ -152,26 +152,26 @@ export default function PlanPage() {
               onClick={() => { setShowSaved(false); setActiveTab('videos') }}
               className={`px-3 py-2 text-sm font-semibold border-b-2 transition-colors ${activeTab === 'videos' && !showSaved ? 'text-green-800 border-green-700' : 'text-gray-500 border-transparent hover:text-gray-700'}`}
             >
-              My Plan
-            </button>
-            <button
-              onClick={() => { setShowSaved(true); setActiveTab('videos') }}
-              className={`px-3 py-2 text-sm font-semibold border-b-2 transition-colors ${showSaved ? 'text-green-800 border-green-700' : 'text-gray-500 border-transparent hover:text-gray-700'}`}
-            >
-              🔖 Saved{savedIds.size > 0 ? ` (${savedIds.size})` : ''}
+              Videos
             </button>
             
               href="/learn"
               className="px-3 py-2 text-sm font-semibold text-gray-500 border-b-2 border-transparent hover:text-gray-700 transition-colors whitespace-nowrap"
             >
-              📖 Articles
+              Articles
             </a>
+            <button
+              onClick={() => setActiveTab('ask')}
+              className={`px-3 py-2 text-sm font-semibold border-b-2 transition-colors ${activeTab === 'ask' ? 'text-green-800 border-green-700' : 'text-gray-500 border-transparent hover:text-gray-700'}`}
+            >
+              Ask AI
+            </button>
             <div className="ml-auto flex items-center gap-2">
               <button
-                onClick={() => setActiveTab('ask')}
-                className="px-4 py-2 text-sm font-semibold text-white bg-green-700 rounded-xl hover:bg-green-800 transition-colors whitespace-nowrap"
+                onClick={() => { setShowSaved(true); setActiveTab('videos') }}
+                className={`px-3 py-2 text-sm font-semibold border-b-2 transition-colors ${showSaved ? 'text-green-800 border-green-700' : 'text-gray-500 border-transparent hover:text-gray-700'}`}
               >
-                Ask MyGolf AI
+                🔖{savedIds.size > 0 ? ` (${savedIds.size})` : ''}
               </button>
               <a
                 href="/onboarding"
