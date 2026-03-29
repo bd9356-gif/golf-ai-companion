@@ -164,13 +164,6 @@ export default function MyPlanPage() {
               Ask AI
             </button>
             <div className="ml-auto flex items-center gap-2">
-              <button
-                onClick={() => { setShowSaved(!showSaved); setActiveTab('videos') }}
-                className={`text-lg transition-colors ${showSaved ? 'text-green-700' : 'text-gray-400 hover:text-gray-600'}`}
-                title="Saved videos"
-              >
-                🔖{savedIds.size > 0 ? ` ${savedIds.size}` : ''}
-              </button>
               <a
                 href="/onboarding"
                 className="text-sm font-semibold text-green-700 border-2 border-green-700 rounded-xl px-4 py-2 hover:bg-green-50 transition-colors whitespace-nowrap"
