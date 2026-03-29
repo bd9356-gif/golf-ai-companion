@@ -103,15 +103,6 @@ export default function LearnPage() {
               <a href="/plan" className="text-sm font-semibold text-white bg-green-700 rounded-xl px-4 py-2 hover:bg-green-800 transition-colors whitespace-nowrap">My Plan</a>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <a
-              href="/"
-              className="px-4 py-2 text-sm font-semibold text-gray-500 hover:text-gray-700 border-b-2 border-transparent transition-colors"
-            >
-              ← Back
-              Learn
-            </span>
-        </div>
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-6">
