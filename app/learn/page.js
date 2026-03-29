@@ -111,21 +111,6 @@ export default function LearnPage() {
               ← Back
               Learn
             </span>
-            <div className="ml-auto flex items-center gap-2">
-              <a
-                href="/plan"
-                className="px-4 py-2 text-sm font-semibold text-white bg-green-700 rounded-xl hover:bg-green-800 transition-colors whitespace-nowrap"
-              >
-                My Video Plan
-              </a>
-              <a
-                href="/onboarding"
-                className="text-sm font-semibold text-white bg-green-700 rounded-xl px-4 py-2 hover:bg-green-800 transition-colors whitespace-nowrap"
-              >
-                Update My Plan
-              </a>
-            </div>
-          </div>
         </div>
       </header>
 
