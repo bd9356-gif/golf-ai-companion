@@ -359,11 +359,7 @@ export default function MyPlanPage() {
                   Get 10 More Videos →
                 </button>
                 <p className="text-sm text-gray-400 mt-2">{videos.length} videos matched to your level</p>
-                {savedIds.size > 0 && (
-                  <button onClick={() => setShowSaved(!showSaved)} className="text-sm text-green-600 mt-1 hover:text-green-800">
-                    🔖 {savedIds.size} video{savedIds.size !== 1 ? 's' : ''} saved{showSaved ? ' · tap to show all' : ' · tap to view'}
-                  </button>
-                )}
+
               </div>
             )}
           </>
