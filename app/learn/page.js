@@ -44,7 +44,7 @@ function renderMarkdown(text) {
     .replace(/\n/g, '<br/>')
 }
 
-export default function LearnPage() {
+export default function ArticlesPage() {
   const [articles, setArticles] = useState([])
   const [loading, setLoading] = useState(true)
   const [skillLevel, setSkillLevel] = useState(null)

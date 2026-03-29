@@ -37,7 +37,7 @@ const TIER_TOPICS = {
   senior_player:        ['swing', 'fitness', 'course management', 'mental game', 'putting'],
 }
 
-export default function PlanPage() {
+export default function MyPlanPage() {
   const [videos, setVideos] = useState([])
   const [loading, setLoading] = useState(true)
   const [skillLevel, setSkillLevel] = useState('')
