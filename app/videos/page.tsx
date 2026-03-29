@@ -228,7 +228,7 @@ export default function Home() {
             <div className="ml-auto flex items-center gap-2">
               <button
                 onClick={() => setActiveTab('ask')}
-                className="px-4 py-2 text-sm font-semibold text-white bg-green-700 rounded-xl hover:bg-green-800 transition-colors whitespace-nowrap"
+                className="px-4 py-2 text-sm font-semibold text-green-700 border-2 border-green-700 rounded-xl hover:bg-green-50 bg-white transition-colors whitespace-nowrap"
               >
                 Ask MyGolf AI
               </button>
