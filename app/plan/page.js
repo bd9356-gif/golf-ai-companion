@@ -16,7 +16,6 @@ const TIER_LABELS = {
   building_consistency: 'Building Consistency',
   improving_player: 'Improving Player',
   advanced_player: 'Advanced Player',
-  senior_player: 'Senior Player',
 }
 
 const TIER_SUBLABELS = {
@@ -25,7 +24,6 @@ const TIER_SUBLABELS = {
   building_consistency: 'Scoring 90–100, improving fundamentals',
   improving_player: 'Scoring 80–90, solid intermediate skills',
   advanced_player: 'Scoring 70–80, low-handicap and scoring well',
-  senior_player: 'Prioritizing mobility, rhythm, balance, and joint-friendly mechanics',
 }
 
 const TIER_TOPICS = {
@@ -34,10 +32,9 @@ const TIER_TOPICS = {
   building_consistency: ['iron play', 'driving', 'short game', 'putting', 'mental game'],
   improving_player:     ['iron play', 'short game', 'bunker', 'course management', 'mental game'],
   advanced_player:      ['driving', 'iron play', 'short game', 'bunker', 'course management'],
-  senior_player:        ['swing', 'fitness', 'course management', 'mental game', 'putting'],
 }
 
-export default function MyPlanPage() {
+export default function PlanPage() {
   const [videos, setVideos] = useState([])
   const [loading, setLoading] = useState(true)
   const [skillLevel, setSkillLevel] = useState('')
@@ -45,8 +42,6 @@ export default function MyPlanPage() {
   const [expandedIds, setExpandedIds] = useState(new Set())
   const [playingId, setPlayingId] = useState(null)
   const [activeTab, setActiveTab] = useState('videos')
-  const [savedIds, setSavedIds] = useState(new Set())
-  const [showSaved, setShowSaved] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -56,8 +51,6 @@ export default function MyPlanPage() {
       return
     }
     setSkillLevel(level)
-    const savedRaw = localStorage.getItem('golf_saved_videos')
-    if (savedRaw) { try { setSavedIds(new Set(JSON.parse(savedRaw))) } catch {} }
     fetchPlanVideos(level)
   }, [])
 
@@ -101,16 +94,6 @@ export default function MyPlanPage() {
     setLoading(false)
   }
 
-  function toggleSaved(id) {
-  function toggleSaved(id) {
-    setSavedIds(prev => {
-      const arr = [...prev]
-      const idx = arr.indexOf(id)
-      if (idx > -1) arr.splice(idx, 1); else arr.push(id)
-      localStorage.setItem('golf_saved_videos', JSON.stringify(arr))
-      return new Set(arr)
-    })
-
   function getMeta(video) {
     const m = video.video_metadata
     if (!m) return null
@@ -131,7 +114,7 @@ export default function MyPlanPage() {
     })
   }
 
-  const visibleVideos = showSaved ? videos.filter(v => savedIds.has(v.id)) : videos.slice(0, showCount)
+  const visibleVideos = videos.slice(0, showCount)
   const hasMore = videos.length > showCount
 
   if (!skillLevel) return null
@@ -148,28 +131,28 @@ export default function MyPlanPage() {
             <p className="text-base text-gray-500 mt-1">Your AI guide to better golf</p>
           </div>
           <div className="flex items-center gap-1">
-            <a href="/" className="text-sm font-medium text-gray-500 hover:text-gray-700 px-2 py-2">← Back</a>
             <button
-              onClick={() => { setShowSaved(false); setActiveTab('videos') }}
-              className={`px-3 py-2 text-sm font-semibold border-b-2 transition-colors ${activeTab === 'videos' && !showSaved ? 'text-green-800 border-green-700' : 'text-gray-500 border-transparent hover:text-gray-700'}`}
+              onClick={() => setActiveTab('videos')}
+              className={`px-4 py-2 text-sm font-semibold border-b-2 transition-colors ${
+                activeTab === 'videos'
+                  ? 'text-green-800 border-green-700'
+                  : 'text-gray-500 border-transparent hover:text-gray-700'
+              }`}
             >
-              Videos
-            </button>
-            <a href="/learn" className={`px-3 py-2 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors`}>
-              Articles
-            </a>
-            <button
-              onClick={() => setActiveTab('ask')}
-              className={`px-3 py-2 text-sm font-semibold border-b-2 transition-colors ${activeTab === 'ask' ? 'text-green-800 border-green-700' : 'text-gray-500 border-transparent hover:text-gray-700'}`}
-            >
-              Ask AI
+              My Video Plan
             </button>
             <div className="ml-auto flex items-center gap-2">
+              <button
+                onClick={() => setActiveTab('ask')}
+                className="px-4 py-2 text-sm font-semibold text-white bg-green-700 rounded-xl hover:bg-green-800 transition-colors whitespace-nowrap"
+              >
+                Ask MyGolf AI
+              </button>
               <a
                 href="/onboarding"
-                className="text-sm font-semibold text-green-700 border-2 border-green-700 rounded-xl px-4 py-2 hover:bg-green-50 transition-colors whitespace-nowrap"
+                className="text-sm font-semibold text-white bg-green-700 rounded-xl px-4 py-2 hover:bg-green-800 transition-colors whitespace-nowrap"
               >
-                Update Plan
+                Update My Plan
               </a>
             </div>
           </div>
@@ -189,7 +172,12 @@ export default function MyPlanPage() {
                   <h2 className="text-2xl font-bold text-green-900">{TIER_LABELS[skillLevel]}</h2>
                   <p className="text-green-700 mt-0.5">{TIER_SUBLABELS[skillLevel]}</p>
                 </div>
-
+                <a
+                  href="/"
+                  className="text-sm text-green-600 hover:text-green-800 whitespace-nowrap mt-1"
+                >
+                  Browse all →
+                </a>
               </div>
               {!loading && (
                 <p className="text-sm text-green-700 mt-3 font-medium">
@@ -295,11 +283,6 @@ export default function MyPlanPage() {
                             </div>
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
-                            <button
-                              onClick={() => toggleSaved(video.id)}
-                              className={`text-xl transition-colors ${savedIds.has(video.id) ? 'text-green-600' : 'text-gray-300 hover:text-gray-500'}`}
-                              title={savedIds.has(video.id) ? 'Remove from saved' : 'Save video'}
-                            >🔖</button>
                             {!isPlaying && (
                               <a
                                 href={video.url}
@@ -359,7 +342,6 @@ export default function MyPlanPage() {
                   Get 10 More Videos →
                 </button>
                 <p className="text-sm text-gray-400 mt-2">{videos.length} videos matched to your level</p>
-
               </div>
             )}
           </>
