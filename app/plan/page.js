@@ -173,7 +173,7 @@ export default function MyPlanPage() {
               </button>
               <a
                 href="/onboarding"
-                className="text-sm font-semibold text-white bg-green-700 rounded-xl px-4 py-2 hover:bg-green-800 transition-colors whitespace-nowrap"
+                className="text-sm font-semibold text-green-700 border-2 border-green-700 rounded-xl px-4 py-2 hover:bg-green-50 transition-colors whitespace-nowrap"
               >
                 Update My Plan
               </a>
