@@ -154,10 +154,7 @@ export default function PlanPage() {
             >
               Videos
             </button>
-            
-              href="/learn"
-              className="px-3 py-2 text-sm font-semibold text-gray-500 border-b-2 border-transparent hover:text-gray-700 transition-colors whitespace-nowrap"
-            >
+            <a href="/learn" className={`px-3 py-2 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors`}>
               Articles
             </a>
             <button
@@ -168,10 +165,11 @@ export default function PlanPage() {
             </button>
             <div className="ml-auto flex items-center gap-2">
               <button
-                onClick={() => { setShowSaved(true); setActiveTab('videos') }}
-                className={`px-3 py-2 text-sm font-semibold border-b-2 transition-colors ${showSaved ? 'text-green-800 border-green-700' : 'text-gray-500 border-transparent hover:text-gray-700'}`}
+                onClick={() => { setShowSaved(!showSaved); setActiveTab('videos') }}
+                className={`text-lg transition-colors ${showSaved ? 'text-green-700' : 'text-gray-400 hover:text-gray-600'}`}
+                title="Saved videos"
               >
-                🔖{savedIds.size > 0 ? ` (${savedIds.size})` : ''}
+                🔖{savedIds.size > 0 ? ` ${savedIds.size}` : ''}
               </button>
               <a
                 href="/onboarding"
