@@ -268,13 +268,6 @@ export default function MyPlanPage() {
                         {isExpanded && (
                           <div className="mt-3 border-t border-gray-100 pt-3 space-y-3">
                             {summary && <p className="text-base text-gray-600 leading-relaxed">{summary}</p>}
-                            {topics.length > 0 && (
-                              <div className="flex flex-wrap gap-2">
-                                {topics.map((topic) => (
-                                  <span key={topic} className="text-sm bg-green-50 text-green-700 px-3 py-1 rounded-full">{topic}</span>
-                                ))}
-                              </div>
-                            )}
                           </div>
                         )}
                       </div>
