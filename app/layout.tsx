@@ -31,3 +31,4 @@ export default function RootLayout({
     </html>
   );
 }
+// nav style update Sun Mar 29 08:44:06 EDT 2026
