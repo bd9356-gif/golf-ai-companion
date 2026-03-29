@@ -257,7 +257,6 @@ export default function MyPlanPage() {
                               onClick={() => toggleSaved(video.id)}
                               className={`text-xl transition-colors ${isSaved ? 'text-green-600' : 'text-gray-300 hover:text-gray-500'}`}
                               title={isSaved ? 'Remove from saved' : 'Save video'}
-                            >🔖</button>
                             {!isPlaying && (
                               <a href={video.url} target="_blank" rel="noopener noreferrer" className="text-sm text-gray-400 hover:text-gray-600" title="Open on YouTube">↗</a>
                             )}
