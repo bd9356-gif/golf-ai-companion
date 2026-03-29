@@ -102,13 +102,14 @@ export default function MyPlanPage() {
   }
 
   function toggleSaved(id) {
+  function toggleSaved(id) {
     setSavedIds(prev => {
-      const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
-      localStorage.setItem('golf_saved_videos', JSON.stringify([...next]))
-      return next
+      const arr = [...prev]
+      const idx = arr.indexOf(id)
+      if (idx > -1) arr.splice(idx, 1); else arr.push(id)
+      localStorage.setItem('golf_saved_videos', JSON.stringify(arr))
+      return new Set(arr)
     })
-  }
 
   function getMeta(video) {
     const m = video.video_metadata
