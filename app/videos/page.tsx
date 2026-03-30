@@ -137,6 +137,7 @@ export default function Home() {
               }`}
             >
               Ask AI
+            <a href="/library" className="px-3 py-2 text-sm font-semibold text-gray-500 border-b-2 border-transparent hover:text-gray-700 transition-colors">Library</a>
             </button>
             <div className="ml-auto">
               <a
