@@ -1,143 +1,123 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
+import { createClient } from '@supabase/supabase-js'
 
-export default function LandingPage() {
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+)
+
+const STATS = [
+  { stat: '767', label: 'Instruction Videos' },
+  { stat: '6', label: 'Skill Levels' },
+  { stat: '40+', label: 'Expert Articles' },
+  { stat: 'AI', label: 'Personalized Plans' },
+]
+
+export default function HomePage() {
   const [hasPlan, setHasPlan] = useState(false)
+  const [user, setUser] = useState(null)
 
   useEffect(() => {
     const level = localStorage.getItem('golf_skill_level')
     if (level) setHasPlan(true)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) setUser(session.user)
+    })
   }, [])
 
+  const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'My Profile'
+
   return (
-    <div className="min-h-screen bg-white">
-      {/* Minimal header */}
-      <header className="border-b border-gray-100 bg-white">
-        <div className="max-w-5xl mx-auto px-4 py-4 text-center">
-          <h1 className="text-3xl font-bold text-gray-900">⛳ MyGolf Companion</h1>
-          <p className="text-base text-gray-500 mt-1">Your AI guide to better golf</p>
-          <div className="inline-block bg-green-50 text-green-700 text-sm font-semibold px-4 py-1.5 rounded-full mt-3">
-            AI-Powered Golf Instruction
+    <div className="min-h-screen bg-white flex flex-col">
+      <header className="border-b border-gray-100 px-4 py-4">
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">⛳ MyGolf Companion</h1>
+            <p className="text-sm text-gray-500">Your AI guide to better golf</p>
           </div>
+          {user ? (
+            <a href="/profile" className="text-sm font-semibold text-green-700 hover:underline">
+              \U0001f464 {userName}
+            </a>
+          ) : (
+            <a href="/login" className="text-sm font-semibold text-green-700 border-2 border-green-700 rounded-xl px-4 py-2 hover:bg-green-50 transition-colors">
+              Sign In
+            </a>
+          )}
         </div>
       </header>
 
-      {/* Hero */}
-      <section className="max-w-5xl mx-auto px-4 pt-6 pb-6 text-center">
-        <h2 className="text-5xl font-bold text-gray-900 leading-tight mb-6">
-          Play Better Golf.<br />
-          <span className="text-green-700">Starting Today.</span>
-        </h2>
-        <p className="text-xl text-gray-500 max-w-2xl mx-auto mb-10">
-          767 curated instruction videos and expert articles — matched to your skill level by AI. From beginner basics to advanced shot shaping.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+      <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-8">
+        <div className="text-center mb-2">
+          <span className="inline-block bg-green-100 text-green-800 text-xs font-semibold px-3 py-1 rounded-full">
+            AI-Powered Golf Instruction
+          </span>
+        </div>
+
+        <div className="text-center mb-8">
+          <h2 className="text-4xl font-bold text-gray-900 mb-2 leading-tight">
+            Play Better Golf.
+          </h2>
+          <h2 className="text-4xl font-bold text-green-700 mb-4 leading-tight">
+            Starting Today.
+          </h2>
+          <p className="text-base text-gray-500 max-w-md mx-auto">
+            767 curated instruction videos and expert articles — matched to your skill level by AI. From beginner basics to advanced shot shaping.
+          </p>
+        </div>
+
+        <div className="space-y-3 mb-8">
           <a
             href="/onboarding"
-            className="px-8 py-4 bg-green-700 text-white rounded-xl font-bold text-lg hover:bg-green-800 transition-colors"
+            className="block w-full px-6 py-4 bg-green-700 text-white rounded-xl font-bold text-lg hover:bg-green-800 transition-colors text-center"
           >
-            Get My Video Plan →
+            Get My Video Plan \u2192
           </a>
           <a
             href="/videos"
-            className="w-full px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors text-center"
+            className="block w-full px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors text-center"
           >
             Browse Videos
           </a>
-          <a href="/learn" className="w-full px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors text-center">
-            📖 Read Articles
+          <a
+            href="/learn"
+            className="block w-full px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors text-center"
+          >
+            \U0001f4d6 Read Articles
           </a>
-          <a href="/videos?tab=ask" className="w-full px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors text-center">
-            🤖 Ask MyGolf AI
+          <a
+            href="/videos?tab=ask"
+            className="block w-full px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors text-center"
+          >
+            \U0001f916 Ask MyGolf AI
           </a>
-          <a href="/plan" className="w-full px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors text-center">
-            🎯 My Plan
-          </a>
-          <a href="/about" className="w-full px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors text-center">
-            ℹ️ About
+          {hasPlan && (
+            <a
+              href="/plan"
+              className="block w-full px-6 py-3 border-2 border-green-200 text-green-700 rounded-xl font-semibold text-base hover:bg-green-50 transition-colors text-center"
+            >
+              \U0001f3af My Plan
+            </a>
+          )}
+          <a
+            href="/about"
+            className="block w-full px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors text-center"
+          >
+            \u2139\ufe0f About
           </a>
         </div>
 
-
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 max-w-2xl mx-auto">
-          {[
-            { stat: '767', label: 'Instruction Videos' },
-            { stat: '6', label: 'Skill Levels' },
-            { stat: '40+', label: 'Expert Articles' },
-            { stat: 'AI', label: 'Personalized Plans' },
-          ].map(({ stat, label }) => (
-            <div key={label} className="text-center">
+        <div className="grid grid-cols-2 gap-4">
+          {STATS.map(({ stat, label }) => (
+            <div key={label} className="text-center p-4 bg-gray-50 rounded-xl">
               <p className="text-3xl font-bold text-green-700">{stat}</p>
               <p className="text-sm text-gray-500 mt-1">{label}</p>
             </div>
           ))}
         </div>
-      </section>
-
-      {/* Features */}
-      <section className="bg-gray-50 py-20">
-        <div className="max-w-5xl mx-auto px-4">
-          <h3 className="text-3xl font-bold text-gray-900 text-center mb-12">Everything you need to improve</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
-            {[
-              { icon: '🎬', title: 'Curated Video Library', desc: '767 hand-picked instructional videos from top coaches. Search by problem, filter by skill level, play right in the app.' },
-              { icon: '🎯', title: 'Personalized Video Plan', desc: 'Answer 1 question about your game and get a personalized plan of videos matched to your exact skill level.' },
-              { icon: '📖', title: 'Expert Articles', desc: 'AI-written articles covering swing tips, course management, mental game, and fitness — personalized to your plan.' },
-              { icon: '🤖', title: 'Ask MyGolf AI', desc: 'Got a question about your swing or strategy? Ask your personal AI golf coach anything, anytime.' },
-              { icon: '⛳', title: '6 Skill Levels', desc: 'From complete beginners to low handicappers — including a dedicated Senior Player track.' },
-              { icon: '📱', title: 'Mobile Friendly', desc: 'Built for the range and the course. Watch videos and read articles right from your phone.' },
-            ].map(({ icon, title, desc }) => (
-              <div key={title} className="bg-white rounded-2xl p-6 border border-gray-100">
-                <p className="text-3xl mb-3">{icon}</p>
-                <h4 className="font-bold text-gray-900 text-base mb-2">{title}</h4>
-                <p className="text-sm text-gray-500 leading-relaxed">{desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Skill levels */}
-      <section className="max-w-5xl mx-auto px-4 py-20">
-        <h3 className="text-3xl font-bold text-gray-900 text-center mb-4">Built for every golfer</h3>
-        <p className="text-gray-500 text-center mb-10">Pick your level and get a plan tailored to where you are right now</p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          {[
-            { level: 'Beginner', value: 'beginner', sub: 'Just starting out', color: 'bg-blue-50 text-blue-700 border-blue-100' },
-            { level: 'Building Your Game', value: 'building_game', sub: 'Scoring 100+', color: 'bg-yellow-50 text-yellow-700 border-yellow-100' },
-            { level: 'Building Consistency', value: 'building_consistency', sub: 'Scoring 90–100', color: 'bg-orange-50 text-orange-700 border-orange-100' },
-            { level: 'Improving Player', value: 'improving_player', sub: 'Scoring 80–90', color: 'bg-purple-50 text-purple-700 border-purple-100' },
-            { level: 'Advanced Player', value: 'advanced_player', sub: 'Scoring 70–80', color: 'bg-red-50 text-red-700 border-red-100' },
-            { level: 'Senior Player', value: 'senior_player', sub: 'Mobility & rhythm focus', color: 'bg-green-50 text-green-700 border-green-100' },
-          ].map(({ level, value, sub, color }) => (
-            <a key={level} href={`/onboarding?level=${value}`} className={`border rounded-xl p-4 hover:shadow-sm transition-all ${color}`}>
-              <p className="font-bold text-sm">{level}</p>
-              <p className="text-xs mt-0.5 opacity-75">{sub}</p>
-            </a>
-          ))}
-        </div>
-        <div className="text-center mt-8">
-          <a href="/onboarding" className="inline-block px-8 py-4 bg-green-700 text-white rounded-xl font-bold text-base hover:bg-green-800 transition-colors">
-            Get My Video Plan →
-          </a>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t border-gray-100 py-8">
-        <div className="max-w-5xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-400">
-          <p>⛳ MyGolf Companion — Your AI guide to better golf</p>
-          <div className="flex gap-6">
-            <a href="/videos" className="hover:text-gray-600">Videos</a>
-            <a href="/learn" className="hover:text-gray-600">Learn</a>
-            <a href="/plan" className="hover:text-gray-600">My Plan</a>
-            <a href="/about" className="hover:text-gray-600">About</a>
-          </div>
-        </div>
-      </footer>
+      </main>
     </div>
   )
 }
