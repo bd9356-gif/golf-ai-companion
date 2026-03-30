@@ -150,7 +150,7 @@ export default function ProfilePage() {
               <div className="text-center py-12 border border-dashed border-gray-200 rounded-xl">
                 <p className="text-3xl mb-2">🔖</p>
                 <p className="text-gray-500 font-medium">No saved videos yet</p>
-                <a href="/plan" className="mt-4 inline-block text-sm text-green-700 font-semibold hover:underline">Go to My Plan →</a>
+                <a href="/plan" className="mt-4 inline-block text-sm text-green-700 font-semibold hover:underline">Go to MyGolf Plan →</a>
               </div>
             ) : (
               <div className="space-y-3">

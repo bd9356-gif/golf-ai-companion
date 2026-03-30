@@ -65,9 +65,7 @@ export default function HomePage() {
         </div>
 
         <div className="space-y-3 mb-8">
-          <a href="/onboarding" className="block w-full px-6 py-4 bg-green-700 text-white rounded-xl font-bold text-lg hover:bg-green-800 transition-colors text-center">
-            Get My Video Plan →
-          </a>
+
           <a href="/videos" className="block w-full px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors text-center">
             Browse Videos
           </a>
@@ -79,7 +77,7 @@ export default function HomePage() {
           </a>
           {hasPlan && (
             <a href="/plan" className="block w-full px-6 py-3 border-2 border-green-200 text-green-700 rounded-xl font-semibold text-base hover:bg-green-50 transition-colors text-center">
-              🎯 My Plan
+              🎯 MyGolf Plan
             </a>
           )}
           <a href="/about" className="block w-full px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors text-center">

@@ -89,7 +89,7 @@ export default function AboutPage() {
           <div className="flex gap-6">
             <a href="/videos" className="hover:text-gray-600">Videos</a>
             <a href="/learn" className="hover:text-gray-600">Learn</a>
-            <a href="/plan" className="hover:text-gray-600">My Plan</a>
+            <a href="/plan" className="hover:text-gray-600">MyGolf Plan</a>
             <a href="/about" className="hover:text-gray-600">About</a>
           </div>
         </div>
