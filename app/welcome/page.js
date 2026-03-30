@@ -12,55 +12,13 @@ const TIER_LABELS = {
   senior_player: 'Senior Player',
 }
 
-const SECTIONS = [
-  {
-    icon: '🎯',
-    title: 'MyGolf Plan',
-    href: '/plan',
-    description: 'Your personalized training plan — videos, articles, and AI answers matched to your skill level.',
-    cta: 'Go to My Plan',
-    primary: true,
-  },
-  {
-    icon: '🎬',
-    title: 'MyVideos',
-    href: '/plan',
-    description: 'Videos tailored to your game and your level — content that actually helps you improve.',
-    cta: 'Watch Videos',
-  },
-  {
-    icon: '📖',
-    title: 'MyArticles',
-    href: '/learn',
-    description: 'AI-crafted golf insights matched to your level — simple guidance that makes your game clearer.',
-    cta: 'Read Articles',
-  },
-  {
-    icon: '🤖',
-    title: 'Ask MyGolf AI',
-    href: '/plan',
-    description: 'Personalized answers for your game — clear, level-matched guidance when you need it.',
-    cta: 'Ask a Question',
-  },
-  {
-    icon: '📚',
-    title: 'MyLibrary',
-    href: '/library',
-    description: 'Your saved videos, articles, and AI answers — all organized around your skill level.',
-    cta: 'View Library',
-  },
-]
-
 export default function WelcomePage() {
   const [skillLevel, setSkillLevel] = useState('')
   const router = useRouter()
 
   useEffect(() => {
     const level = localStorage.getItem('golf_skill_level')
-    if (!level) {
-      router.push('/onboarding')
-      return
-    }
+    if (!level) { router.push('/onboarding'); return }
     setSkillLevel(level)
   }, [])
 
@@ -80,7 +38,7 @@ export default function WelcomePage() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-8">
+      <main className="max-w-4xl mx-auto px-4 py-10">
 
         <div className="text-center mb-10">
           <div className="inline-block bg-green-100 text-green-800 text-sm font-semibold px-4 py-1.5 rounded-full mb-4">
@@ -90,43 +48,38 @@ export default function WelcomePage() {
             Welcome to Your MyGolf Plan
           </h2>
           <p className="text-gray-500 text-base max-w-md mx-auto">
-            You're set up as a <strong className="text-green-700">{TIER_LABELS[skillLevel]}</strong>. Here's everything personalized for your game.
+            You're set up as a <strong className="text-green-700">{TIER_LABELS[skillLevel]}</strong>. Here's everything that's now personalized for your game.
           </p>
         </div>
 
-        <div className="space-y-4 mb-10">
-          {SECTIONS.map((section) => (
-            <div
-              key={section.title}
-              className={`p-5 rounded-2xl border ${
-                section.primary
-                  ? 'bg-green-700 border-green-700'
-                  : 'bg-white border-gray-200'
-              }`}
-            >
-              <div className="flex items-start gap-3">
-                <span className="text-2xl">{section.icon}</span>
-                <div>
-                  <h3 className={`font-bold text-lg leading-tight ${section.primary ? 'text-white' : 'text-gray-900'}`}>
-                    {section.title}
-                  </h3>
-                  <p className={`text-sm mt-1 leading-relaxed ${section.primary ? 'text-green-100' : 'text-gray-500'}`}>
-                    {section.description}
-                  </p>
-                </div>
-              </div>
-            </div>
-          ))}
+        <div className="max-w-lg mx-auto space-y-5 mb-10">
+          <div className="border-l-4 border-green-700 pl-4">
+            <p className="font-bold text-gray-900">MyGolf Plan</p>
+            <p className="text-sm text-gray-500 mt-0.5">Your personalized training plan — videos, articles, and AI answers matched to your skill level.</p>
+          </div>
+          <div className="border-l-4 border-green-300 pl-4">
+            <p className="font-bold text-gray-900">MyVideos</p>
+            <p className="text-sm text-gray-500 mt-0.5">Videos tailored to your game and your level — content that actually helps you improve.</p>
+          </div>
+          <div className="border-l-4 border-green-300 pl-4">
+            <p className="font-bold text-gray-900">MyArticles</p>
+            <p className="text-sm text-gray-500 mt-0.5">AI-crafted golf insights matched to your level — simple guidance that makes your game clearer.</p>
+          </div>
+          <div className="border-l-4 border-green-300 pl-4">
+            <p className="font-bold text-gray-900">Ask MyGolf AI</p>
+            <p className="text-sm text-gray-500 mt-0.5">Personalized answers for your game — clear, level-matched guidance when you need it.</p>
+          </div>
+          <div className="border-l-4 border-green-300 pl-4">
+            <p className="font-bold text-gray-900">MyLibrary</p>
+            <p className="text-sm text-gray-500 mt-0.5">Your saved videos, articles, and AI answers — all organized around your skill level.</p>
+          </div>
         </div>
 
         <div className="text-center">
-          <a
-            href="/plan"
-            className="inline-block px-8 py-4 bg-green-700 text-white rounded-xl font-bold text-lg hover:bg-green-800 transition-colors"
-          >
+          <a href="/plan" className="inline-block px-8 py-4 bg-green-700 text-white rounded-xl font-bold text-lg hover:bg-green-800 transition-colors">
             Go to MyGolf Plan →
           </a>
-          <p className="text-sm text-gray-400 mt-3">You can always update your skill level from the plan page</p>
+          <p className="text-sm text-gray-400 mt-3">You can update your skill level anytime from the plan page</p>
         </div>
 
       </main>
