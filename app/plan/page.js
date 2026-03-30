@@ -159,7 +159,7 @@ export default function MyPlanPage() {
               <h1 className="text-3xl font-bold text-gray-900 leading-tight tracking-tight">
                 ⛳ MyGolf Companion
               </h1>
-              <p className="text-base text-gray-500 mt-1">Your AI guide to better golf</p>
+              <p className="text-base text-gray-500 mt-1">Your AI guide to better golf · <a href="/library" className="text-green-700 font-semibold hover:underline">My Library</a></p>
             </div>
             <div className="flex items-center gap-2">
               <a href="/profile" className="text-sm text-gray-500 hover:text-gray-700 font-medium">
@@ -187,7 +187,7 @@ export default function MyPlanPage() {
             >
               Ask AI
             </button>
-            <div className="ml-auto flex items-center gap-2"><a href="/library" className="text-sm font-semibold text-gray-500 hover:text-gray-700 transition-colors">Library</a>
+            <div className="ml-auto">
               <a href="/onboarding" className="text-sm font-semibold text-green-700 border-2 border-green-700 rounded-xl px-4 py-2 hover:bg-green-50 transition-colors whitespace-nowrap">
                 Set Skill Level
               </a>
