@@ -102,14 +102,6 @@ export default function AskCompanionTab({ skillLevel = 'all', onBack }: Props) {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="mb-4 px-3 py-2 bg-green-50 border border-green-100 rounded-xl flex items-center justify-between">
-        <span className="text-sm text-green-800">
-          🏌️ Chatting as a <strong>{TIER_LABEL[skillLevel] || 'All Levels'}</strong> golfer
-          {' · '}
-          <button onClick={() => window.location.href = '/onboarding'} className="text-green-600 hover:text-green-800 underline text-xs">retake assessment</button>
-        </span>
-        <button onClick={() => setMessages([])} className="text-xs text-green-600 hover:text-green-800">Clear chat</button>
-      </div>
 
       <div className="flex-1 overflow-y-auto space-y-4 pb-4">
         {messages.length === 0 && (
