@@ -150,9 +150,7 @@ export default function ProfilePage() {
                 return (
                   <a
                     key={saved.video_id}
-                    href={video.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href="/plan"
                     className="flex items-center gap-3 p-3 border border-gray-100 rounded-xl hover:border-green-200 hover:bg-green-50 transition-colors"
                   >
                     {ytId && (
@@ -168,7 +166,7 @@ export default function ProfilePage() {
                         <p className="text-xs text-gray-400 mt-0.5">{video.channel_name}</p>
                       )}
                     </div>
-                    <span className="text-gray-400 shrink-0">↗</span>
+                    <span className="text-gray-400 shrink-0">▶</span>
                   </a>
                 )
               })}
