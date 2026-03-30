@@ -45,20 +45,37 @@ export default function MyPlanPage() {
   const [playingId, setPlayingId] = useState(null)
   const [activeTab, setActiveTab] = useState('videos')
   const [savedIds, setSavedIds] = useState(new Set())
+  const [user, setUser] = useState(null)
   const router = useRouter()
 
   useEffect(() => {
-    const level = localStorage.getItem('golf_skill_level')
-    if (!level || !TIER_LABELS[level]) {
-      router.push('/onboarding')
-      return
+    async function init() {
+      // Check auth
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        router.push('/login')
+        return
+      }
+      setUser(session.user)
+
+      // Check skill level
+      const level = localStorage.getItem('golf_skill_level')
+      if (!level || !TIER_LABELS[level]) {
+        router.push('/onboarding')
+        return
+      }
+      setSkillLevel(level)
+
+      // Load saved videos from Supabase
+      const { data: saved } = await supabase
+        .from('saved_videos')
+        .select('video_id')
+        .eq('user_id', session.user.id)
+      if (saved) setSavedIds(new Set(saved.map(s => s.video_id)))
+
+      fetchPlanVideos(level)
     }
-    setSkillLevel(level)
-    const savedRaw = localStorage.getItem('golf_saved_videos')
-    if (savedRaw) {
-      try { setSavedIds(new Set(JSON.parse(savedRaw))) } catch {}
-    }
-    fetchPlanVideos(level)
+    init()
   }, [])
 
   async function fetchPlanVideos(level) {
@@ -89,15 +106,22 @@ export default function MyPlanPage() {
     setLoading(false)
   }
 
-  function toggleSaved(id) {
-    setSavedIds(prev => {
-      const arr = [...prev]
-      const idx = arr.indexOf(id)
-      if (idx > -1) arr.splice(idx, 1)
-      else arr.push(id)
-      localStorage.setItem('golf_saved_videos', JSON.stringify(arr))
-      return new Set(arr)
-    })
+  async function toggleSaved(videoId) {
+    if (!user) return
+    const isSaved = savedIds.has(videoId)
+    if (isSaved) {
+      await supabase.from('saved_videos').delete()
+        .eq('user_id', user.id).eq('video_id', videoId)
+      setSavedIds(prev => { const next = new Set(prev); next.delete(videoId); return next })
+    } else {
+      await supabase.from('saved_videos').insert({ user_id: user.id, video_id: videoId })
+      setSavedIds(prev => new Set([...prev, videoId]))
+    }
+  }
+
+  async function handleSignOut() {
+    await supabase.auth.signOut()
+    router.push('/login')
   }
 
   function getMeta(video) {
@@ -120,11 +144,9 @@ export default function MyPlanPage() {
     })
   }
 
-  const visibleVideos = savedIds.size > 0 && activeTab === 'saved'
-    ? videos.filter(v => savedIds.has(v.id))
-    : videos.slice(0, showCount)
-
+  const visibleVideos = videos.slice(0, showCount)
   const hasMore = videos.length > showCount
+  const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Golfer'
 
   if (!skillLevel) return null
 
@@ -132,11 +154,21 @@ export default function MyPlanPage() {
     <div className="min-h-screen bg-white">
       <header className="border-b border-gray-100 bg-white sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-4 pt-5 pb-3">
-          <div className="mb-3">
-            <h1 className="text-3xl font-bold text-gray-900 leading-tight tracking-tight">
-              ⛳ MyGolf Companion
-            </h1>
-            <p className="text-base text-gray-500 mt-1">Your AI guide to better golf</p>
+          <div className="mb-3 flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 leading-tight tracking-tight">
+                ⛳ MyGolf Companion
+              </h1>
+              <p className="text-base text-gray-500 mt-1">Your AI guide to better golf</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <a href="/profile" className="text-sm text-gray-500 hover:text-gray-700 font-medium">
+                👤 {userName}
+              </a>
+              <button onClick={handleSignOut} className="text-xs text-gray-400 hover:text-gray-600">
+                Sign out
+              </button>
+            </div>
           </div>
           <div className="flex items-center gap-1">
             <a href="/" className="text-sm font-medium text-gray-500 hover:text-gray-700 px-2 py-2">← Back</a>
@@ -177,9 +209,7 @@ export default function MyPlanPage() {
                 <p className="text-sm text-green-700 mt-3 font-medium">
                   {videos.length} videos matched to your level
                   {savedIds.size > 0 && (
-                    <span className="ml-3 text-green-600">
-                      · 🔖 {savedIds.size} saved
-                    </span>
+                    <span className="ml-3 text-green-600">· 🔖 {savedIds.size} saved</span>
                   )}
                 </p>
               )}
@@ -211,7 +241,6 @@ export default function MyPlanPage() {
                   const isExpanded = expandedIds.has(video.id)
                   const meta = getMeta(video)
                   const summary = meta?.ai_summary ?? ''
-                  const topics = meta?.topics ?? []
                   const isSaved = savedIds.has(video.id)
 
                   return (
@@ -261,12 +290,12 @@ export default function MyPlanPage() {
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); toggleSaved(video.id) }}
-                          className={`mt-1 text-sm font-semibold transition-colors ${isSaved ? 'text-green-600' : 'text-gray-400 hover:text-gray-600'}`}
+                          className={`mt-1 ml-4 text-sm font-semibold transition-colors ${isSaved ? 'text-green-600' : 'text-gray-400 hover:text-gray-600'}`}
                         >
                           {isSaved ? '🔖 Saved to Library' : '🔖 Save to Library'}
                         </button>
                         {isExpanded && (
-                          <div className="mt-3 border-t border-gray-100 pt-3 space-y-3">
+                          <div className="mt-3 border-t border-gray-100 pt-3">
                             {summary && <p className="text-base text-gray-600 leading-relaxed">{summary}</p>}
                           </div>
                         )}
@@ -292,4 +321,4 @@ export default function MyPlanPage() {
       </main>
     </div>
   )
-}// v2
+}
