@@ -229,10 +229,7 @@ export default function ProfilePage() {
                         <div className="px-4 pb-4 border-t border-gray-100 pt-4">
                           <div
                             className="text-sm text-gray-700 leading-relaxed"
-                            dangerouslySetInnerHTML={{ __html: article.content.replace(/\n\n/g, "</p><p class='mb-3'>").replace(/\n/g, "<br/>") }}
-                          />
-                        </div>
-                      )}
+                            dangerouslySetInnerHTML={{ __html: (article.content || '').split('\n\n').join('</p><p>').split('\n').join('<br/>') }}
                           />
                         </div>
                       )}
