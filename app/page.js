@@ -38,9 +38,14 @@ export default function HomePage() {
             <p className="text-sm text-gray-500">Your AI guide to better golf</p>
           </div>
           {user ? (
-            <a href="/profile" className="text-sm font-semibold text-green-700 hover:underline">
-              👤 {userName}
-            </a>
+            <div className="flex items-center gap-2">
+              <a href="/plan" className="text-sm font-semibold text-white bg-green-700 rounded-xl px-4 py-2 hover:bg-green-800 transition-colors">
+                🎯 MyGolf Plan
+              </a>
+              <a href="/profile" className="text-sm font-medium text-gray-500 hover:text-gray-700">
+                👤 {userName}
+              </a>
+            </div>
           ) : (
             <a href="/login" className="text-sm font-semibold text-green-700 border-2 border-green-700 rounded-xl px-4 py-2 hover:bg-green-50 transition-colors">
               Sign In
