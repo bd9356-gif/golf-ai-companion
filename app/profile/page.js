@@ -130,15 +130,15 @@ export default function ProfilePage() {
           </button>
           <button
             onClick={() => setActiveTab('answers')}
-            className={}
+            className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${activeTab === 'answers' ? 'bg-green-700 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
           >
-            🤖 Answers ({savedAnswers.length})
+            {'🤖 Answers (' + savedAnswers.length + ')'}
           </button>
           <button
             onClick={() => setActiveTab('articles')}
             className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${activeTab === 'articles' ? 'bg-green-700 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
           >
-            📖 Articles ({savedArticles.length})
+            {'📖 Articles (' + savedArticles.length + ')'}
           </button>
         </div>
 
