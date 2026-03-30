@@ -96,32 +96,26 @@ export default function WelcomePage() {
 
         <div className="space-y-4 mb-10">
           {SECTIONS.map((section) => (
-            <a
+            <div
               key={section.title}
-              href={section.href}
-              className={`block p-5 rounded-2xl border transition-all hover:shadow-md ${
+              className={`p-5 rounded-2xl border ${
                 section.primary
-                  ? 'bg-green-700 border-green-700 text-white hover:bg-green-800'
-                  : 'bg-white border-gray-200 hover:border-green-200 hover:bg-green-50'
+                  ? 'bg-green-700 border-green-700'
+                  : 'bg-white border-gray-200'
               }`}
             >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-start gap-3">
-                  <span className="text-2xl">{section.icon}</span>
-                  <div>
-                    <h3 className={`font-bold text-lg leading-tight ${section.primary ? 'text-white' : 'text-gray-900'}`}>
-                      {section.title}
-                    </h3>
-                    <p className={`text-sm mt-1 leading-relaxed ${section.primary ? 'text-green-100' : 'text-gray-500'}`}>
-                      {section.description}
-                    </p>
-                  </div>
+              <div className="flex items-start gap-3">
+                <span className="text-2xl">{section.icon}</span>
+                <div>
+                  <h3 className={`font-bold text-lg leading-tight ${section.primary ? 'text-white' : 'text-gray-900'}`}>
+                    {section.title}
+                  </h3>
+                  <p className={`text-sm mt-1 leading-relaxed ${section.primary ? 'text-green-100' : 'text-gray-500'}`}>
+                    {section.description}
+                  </p>
                 </div>
-                <span className={`text-sm font-semibold shrink-0 mt-1 ${section.primary ? 'text-green-100' : 'text-green-700'}`}>
-                  {section.cta} →
-                </span>
               </div>
-            </a>
+            </div>
           ))}
         </div>
 
