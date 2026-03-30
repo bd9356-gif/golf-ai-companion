@@ -128,17 +128,18 @@ export default function ArticlesPage() {
   return (
     <div className="min-h-screen bg-white">
       <header className="border-b border-gray-100 bg-white sticky top-0 z-40">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <a href="/" className="text-xl font-bold text-gray-900">⛳ MyGolf Companion</a>
-          <div className="flex items-center gap-2">
+        <div className="max-w-4xl mx-auto px-4 pt-5 pb-3">
+          <div className="mb-3">
+            <h1 className="text-3xl font-bold text-gray-900 leading-tight tracking-tight">⛳ MyGolf Companion</h1>
+            <p className="text-base text-gray-500 mt-1">Your AI guide to better golf</p>
+          </div>
+          <div className="flex items-center gap-1">
             <button onClick={() => window.history.back()} className="text-sm font-medium text-gray-500 hover:text-gray-700 px-2 py-2">← Back</button>
             <a href="/videos" className="px-3 py-2 text-sm font-semibold text-gray-500 border-b-2 border-transparent hover:text-gray-700 transition-colors">Videos</a>
             <span className="px-3 py-2 text-sm font-semibold text-green-800 border-b-2 border-green-700">Articles</span>
             <a href="/videos?tab=ask" className="px-3 py-2 text-sm font-semibold text-gray-500 border-b-2 border-transparent hover:text-gray-700 transition-colors">Ask AI</a>
             <div className="ml-auto">
-              <a href="/plan" className="text-sm font-semibold text-green-700 border-2 border-green-700 rounded-xl px-4 py-2 hover:bg-green-50 transition-colors whitespace-nowrap">
-                My Plan
-              </a>
+              <a href="/plan" className="text-sm font-semibold text-green-700 border-2 border-green-700 rounded-xl px-4 py-2 hover:bg-green-50 transition-colors whitespace-nowrap">My Plan</a>
             </div>
           </div>
         </div>
