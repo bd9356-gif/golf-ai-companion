@@ -25,6 +25,7 @@ export default function ProfilePage() {
   const [skillLevel, setSkillLevel] = useState('')
   const [playingId, setPlayingId] = useState(null)
   const [activeTab, setActiveTab] = useState('videos')
+  const [savedAnswers, setSavedAnswers] = useState([])
   const [openArticleId, setOpenArticleId] = useState(null)
   const router = useRouter()
 
@@ -35,11 +36,12 @@ export default function ProfilePage() {
       setUser(session.user)
       setSkillLevel(localStorage.getItem('golf_skill_level') || '')
 
-      const [videosRes, articlesRes] = await Promise.all([
+      const [videosRes, answersRes, articlesRes] = await Promise.all([
         supabase.from('saved_videos')
           .select('video_id, created_at, videos(id, title, url, thumbnail_url, youtube_video_id, channel_name)')
           .eq('user_id', session.user.id)
           .order('created_at', { ascending: false }),
+        supabase.from('saved_answers').select('id, question, answer, created_at').eq('user_id', session.user.id).order('created_at', { ascending: false }),
         supabase.from('saved_articles')
           .select('article_id, created_at, articles(id, title, summary, topic, read_time_minutes, content)')
           .eq('user_id', session.user.id)
@@ -47,6 +49,7 @@ export default function ProfilePage() {
       ])
 
       if (videosRes.data) setSavedVideos(videosRes.data.filter(s => s.videos))
+      if (answersRes.data) setSavedAnswers(answersRes.data)
       if (articlesRes.data) setSavedArticles(articlesRes.data.filter(s => s.articles))
       setLoading(false)
     }
@@ -113,8 +116,8 @@ export default function ProfilePage() {
             <p className="text-sm text-gray-500 mt-1">Saved Articles</p>
           </div>
           <div className="text-center p-4 border border-gray-100 rounded-xl">
-            <p className="text-3xl font-bold text-green-700">{skillLevel ? '1' : '0'}</p>
-            <p className="text-sm text-gray-500 mt-1">Active Plan</p>
+            <p className="text-3xl font-bold text-green-700">{savedAnswers.length}</p>
+            <p className="text-sm text-gray-500 mt-1">Saved Answers</p>
           </div>
         </div>
 
@@ -124,6 +127,12 @@ export default function ProfilePage() {
             className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${activeTab === 'videos' ? 'bg-green-700 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
           >
             🔖 Videos ({savedVideos.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('answers')}
+            className={}
+          >
+            🤖 Answers ({savedAnswers.length})
           </button>
           <button
             onClick={() => setActiveTab('articles')}
@@ -229,7 +238,10 @@ export default function ProfilePage() {
                         <div className="px-4 pb-4 border-t border-gray-100 pt-4">
                           <div
                             className="text-sm text-gray-700 leading-relaxed"
-                            dangerouslySetInnerHTML={{ __html: (article.content || '').split('\n\n').join('</p><p>').split('\n').join('<br/>') }}
+                            dangerouslySetInnerHTML={{ __html: article.content.replace(/
+
+/g, "</p><p class='mb-3'>").replace(/
+/g, "<br/>") }}
                           />
                         </div>
                       )}
@@ -241,6 +253,29 @@ export default function ProfilePage() {
           </div>
         )}
 
+        {activeTab === 'answers' && (
+          <div>
+            {loading ? (
+              <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-20 bg-gray-100 rounded-xl animate-pulse" />)}</div>
+            ) : savedAnswers.length === 0 ? (
+              <div className="text-center py-12 border border-dashed border-gray-200 rounded-xl">
+                <p className="text-3xl mb-2">🤖</p>
+                <p className="text-gray-500 font-medium">No saved answers yet</p>
+                <p className="text-sm text-gray-400 mt-1">Save AI answers from the Ask AI tab</p>
+                <a href="/plan" className="mt-4 inline-block text-sm text-green-700 font-semibold hover:underline">Ask MyGolf AI →</a>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {savedAnswers.map((item) => (
+                  <div key={item.id} className="border border-gray-100 rounded-xl p-4">
+                    <p className="text-sm font-semibold text-green-800 mb-2">Q: {item.question}</p>
+                    <p className="text-sm text-gray-600 leading-relaxed">{item.answer}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </main>
     </div>
   )
