@@ -25,6 +25,7 @@ export default function ProfilePage() {
   const [skillLevel, setSkillLevel] = useState('')
   const [playingId, setPlayingId] = useState(null)
   const [activeTab, setActiveTab] = useState('videos')
+  const [openArticleId, setOpenArticleId] = useState(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -40,7 +41,7 @@ export default function ProfilePage() {
           .eq('user_id', session.user.id)
           .order('created_at', { ascending: false }),
         supabase.from('saved_articles')
-          .select('article_id, created_at, articles(id, title, summary, topic, read_time_minutes)')
+          .select('article_id, created_at, articles(id, title, summary, topic, read_time_minutes, content)')
           .eq('user_id', session.user.id)
           .order('created_at', { ascending: false })
       ])
@@ -201,20 +202,41 @@ export default function ProfilePage() {
               <div className="space-y-3">
                 {savedArticles.map((saved) => {
                   const article = saved.articles
+                  const isOpen = openArticleId === saved.article_id
                   return (
-                    <a
+                    <div
                       key={saved.article_id}
-                      href="/learn"
-                      className="block border border-gray-100 rounded-xl p-4 hover:border-green-200 hover:bg-green-50 transition-colors"
+                      className="border border-gray-100 rounded-xl overflow-hidden hover:border-green-200 transition-colors"
                     >
-                      <h3 className="font-semibold text-gray-900 text-sm leading-snug">{article.title}</h3>
-                      <p className="text-xs text-gray-500 mt-1 line-clamp-2">{article.summary}</p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <span className="text-xs text-gray-400">{article.read_time_minutes} min read</span>
-                        <span className="text-xs text-gray-300">·</span>
-                        <span className="text-xs text-gray-400">{article.topic}</span>
-                      </div>
-                    </a>
+                      <button
+                        onClick={() => setOpenArticleId(isOpen ? null : saved.article_id)}
+                        className="w-full text-left p-4"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-gray-900 text-sm leading-snug">{article.title}</h3>
+                            <p className="text-xs text-gray-500 mt-1 line-clamp-2">{article.summary}</p>
+                            <div className="flex items-center gap-2 mt-2">
+                              <span className="text-xs text-gray-400">{article.read_time_minutes} min read</span>
+                              <span className="text-xs text-gray-300">·</span>
+                              <span className="text-xs text-gray-400">{article.topic}</span>
+                            </div>
+                          </div>
+                          <span className="text-gray-400 shrink-0">{isOpen ? "▲" : "▼"}</span>
+                        </div>
+                      </button>
+                      {isOpen && article.content && (
+                        <div className="px-4 pb-4 border-t border-gray-100 pt-4">
+                          <div
+                            className="text-sm text-gray-700 leading-relaxed"
+                            dangerouslySetInnerHTML={{ __html: article.content.replace(/
+
+/g, "</p><p class='mb-3'>").replace(/
+/g, "<br/>") }}
+                          />
+                        </div>
+                      )}
+                    </div>
                   )
                 })}
               </div>
