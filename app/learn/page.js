@@ -138,8 +138,7 @@ export default function ArticlesPage() {
             <a href="/videos" className="px-3 py-2 text-sm font-semibold text-gray-500 border-b-2 border-transparent hover:text-gray-700 transition-colors">Videos</a>
             <span className="px-3 py-2 text-sm font-semibold text-green-800 border-b-2 border-green-700">Articles</span>
             <a href="/videos?tab=ask" className="px-3 py-2 text-sm font-semibold text-gray-500 border-b-2 border-transparent hover:text-gray-700 transition-colors">AI</a>
-            <a href="/library" className="px-3 py-2 text-sm font-semibold text-gray-500 border-b-2 border-transparent hover:text-gray-700 transition-colors">Library</a>
-            <div className="ml-auto">
+            <div className="ml-auto flex items-center gap-2"><a href="/library" className="text-sm font-semibold text-gray-500 hover:text-gray-700 transition-colors">Library</a>
               <a href="/plan" className="text-sm font-semibold text-green-700 border-2 border-green-700 rounded-xl px-4 py-2 hover:bg-green-50 transition-colors whitespace-nowrap">MyGolf Plan</a>
             </div>
           </div>
