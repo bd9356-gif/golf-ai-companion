@@ -22,19 +22,16 @@ export default function ProfilePage() {
   const [savedVideos, setSavedVideos] = useState([])
   const [loading, setLoading] = useState(true)
   const [skillLevel, setSkillLevel] = useState('')
+  const [playingId, setPlayingId] = useState(null)
   const router = useRouter()
 
   useEffect(() => {
     async function init() {
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
-        router.push('/login')
-        return
-      }
+      if (!session) { router.push('/login'); return }
       setUser(session.user)
       setSkillLevel(localStorage.getItem('golf_skill_level') || '')
 
-      // Load saved videos with full video details
       const { data } = await supabase
         .from('saved_videos')
         .select(`
@@ -81,7 +78,6 @@ export default function ProfilePage() {
 
       <main className="max-w-4xl mx-auto px-4 py-6">
 
-        {/* Profile card */}
         <div className="mb-8 p-6 bg-green-50 border border-green-100 rounded-2xl flex items-center gap-4">
           {avatarUrl ? (
             <img src={avatarUrl} alt={userName} className="w-16 h-16 rounded-full" />
@@ -104,7 +100,6 @@ export default function ProfilePage() {
           </a>
         </div>
 
-        {/* Quick stats */}
         <div className="grid grid-cols-3 gap-4 mb-8">
           <div className="text-center p-4 border border-gray-100 rounded-xl">
             <p className="text-3xl font-bold text-green-700">{savedVideos.length}</p>
@@ -120,7 +115,6 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Saved Videos */}
         <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-gray-900">🔖 Saved Videos</h2>
@@ -147,33 +141,60 @@ export default function ProfilePage() {
               {savedVideos.map((saved) => {
                 const video = saved.videos
                 const ytId = getYouTubeId(video)
+                const isPlaying = playingId === saved.video_id
+
                 return (
-                  <a
-                    key={saved.video_id}
-                    href="/plan"
-                    className="flex items-center gap-3 p-3 border border-gray-100 rounded-xl hover:border-green-200 hover:bg-green-50 transition-colors"
-                  >
-                    {ytId && (
-                      <img
-                        src={video.thumbnail_url || `https://img.youtube.com/vi/${ytId}/mqdefault.jpg`}
-                        alt={video.title}
-                        className="w-20 h-14 object-cover rounded-lg shrink-0"
-                      />
+                  <div key={saved.video_id} className="border border-gray-100 rounded-xl overflow-hidden hover:border-green-200 transition-colors">
+                    {isPlaying && ytId ? (
+                      <div>
+                        <div className="relative w-full aspect-video bg-black">
+                          <iframe
+                            src={`https://www.youtube.com/embed/${ytId}?autoplay=1`}
+                            className="w-full h-full"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                          />
+                          <button
+                            onClick={() => setPlayingId(null)}
+                            className="absolute top-2 right-2 bg-black/60 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm hover:bg-black/80"
+                          >✕</button>
+                        </div>
+                        <div className="p-3">
+                          <p className="font-semibold text-gray-900 text-sm">{video.title}</p>
+                          {video.channel_name && <p className="text-xs text-gray-400 mt-0.5">{video.channel_name}</p>}
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setPlayingId(saved.video_id)}
+                        className="w-full flex items-center gap-3 p-3 text-left"
+                      >
+                        {ytId && (
+                          <div className="relative shrink-0">
+                            <img
+                              src={video.thumbnail_url || `https://img.youtube.com/vi/${ytId}/mqdefault.jpg`}
+                              alt={video.title}
+                              className="w-20 h-14 object-cover rounded-lg"
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="w-8 h-8 bg-white/90 rounded-full flex items-center justify-center shadow">
+                                <svg viewBox="0 0 24 24" className="w-4 h-4 text-green-800 ml-0.5" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-gray-900 text-sm leading-snug line-clamp-2">{video.title}</p>
+                          {video.channel_name && <p className="text-xs text-gray-400 mt-0.5">{video.channel_name}</p>}
+                        </div>
+                      </button>
                     )}
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 text-sm leading-snug line-clamp-2">{video.title}</p>
-                      {video.channel_name && (
-                        <p className="text-xs text-gray-400 mt-0.5">{video.channel_name}</p>
-                      )}
-                    </div>
-                    <span className="text-gray-400 shrink-0">▶</span>
-                  </a>
+                  </div>
                 )
               })}
             </div>
           )}
         </div>
-
       </main>
     </div>
   )
