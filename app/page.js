@@ -39,7 +39,7 @@ export default function HomePage() {
           </div>
           {user ? (
             <a href="/profile" className="text-sm font-semibold text-green-700 hover:underline">
-              \U0001f464 {userName}
+              👤 {userName}
             </a>
           ) : (
             <a href="/login" className="text-sm font-semibold text-green-700 border-2 border-green-700 rounded-xl px-4 py-2 hover:bg-green-50 transition-colors">
@@ -57,55 +57,33 @@ export default function HomePage() {
         </div>
 
         <div className="text-center mb-8">
-          <h2 className="text-4xl font-bold text-gray-900 mb-2 leading-tight">
-            Play Better Golf.
-          </h2>
-          <h2 className="text-4xl font-bold text-green-700 mb-4 leading-tight">
-            Starting Today.
-          </h2>
+          <h2 className="text-4xl font-bold text-gray-900 mb-2 leading-tight">Play Better Golf.</h2>
+          <h2 className="text-4xl font-bold text-green-700 mb-4 leading-tight">Starting Today.</h2>
           <p className="text-base text-gray-500 max-w-md mx-auto">
             767 curated instruction videos and expert articles — matched to your skill level by AI. From beginner basics to advanced shot shaping.
           </p>
         </div>
 
         <div className="space-y-3 mb-8">
-          <a
-            href="/onboarding"
-            className="block w-full px-6 py-4 bg-green-700 text-white rounded-xl font-bold text-lg hover:bg-green-800 transition-colors text-center"
-          >
-            Get My Video Plan \u2192
+          <a href="/onboarding" className="block w-full px-6 py-4 bg-green-700 text-white rounded-xl font-bold text-lg hover:bg-green-800 transition-colors text-center">
+            Get My Video Plan →
           </a>
-          <a
-            href="/videos"
-            className="block w-full px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors text-center"
-          >
+          <a href="/videos" className="block w-full px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors text-center">
             Browse Videos
           </a>
-          <a
-            href="/learn"
-            className="block w-full px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors text-center"
-          >
-            \U0001f4d6 Read Articles
+          <a href="/learn" className="block w-full px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors text-center">
+            📖 Read Articles
           </a>
-          <a
-            href="/videos?tab=ask"
-            className="block w-full px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors text-center"
-          >
-            \U0001f916 Ask MyGolf AI
+          <a href="/videos?tab=ask" className="block w-full px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors text-center">
+            🤖 Ask MyGolf AI
           </a>
           {hasPlan && (
-            <a
-              href="/plan"
-              className="block w-full px-6 py-3 border-2 border-green-200 text-green-700 rounded-xl font-semibold text-base hover:bg-green-50 transition-colors text-center"
-            >
-              \U0001f3af My Plan
+            <a href="/plan" className="block w-full px-6 py-3 border-2 border-green-200 text-green-700 rounded-xl font-semibold text-base hover:bg-green-50 transition-colors text-center">
+              🎯 My Plan
             </a>
           )}
-          <a
-            href="/about"
-            className="block w-full px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors text-center"
-          >
-            \u2139\ufe0f About
+          <a href="/about" className="block w-full px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors text-center">
+            ℹ️ About
           </a>
         </div>
 
