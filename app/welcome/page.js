@@ -41,6 +41,7 @@ const SECTIONS = [
     href: '/library',
     description: 'Your saved videos, guides, and AI answers — everything you carry with you.',
   },
+  { icon: '🏌️', title: 'MyCourses', subtitle: 'Your Home Courses', href: '/courses', description: 'Save your favorite courses — notes, tips, and tee time links all in one place.' },
 ]
 
 export default function ClubhousePage() {
