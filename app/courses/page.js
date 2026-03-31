@@ -125,6 +125,16 @@ export default function CoursesPage() {
                   className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-green-300"
                 />
               </div>
+              {form.name.trim() && (
+                
+                  href={`https://www.google.com/search?q=${encodeURIComponent(form.name + ' tee time booking')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-sm text-green-700 font-semibold hover:text-green-900"
+                >
+                  🔍 Find tee time link for "{form.name}" →
+                </a>
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
                 <textarea
