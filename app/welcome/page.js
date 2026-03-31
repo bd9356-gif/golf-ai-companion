@@ -31,7 +31,7 @@ const SECTIONS = [
     icon: '🎓',
     title: 'MyPro',
     subtitle: 'Ask the Club Pro',
-    href: '/plan',
+    href: '/plan?tab=ask',
     description: 'Personal AI guidance for your game — step inside and talk with your club pro.',
   },
   {
