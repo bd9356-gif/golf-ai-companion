@@ -122,13 +122,13 @@ export default function Home() {
                 activeTab === 'videos' ? 'text-green-800 border-green-700' : 'text-gray-500 border-transparent hover:text-gray-700'
               }`}
             >
-              Videos
+              MyVideos
             </button>
             <a
               href="/learn"
               className="px-3 py-2 text-sm font-semibold text-gray-500 border-b-2 border-transparent hover:text-gray-700 transition-colors"
             >
-              Articles
+              MyGuides
             </a>
             <button
               onClick={() => setActiveTab('ask')}
@@ -136,7 +136,7 @@ export default function Home() {
                 activeTab === 'ask' ? 'text-green-800 border-green-700' : 'text-gray-500 border-transparent hover:text-gray-700'
               }`}
             >
-              Ask AI
+              MyPro
             </button>
             <div className="ml-auto">
               <a
