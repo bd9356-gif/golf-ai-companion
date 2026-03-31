@@ -49,6 +49,7 @@ export default function ArticlesPage() {
   const [skillLevel, setSkillLevel] = useState(null)
   const [selectedTopic, setSelectedTopic] = useState('all')
   const [openArticle, setOpenArticle] = useState(null)
+  const [playingVideoId, setPlayingVideoId] = useState(null)
   const [relatedVideos, setRelatedVideos] = useState([])
   const [savedIds, setSavedIds] = useState(new Set())
   const [user, setUser] = useState(null)
@@ -251,24 +252,34 @@ export default function ArticlesPage() {
                           <p className="text-sm font-semibold text-gray-500 mb-3">🎬 Related Videos</p>
                           <div className="space-y-2">
                             {relatedVideos.map(v => (
-                              <div
-                                key={v.id}
-                                className="flex items-center gap-3 p-2 rounded-lg bg-gray-50"
-                              >
-                                <img
-                                  src={v.thumbnail_url || `https://img.youtube.com/vi/${v.youtube_video_id}/mqdefault.jpg`}
-                                  alt={v.title}
-                                  className="w-20 h-12 object-cover rounded-lg shrink-0"
-                                />
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm text-gray-700 font-medium leading-snug line-clamp-2">{v.title}</p>
-                                  <button
-                                    onClick={() => saveVideoToLibrary(v.id)}
-                                    className="text-xs text-green-700 font-semibold hover:text-green-900 mt-1"
-                                  >
-                                    🔖 Add to MyBag
-                                  </button>
-                                </div>
+                              <div key={v.id} className="rounded-lg overflow-hidden bg-gray-50">
+                                {playingVideoId === v.id ? (
+                                  <div>
+                                    <div className="relative w-full aspect-video bg-black">
+                                      <iframe src={`https://www.youtube.com/embed/${v.youtube_video_id}?autoplay=1`} className="w-full h-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+                                      <button onClick={() => setPlayingVideoId(null)} className="absolute top-2 right-2 bg-black/60 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs">✕</button>
+                                    </div>
+                                    <div className="p-2 flex items-center justify-between">
+                                      <p className="text-xs text-gray-600 font-medium line-clamp-1">{v.title}</p>
+                                      <button onClick={() => saveVideoToLibrary(v.id)} className="text-xs text-green-700 font-semibold ml-2 shrink-0">🔖 MyBag</button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center gap-3 p-2">
+                                    <button onClick={() => setPlayingVideoId(v.id)} className="relative shrink-0">
+                                      <img src={v.thumbnail_url || `https://img.youtube.com/vi/${v.youtube_video_id}/mqdefault.jpg`} alt={v.title} className="w-20 h-12 object-cover rounded-lg" />
+                                      <div className="absolute inset-0 flex items-center justify-center">
+                                        <div className="w-7 h-7 bg-white/90 rounded-full flex items-center justify-center shadow">
+                                          <svg viewBox="0 0 24 24" className="w-3 h-3 text-green-800 ml-0.5" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+                                        </div>
+                                      </div>
+                                    </button>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm text-gray-700 font-medium leading-snug line-clamp-2">{v.title}</p>
+                                      <button onClick={() => saveVideoToLibrary(v.id)} className="text-xs text-green-700 font-semibold mt-1">🔖 Add to MyBag</button>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             ))}
                           </div>
