@@ -41,7 +41,8 @@ export default function Home() {
     if (params.get('tab') === 'ask') setActiveTab('ask')
   }, [])
 
-  useEffect(() => { fetchVideos() }, [])
+  useEffect(() => {
+    fetchVideos()
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session) {
         setUser(session.user)
@@ -49,6 +50,7 @@ export default function Home() {
         if (data) setSavedIds(new Set(data.map((s: any) => s.video_id)))
       }
     })
+  }, [])
   useEffect(() => { applyFilters() }, [videos, search])
 
   async function fetchVideos() {
