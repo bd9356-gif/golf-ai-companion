@@ -13,13 +13,37 @@ const TIER_LABELS = {
 }
 
 const SECTIONS = [
-  { icon: '🎬', title: 'MyVideos', href: '/plan', description: 'Videos tailored to your game and your level — content that actually helps you improve.' },
-  { icon: '📖', title: 'MyArticles', href: '/learn', description: 'AI-crafted golf insights matched to your level — simple guidance that makes your game clearer.' },
-  { icon: '🤖', title: 'Ask MyGolf AI', href: '/plan', description: 'Personalized answers for your game — clear, level-matched guidance when you need it.' },
-  { icon: '📚', title: 'MyLibrary', href: '/library', description: 'Your saved videos, articles, and AI answers — all organized around your skill level.' },
+  {
+    icon: '⛳',
+    title: 'MyVideos',
+    subtitle: 'The Course',
+    href: '/plan',
+    description: 'Videos matched to your skill level — head out to the course and start improving.',
+  },
+  {
+    icon: '📖',
+    title: 'MyGuides',
+    subtitle: 'The Buddies',
+    href: '/learn',
+    description: 'AI-crafted golf articles matched to your game — talk it over with your buddies.',
+  },
+  {
+    icon: '🎓',
+    title: 'MyPro',
+    subtitle: 'Ask the Club Pro',
+    href: '/plan',
+    description: 'Personal AI guidance for your game — step inside and talk with your club pro.',
+  },
+  {
+    icon: '🏌️',
+    title: 'MyBag',
+    subtitle: 'Your Golf Bag',
+    href: '/library',
+    description: 'Your saved videos, guides, and AI answers — everything you carry with you.',
+  },
 ]
 
-export default function WelcomePage() {
+export default function ClubhousePage() {
   const [skillLevel, setSkillLevel] = useState('')
   const router = useRouter()
 
@@ -34,23 +58,29 @@ export default function WelcomePage() {
   return (
     <div className="min-h-screen bg-white">
       <header className="border-b border-gray-100 px-4 py-4">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl font-bold text-gray-900">⛳ MyGolf Companion</h1>
-          <p className="text-sm text-gray-500">Your AI guide to better golf</p>
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">⛳ MyGolf Companion</h1>
+            <p className="text-sm text-gray-500">Your AI guide to better golf</p>
+          </div>
+          <a href="/profile" className="text-sm text-gray-500 hover:text-gray-700">👤 Profile</a>
         </div>
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-8">
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            Welcome to Your MyGolf Plan
+          <h2 className="text-3xl font-bold text-gray-900 mb-1">
+            MyGolfClubhouse
           </h2>
-          <p className="text-gray-500 text-base">
-            You're set up as a <strong className="text-green-700">{TIER_LABELS[skillLevel]}</strong> — here's everything personalized for your game.
+          <p className="text-gray-500 text-base mb-1">
+            Your AI-powered starting point for everything in your game.
+          </p>
+          <p className="text-sm text-green-700 font-medium">
+            Playing as: {TIER_LABELS[skillLevel]} · <a href="/onboarding" className="underline hover:text-green-900">Change level</a>
           </p>
         </div>
 
-        <div className="space-y-3 mb-8">
+        <div className="space-y-3">
           {SECTIONS.map((section) => (
             <a
               key={section.title}
@@ -60,19 +90,16 @@ export default function WelcomePage() {
               <div className="flex items-start gap-3">
                 <span className="text-2xl">{section.icon}</span>
                 <div className="flex-1">
-                  <h3 className="font-bold text-base text-gray-900">{section.title}</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-base text-gray-900">{section.title}</h3>
+                    <span className="text-xs text-gray-400 font-medium">— {section.subtitle}</span>
+                  </div>
                   <p className="text-sm mt-0.5 leading-relaxed text-gray-500">{section.description}</p>
                 </div>
                 <span className="text-gray-400 shrink-0 mt-1">→</span>
               </div>
             </a>
           ))}
-        </div>
-
-        <div className="text-center">
-          <a href="/plan" className="inline-block px-8 py-4 bg-green-700 text-white rounded-xl font-bold text-lg hover:bg-green-800 transition-colors">
-            Go to MyGolf Plan →
-          </a>
         </div>
       </main>
     </div>
