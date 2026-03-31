@@ -131,7 +131,7 @@ export default function CoursesPage() {
                 rel="noopener noreferrer"
                 className={`inline-flex items-center gap-1 text-sm font-semibold ${form.name.trim() ? 'text-green-700 hover:text-green-900' : 'text-gray-300 pointer-events-none'}`}
               >
-                🔍 {form.name.trim() ? 'Search tee times for ' + form.name : 'Type a course name to search'}
+                {form.name.trim() ? 'Search tee times for ' + form.name : 'Type a course name above'}
               </a>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
