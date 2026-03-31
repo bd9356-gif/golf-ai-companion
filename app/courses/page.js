@@ -125,7 +125,7 @@ export default function CoursesPage() {
                   className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-green-300"
                 />
               </div>
-              
+              <a
                 href={form.name.trim() ? `https://www.google.com/search?q=${encodeURIComponent(form.name + ' tee time booking')}` : '#'}
                 target={form.name.trim() ? '_blank' : '_self'}
                 rel="noopener noreferrer"
