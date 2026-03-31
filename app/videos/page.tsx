@@ -295,7 +295,6 @@ export default function Home() {
                               <p className="text-sm text-gray-500">Sign in to see AI summaries and personalized insights.</p>
                             )}
                           </div>
-                          </div>
                     </div>
                   )
                 })}
