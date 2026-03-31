@@ -111,6 +111,7 @@ export default function AskCompanionTab({ skillLevel = 'all', onBack }: Props) {
         <button onClick={() => setMessages([])} className="text-xs text-green-600 hover:text-green-800">Clear chat</button>
       </div>
 
+      <p className="text-sm text-gray-500 text-center mb-4">Choose a question or ask anything you want — get instant, personalized guidance from your AI Pro.</p>
       <div className="flex-1 overflow-y-auto space-y-4 pb-4">
         {messages.length === 0 && (
           <div className="space-y-2">
