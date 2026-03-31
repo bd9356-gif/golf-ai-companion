@@ -115,6 +115,12 @@ export default function ArticlesPage() {
     }
   }
 
+  async function saveVideoToLibrary(videoId) {
+    if (!user) { window.location.href = '/login'; return }
+    await supabase.from('saved_videos').upsert({ user_id: user.id, video_id: videoId })
+    alert('Added to MyBag!')
+  }
+
   const topicFiltered = selectedTopic === 'all'
     ? articles
     : articles.filter(a => a.topic === selectedTopic)
@@ -245,20 +251,25 @@ export default function ArticlesPage() {
                           <p className="text-sm font-semibold text-gray-500 mb-3">🎬 Related Videos</p>
                           <div className="space-y-2">
                             {relatedVideos.map(v => (
-                              <a
+                              <div
                                 key={v.id}
-                                href={`https://www.youtube.com/watch?v=${v.youtube_video_id}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                                className="flex items-center gap-3 p-2 rounded-lg bg-gray-50"
                               >
                                 <img
                                   src={v.thumbnail_url || `https://img.youtube.com/vi/${v.youtube_video_id}/mqdefault.jpg`}
                                   alt={v.title}
                                   className="w-20 h-12 object-cover rounded-lg shrink-0"
                                 />
-                                <p className="text-sm text-gray-700 font-medium leading-snug">{v.title}</p>
-                              </a>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm text-gray-700 font-medium leading-snug line-clamp-2">{v.title}</p>
+                                  <button
+                                    onClick={() => saveVideoToLibrary(v.id)}
+                                    className="text-xs text-green-700 font-semibold hover:text-green-900 mt-1"
+                                  >
+                                    🔖 Add to MyBag
+                                  </button>
+                                </div>
+                              </div>
                             ))}
                           </div>
                         </div>
