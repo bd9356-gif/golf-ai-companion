@@ -258,8 +258,8 @@ export default function ProfilePage() {
               <div className="text-center py-12 border border-dashed border-gray-200 rounded-xl">
                 <p className="text-3xl mb-2">🤖</p>
                 <p className="text-gray-500 font-medium">No saved answers yet</p>
-                <p className="text-sm text-gray-400 mt-1">Save AI answers from the Ask AI tab</p>
-                <a href="/plan" className="mt-4 inline-block text-sm text-green-700 font-semibold hover:underline">Ask MyGolf AI →</a>
+                <p className="text-sm text-gray-400 mt-1">Save AI answers from MyPro</p>
+                <a href="/plan" className="mt-4 inline-block text-sm text-green-700 font-semibold hover:underline">Ask MyPro →</a>
               </div>
             ) : (
               <div className="space-y-3">
