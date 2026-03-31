@@ -131,7 +131,7 @@ export default function ArticlesPage() {
         <div className="max-w-4xl mx-auto px-4 pt-5 pb-3">
           <div className="mb-3">
             <h1 className="text-3xl font-bold text-gray-900 leading-tight tracking-tight">⛳ MyGolf Companion</h1>
-            <p className="text-base text-gray-500 mt-1">Your AI guide to better golf · <a href="/library" className="text-green-700 font-semibold hover:underline">My Library</a></p>
+            <p className="text-base text-gray-500 mt-1">Your AI guide to better golf · <a href="/library" className="text-green-700 font-semibold hover:underline">MyBag</a></p>
           </div>
           <div className="flex items-center gap-1">
             <button onClick={() => window.location.href='/welcome'} className="text-sm font-medium text-gray-500 hover:text-gray-700 px-2 py-2">← Back</button>
@@ -139,7 +139,7 @@ export default function ArticlesPage() {
             <span className="px-3 py-2 text-sm font-semibold text-green-800 border-b-2 border-green-700">MyGuides</span>
             <a href="/videos?tab=ask" className="px-3 py-2 text-sm font-semibold text-gray-500 border-b-2 border-transparent hover:text-gray-700 transition-colors">MyPro</a>
             <div className="ml-auto">
-              <a href="/plan" className="text-sm font-semibold text-green-700 border-2 border-green-700 rounded-xl px-4 py-2 hover:bg-green-50 transition-colors whitespace-nowrap">MyGolf Plan</a>
+              <a href="/plan" className="text-sm font-semibold text-green-700 border-2 border-green-700 rounded-xl px-4 py-2 hover:bg-green-50 transition-colors whitespace-nowrap">MyLevel</a>
             </div>
           </div>
         </div>
@@ -158,8 +158,8 @@ export default function ArticlesPage() {
         )}
 
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Golf Articles</h2>
-          <p className="text-gray-500 mt-1">AI-Crafted Golf Articles for Every Golfer — From Your MyGolf Companion</p>
+          <h2 className="text-2xl font-bold text-gray-900">MyGuides</h2>
+          <p className="text-gray-500 mt-1">AI-crafted guides matched to your game — talk it over with your buddies.</p>
         </div>
 
         <div className="flex flex-wrap gap-2 mb-6">
