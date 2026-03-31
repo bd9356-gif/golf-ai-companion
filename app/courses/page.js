@@ -47,6 +47,7 @@ export default function CoursesPage() {
         name: form.name,
         notes: form.notes,
         tee_time_url: form.tee_time_url,
+        phone: form.phone || '',
       }).eq('id', editingId)
     } else {
       await supabase.from('saved_courses').insert({
@@ -54,10 +55,11 @@ export default function CoursesPage() {
         name: form.name,
         notes: form.notes,
         tee_time_url: form.tee_time_url,
-      })
+        tee_time_url: form.tee_time_url,
+        phone: form.phone || '',
     }
     setForm({ name: '', notes: '', tee_time_url: '' })
-    setShowForm(false)
+    setForm({ name: '', notes: '', tee_time_url: '', phone: '' })
     setEditingId(null)
     setSaving(false)
     loadCourses(user.id)
