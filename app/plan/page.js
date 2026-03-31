@@ -173,7 +173,7 @@ export default function MyPlanPage() {
             </div>
           </div>
           <div className="flex items-center gap-1">
-            <a href="/" className="text-sm font-medium text-gray-500 hover:text-gray-700 px-2 py-2">← Back</a>
+            <a href="/welcome" className="text-sm font-medium text-gray-500 hover:text-gray-700 px-2 py-2">← Back</a>
             <button
               onClick={() => setActiveTab('videos')}
               className={`px-3 py-2 text-sm font-semibold border-b-2 transition-colors ${activeTab === 'videos' ? 'text-green-800 border-green-700' : 'text-gray-500 border-transparent hover:text-gray-700'}`}

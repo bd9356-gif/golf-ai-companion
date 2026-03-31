@@ -134,7 +134,7 @@ export default function ArticlesPage() {
             <p className="text-base text-gray-500 mt-1">Your AI guide to better golf · <a href="/library" className="text-green-700 font-semibold hover:underline">My Library</a></p>
           </div>
           <div className="flex items-center gap-1">
-            <button onClick={() => window.history.back()} className="text-sm font-medium text-gray-500 hover:text-gray-700 px-2 py-2">← Back</button>
+            <button onClick={() => window.location.href='/welcome'} className="text-sm font-medium text-gray-500 hover:text-gray-700 px-2 py-2">← Back</button>
             <a href="/videos" className="px-3 py-2 text-sm font-semibold text-gray-500 border-b-2 border-transparent hover:text-gray-700 transition-colors">Videos</a>
             <span className="px-3 py-2 text-sm font-semibold text-green-800 border-b-2 border-green-700">Articles</span>
             <a href="/videos?tab=ask" className="px-3 py-2 text-sm font-semibold text-gray-500 border-b-2 border-transparent hover:text-gray-700 transition-colors">MyPro</a>

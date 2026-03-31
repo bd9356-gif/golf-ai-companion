@@ -78,7 +78,7 @@ export default function LibraryPage() {
             <a href="/profile" className="text-sm text-gray-500 hover:text-gray-700">👤 Profile</a>
           </div>
           <div className="flex items-center gap-1">
-            <button onClick={() => window.history.back()} className="text-sm font-medium text-gray-500 hover:text-gray-700 px-2 py-2">← Back</button>
+            <button onClick={() => window.location.href='/welcome'} className="text-sm font-medium text-gray-500 hover:text-gray-700 px-2 py-2">← Back</button>
             <a href="/plan" className="px-3 py-2 text-sm font-semibold text-gray-500 border-b-2 border-transparent hover:text-gray-700">MyGolf Plan</a>
             <a href="/videos" className="px-3 py-2 text-sm font-semibold text-gray-500 border-b-2 border-transparent hover:text-gray-700">Videos</a>
             <a href="/learn" className="px-3 py-2 text-sm font-semibold text-gray-500 border-b-2 border-transparent hover:text-gray-700">Articles</a>

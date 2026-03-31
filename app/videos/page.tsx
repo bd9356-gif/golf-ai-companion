@@ -111,7 +111,7 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-1">
             <button
-              onClick={() => window.history.back()}
+              onClick={() => window.location.href='/welcome'}
               className="text-sm font-medium text-gray-500 hover:text-gray-700 px-2 py-2"
             >
               ← Back
