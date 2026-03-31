@@ -56,6 +56,7 @@ export default function CoursesPage() {
         notes: form.notes,
         tee_time_url: form.tee_time_url,
         phone: form.phone || '',
+      })
     }
     setForm({ name: '', notes: '', tee_time_url: '', phone: '' })
     setEditingId(null)
