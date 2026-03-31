@@ -13,32 +13,11 @@ const TIER_LABELS = {
 }
 
 const SECTIONS = [
-  {
-    icon: '🎯',
-    title: 'MyGolf Plan',
-    description: 'Your personalized training plan — videos, articles, and AI answers matched to your skill level.',
-    primary: true,
-  },
-  {
-    icon: '🎬',
-    title: 'MyVideos',
-    description: 'Videos tailored to your game and your level — content that actually helps you improve.',
-  },
-  {
-    icon: '📖',
-    title: 'MyArticles',
-    description: 'AI-crafted golf insights matched to your level — simple guidance that makes your game clearer.',
-  },
-  {
-    icon: '🤖',
-    title: 'Ask MyGolf AI',
-    description: 'Personalized answers for your game — clear, level-matched guidance when you need it.',
-  },
-  {
-    icon: '📚',
-    title: 'MyLibrary',
-    description: 'Your saved videos, articles, and AI answers — all organized around your skill level.',
-  },
+  { icon: '🎯', title: 'MyGolf Plan', href: '/plan', description: 'Your personalized training plan — videos, articles, and AI answers matched to your skill level.', primary: true },
+  { icon: '🎬', title: 'MyVideos', href: '/plan', description: 'Videos tailored to your game and your level — content that actually helps you improve.' },
+  { icon: '📖', title: 'MyArticles', href: '/learn', description: 'AI-crafted golf insights matched to your level — simple guidance that makes your game clearer.' },
+  { icon: '🤖', title: 'Ask MyGolf AI', href: '/plan', description: 'Personalized answers for your game — clear, level-matched guidance when you need it.' },
+  { icon: '📚', title: 'MyLibrary', href: '/library', description: 'Your saved videos, articles, and AI answers — all organized around your skill level.' },
 ]
 
 export default function WelcomePage() {
@@ -74,12 +53,13 @@ export default function WelcomePage() {
 
         <div className="space-y-3">
           {SECTIONS.map((section) => (
-            <div
+            <a
               key={section.title}
-              className={`p-5 rounded-2xl border ${
+              href={section.href}
+              className={`block p-5 rounded-2xl border transition-all hover:shadow-md ${
                 section.primary
-                  ? 'bg-green-700 border-green-700'
-                  : 'bg-white border-gray-200'
+                  ? 'bg-green-700 border-green-700 hover:bg-green-800'
+                  : 'bg-white border-gray-200 hover:border-green-300'
               }`}
             >
               <div className="flex items-start gap-3">
@@ -92,15 +72,10 @@ export default function WelcomePage() {
                     {section.description}
                   </p>
                 </div>
+                <span className={`ml-auto shrink-0 mt-1 ${section.primary ? 'text-green-100' : 'text-gray-400'}`}>→</span>
               </div>
-            </div>
+            </a>
           ))}
-        </div>
-
-        <div className="text-center mt-8">
-          <a href="/plan" className="inline-block px-8 py-4 bg-green-700 text-white rounded-xl font-bold text-lg hover:bg-green-800 transition-colors">
-            Go to MyGolf Plan →
-          </a>
         </div>
       </main>
     </div>
