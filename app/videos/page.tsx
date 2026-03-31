@@ -107,7 +107,7 @@ export default function Home() {
             <h1 className="text-3xl font-bold text-gray-900 leading-tight tracking-tight">
               ⛳ MyGolf Companion
             </h1>
-            <p className="text-base text-gray-500 mt-1">Your AI guide to better golf · <a href="/library" className="text-green-700 font-semibold hover:underline">My Library</a></p>
+            <p className="text-base text-gray-500 mt-1">Your AI guide to better golf · <a href="/library" className="text-green-700 font-semibold hover:underline">MyBag</a></p>
           </div>
           <div className="flex items-center gap-1">
             <button

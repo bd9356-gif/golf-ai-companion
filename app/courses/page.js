@@ -144,6 +144,16 @@ export default function CoursesPage() {
                 />
               </div>
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                <input
+                  type="tel"
+                  value={form.phone || ''}
+                  onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
+                  placeholder="Course phone number"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-green-300"
+                />
+              </div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Tee Time Link</label>
                 <input
                   type="url"

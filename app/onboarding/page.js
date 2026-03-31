@@ -76,7 +76,7 @@ export default function OnboardingPage() {
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Set Your Skill Level</h2>
           <p className="text-gray-500 text-base">
-            Select your current skill level and I'll match you with the best videos for your game.
+            Select your current skill level to unlock personalized videos, tips, and guidance — and explore all other levels whenever you want.
           </p>
         </div>
 

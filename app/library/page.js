@@ -89,7 +89,7 @@ export default function LibraryPage() {
 
       <main className="max-w-4xl mx-auto px-4 py-6">
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">📚 My Library</h2>
+          <h2 className="text-2xl font-bold text-gray-900">📚 MyBag</h2>
           <p className="text-gray-500 mt-1">{totalItems} saved item{totalItems !== 1 ? 's' : ''}</p>
         </div>
 
