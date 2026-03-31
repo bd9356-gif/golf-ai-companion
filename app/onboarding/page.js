@@ -74,7 +74,7 @@ export default function OnboardingPage() {
 
       <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-10 flex flex-col">
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Get My Video Plan</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Set Your Skill Level</h2>
           <p className="text-gray-500 text-base">
             Select your current skill level and I'll match you with the best videos for your game.
           </p>
@@ -107,7 +107,7 @@ export default function OnboardingPage() {
             disabled={!selected}
             className="w-full py-4 bg-green-700 text-white rounded-xl text-base font-semibold hover:bg-green-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
-            Get My Video Plan →
+            Go to MyGolfClubhouse →
           </button>
         </div>
       </main>
