@@ -72,7 +72,7 @@ export default function WelcomePage() {
           </p>
         </div>
 
-        <div className="space-y-3 mb-8">
+        <div className="space-y-3">
           {SECTIONS.map((section) => (
             <div
               key={section.title}
@@ -97,11 +97,10 @@ export default function WelcomePage() {
           ))}
         </div>
 
-        <div className="text-center">
-          <a href="/plan" className="text-green-700 font-semibold hover:underline text-base">
+        <div className="text-center mt-8">
+          <a href="/plan" className="inline-block px-8 py-4 bg-green-700 text-white rounded-xl font-bold text-lg hover:bg-green-800 transition-colors">
             Go to MyGolf Plan →
           </a>
-          <p className="text-sm text-gray-400 mt-2">You can update your skill level anytime from the plan page</p>
         </div>
       </main>
     </div>
