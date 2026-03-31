@@ -13,7 +13,6 @@ const TIER_LABELS = {
 }
 
 const SECTIONS = [
-  { icon: '🎯', title: 'MyGolf Plan', href: '/plan', description: 'Your personalized training plan — videos, articles, and AI answers matched to your skill level.', primary: true },
   { icon: '🎬', title: 'MyVideos', href: '/plan', description: 'Videos tailored to your game and your level — content that actually helps you improve.' },
   { icon: '📖', title: 'MyArticles', href: '/learn', description: 'AI-crafted golf insights matched to your level — simple guidance that makes your game clearer.' },
   { icon: '🤖', title: 'Ask MyGolf AI', href: '/plan', description: 'Personalized answers for your game — clear, level-matched guidance when you need it.' },
@@ -51,31 +50,29 @@ export default function WelcomePage() {
           </p>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-3 mb-8">
           {SECTIONS.map((section) => (
             <a
               key={section.title}
               href={section.href}
-              className={`block p-5 rounded-2xl border transition-all hover:shadow-md ${
-                section.primary
-                  ? 'bg-green-700 border-green-700 hover:bg-green-800'
-                  : 'bg-white border-gray-200 hover:border-green-300'
-              }`}
+              className="block p-5 rounded-2xl border border-gray-200 hover:border-green-300 hover:shadow-sm transition-all bg-white"
             >
               <div className="flex items-start gap-3">
                 <span className="text-2xl">{section.icon}</span>
-                <div>
-                  <h3 className={`font-bold text-base ${section.primary ? 'text-white' : 'text-gray-900'}`}>
-                    {section.title}
-                  </h3>
-                  <p className={`text-sm mt-0.5 leading-relaxed ${section.primary ? 'text-green-100' : 'text-gray-500'}`}>
-                    {section.description}
-                  </p>
+                <div className="flex-1">
+                  <h3 className="font-bold text-base text-gray-900">{section.title}</h3>
+                  <p className="text-sm mt-0.5 leading-relaxed text-gray-500">{section.description}</p>
                 </div>
-                <span className={`ml-auto shrink-0 mt-1 ${section.primary ? 'text-green-100' : 'text-gray-400'}`}>→</span>
+                <span className="text-gray-400 shrink-0 mt-1">→</span>
               </div>
             </a>
           ))}
+        </div>
+
+        <div className="text-center">
+          <a href="/plan" className="inline-block px-8 py-4 bg-green-700 text-white rounded-xl font-bold text-lg hover:bg-green-800 transition-colors">
+            Go to MyGolf Plan →
+          </a>
         </div>
       </main>
     </div>
