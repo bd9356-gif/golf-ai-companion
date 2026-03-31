@@ -74,6 +74,8 @@ export default function MyPlanPage() {
       if (saved) setSavedIds(new Set(saved.map(s => s.video_id)))
 
       fetchPlanVideos(level)
+      const tabParam = new URLSearchParams(window.location.search).get('tab')
+      if (tabParam === 'ask') setActiveTab('ask')
     }
     init()
   }, [])
