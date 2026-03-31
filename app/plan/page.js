@@ -178,16 +178,16 @@ export default function MyPlanPage() {
               onClick={() => setActiveTab('videos')}
               className={`px-3 py-2 text-sm font-semibold border-b-2 transition-colors ${activeTab === 'videos' ? 'text-green-800 border-green-700' : 'text-gray-500 border-transparent hover:text-gray-700'}`}
             >
-              Videos
+              MyVideos
             </button>
             <a href="/learn" className="px-3 py-2 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors">
-              Articles
+              MyGuides
             </a>
             <button
               onClick={() => setActiveTab('ask')}
               className={`px-3 py-2 text-sm font-semibold border-b-2 transition-colors ${activeTab === 'ask' ? 'text-green-800 border-green-700' : 'text-gray-500 border-transparent hover:text-gray-700'}`}
             >
-              Ask AI
+              MyPro
             </button>
             <div className="ml-auto">
               <a href="/onboarding" className="text-sm font-semibold text-green-700 border-2 border-green-700 rounded-xl px-4 py-2 hover:bg-green-50 transition-colors whitespace-nowrap">
