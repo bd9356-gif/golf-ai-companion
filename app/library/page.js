@@ -80,9 +80,9 @@ export default function LibraryPage() {
           <div className="flex items-center gap-1">
             <button onClick={() => window.location.href='/welcome'} className="text-sm font-medium text-gray-500 hover:text-gray-700 px-2 py-2">← Back</button>
             <a href="/plan" className="px-3 py-2 text-sm font-semibold text-gray-500 border-b-2 border-transparent hover:text-gray-700">MyGolf Plan</a>
-            <a href="/videos" className="px-3 py-2 text-sm font-semibold text-gray-500 border-b-2 border-transparent hover:text-gray-700">Videos</a>
-            <a href="/learn" className="px-3 py-2 text-sm font-semibold text-gray-500 border-b-2 border-transparent hover:text-gray-700">Articles</a>
-            <span className="px-3 py-2 text-sm font-semibold text-green-800 border-b-2 border-green-700">Library</span>
+            <a href="/videos" className="px-3 py-2 text-sm font-semibold text-gray-500 border-b-2 border-transparent hover:text-gray-700">MyVideos</a>
+            <a href="/learn" className="px-3 py-2 text-sm font-semibold text-gray-500 border-b-2 border-transparent hover:text-gray-700">MyGuides</a>
+            <span className="px-3 py-2 text-sm font-semibold text-green-800 border-b-2 border-green-700">MyBag</span>
           </div>
         </div>
       </header>
@@ -118,7 +118,7 @@ export default function LibraryPage() {
             <p className="text-sm text-gray-400 mt-1">Save videos, articles and AI answers to build your library</p>
             <div className="flex gap-3 justify-center mt-6">
               <a href="/plan" className="text-sm text-green-700 font-semibold border-2 border-green-700 rounded-xl px-4 py-2 hover:bg-green-50">MyGolf Plan</a>
-              <a href="/learn" className="text-sm text-gray-600 font-semibold border-2 border-gray-200 rounded-xl px-4 py-2 hover:bg-gray-50">Articles</a>
+              <a href="/learn" className="text-sm text-gray-600 font-semibold border-2 border-gray-200 rounded-xl px-4 py-2 hover:bg-gray-50">MyGuides</a>
             </div>
           </div>
         ) : (
