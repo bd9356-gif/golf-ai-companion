@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import AskCompanionTab from '@/components/AskCompanionTab'
+import PreviewMode from '@/components/PreviewMode'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -29,6 +30,9 @@ export default function Home() {
   const [search, setSearch] = useState('')
   const [showCount, setShowCount] = useState(10)
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
+  const [user, setUser] = useState<any>(null)
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
+  const [previewVideoId, setPreviewVideoId] = useState<string | null>(null)
   const [playingId, setPlayingId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<Tab>('videos')
 
@@ -38,6 +42,13 @@ export default function Home() {
   }, [])
 
   useEffect(() => { fetchVideos() }, [])
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session) {
+        setUser(session.user)
+        const { data } = await supabase.from('saved_videos').select('video_id').eq('user_id', session.user.id)
+        if (data) setSavedIds(new Set(data.map((s: any) => s.video_id)))
+      }
+    })
   useEffect(() => { applyFilters() }, [videos, search])
 
   async function fetchVideos() {
@@ -80,6 +91,18 @@ export default function Home() {
     }
     setFiltered(result)
     setShowCount(10)
+  }
+
+  async function toggleSaved(videoId: string) {
+    if (!user) { setPreviewVideoId(videoId); return }
+    const isSaved = savedIds.has(videoId)
+    if (isSaved) {
+      await supabase.from('saved_videos').delete().eq('user_id', user.id).eq('video_id', videoId)
+      setSavedIds(prev => { const next = new Set(prev); next.delete(videoId); return next })
+    } else {
+      await supabase.from('saved_videos').insert({ user_id: user.id, video_id: videoId })
+      setSavedIds(prev => new Set([...prev, videoId]))
+    }
   }
 
   function toggleExpanded(id: string) {
@@ -264,13 +287,12 @@ export default function Home() {
 
                         {isExpanded && (
                           <div className="mt-3 border-t border-gray-100 pt-3">
-                            <div className="bg-green-50 border border-green-100 rounded-xl p-4 text-center">
-                              <p className="text-sm font-semibold text-green-800 mb-1">🎯 Get Your Personalized Video Plan</p>
-                              <p className="text-sm text-green-700 mb-3">Unlock AI-powered insights, personalized recommendations, and videos matched to your skill level.</p>
-                              <a href="/onboarding" className="inline-block px-5 py-2 bg-green-700 text-white rounded-xl text-sm font-semibold hover:bg-green-800 transition-colors">Get My Video Plan →</a>
-                            </div>
+                            {previewVideoId === video.id ? (
+                              <PreviewMode feature="Personalized video details" />
+                            ) : (
+                              <p className="text-sm text-gray-500">Sign in to see AI summaries and personalized insights.</p>
+                            )}
                           </div>
-                        )}
                       </div>
                     </div>
                   )
