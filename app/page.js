@@ -40,7 +40,7 @@ export default function HomePage() {
           {user ? (
             <div className="flex items-center gap-2">
               <a href="/plan" className="text-sm font-semibold text-white bg-green-700 rounded-xl px-4 py-2 hover:bg-green-800 transition-colors">
-                🎯 MyGolf Plan
+                🎯 MyGolfClubhouse
               </a>
               <a href="/profile" className="text-sm font-medium text-gray-500 hover:text-gray-700">
                 👤 {userName}
@@ -75,14 +75,14 @@ export default function HomePage() {
             Browse Videos
           </a>
           <a href="/learn" className="block w-full px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors text-center">
-            📖 Read Articles
+            📖 MyGuides
           </a>
           <a href="/videos?tab=ask" className="block w-full px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors text-center">
-            🤖 Ask MyGolf AI
+            🤖 MyPro
           </a>
           {hasPlan && (
             <a href="/plan" className="block w-full px-6 py-3 border-2 border-green-200 text-green-700 rounded-xl font-semibold text-base hover:bg-green-50 transition-colors text-center">
-              🎯 MyGolf Plan
+              🎯 MyGolfClubhouse
             </a>
           )}
           <a href="/about" className="block w-full px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors text-center">
