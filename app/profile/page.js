@@ -58,7 +58,7 @@ export default function ProfilePage() {
 
   async function handleSignOut() {
     await supabase.auth.signOut()
-    router.push('/login')
+    router.push('/')
   }
 
   function getYouTubeId(video) {
@@ -101,8 +101,8 @@ export default function ProfilePage() {
               </span>
             )}
           </div>
-          <a href="/plan" className="text-sm font-semibold text-green-700 border-2 border-green-700 rounded-xl px-4 py-2 hover:bg-green-50 transition-colors">
-            MyGolf Plan
+          <a href="/welcome" className="text-sm font-semibold text-green-700 border-2 border-green-700 rounded-xl px-4 py-2 hover:bg-green-50 transition-colors">
+            MyGolfClubhouse
           </a>
         </div>
 

@@ -124,7 +124,7 @@ export default function MyPlanPage() {
 
   async function handleSignOut() {
     await supabase.auth.signOut()
-    router.push('/login')
+    router.push('/')
   }
 
   function getMeta(video) {
