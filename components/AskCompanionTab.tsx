@@ -112,6 +112,7 @@ export default function AskCompanionTab({ skillLevel = 'all', onBack }: Props) {
       </div>
 
       <p className="text-sm text-gray-500 text-center mb-4">Choose a question or ask anything you want — get instant, personalized guidance from your AI Pro.</p>
+      <p className="text-sm text-gray-500 text-center mb-4 leading-relaxed">Choose a question or ask anything you want — get instant, personalized guidance from your AI Pro.</p>
       <div className="flex-1 overflow-y-auto space-y-4 pb-4">
         {messages.length === 0 && (
           <div className="space-y-2">
