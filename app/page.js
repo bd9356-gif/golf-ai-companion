@@ -78,7 +78,7 @@ export default function HomePage() {
             📖 MyGuides
           </a>
           <a href="/videos?tab=ask" className="block w-full px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors text-center">
-            🤖 MyPro
+            🏌️ MyPro
           </a>
           {hasPlan && (
             <a href="/plan" className="block w-full px-6 py-3 border-2 border-green-200 text-green-700 rounded-xl font-semibold text-base hover:bg-green-50 transition-colors text-center">
