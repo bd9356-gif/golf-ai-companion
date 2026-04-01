@@ -190,7 +190,7 @@ export default function MyBagPage() {
         }`}
         title={inCart ? 'Remove from cart' : 'Load to cart'}
       >
-        {inCart ? '🛒 In Cart' : '🛒 Load'}
+        {inCart ? '🛺 Added' : '🛺 Add to Cart'}
       </button>
     )
   }
@@ -303,9 +303,9 @@ export default function MyBagPage() {
     if (cartCount === 0) {
       return (
         <div className="text-center py-8 border border-dashed border-yellow-200 rounded-xl bg-yellow-50">
-          <p className="text-3xl mb-2">🛒</p>
+          <p className="text-3xl mb-2">🛺</p>
           <p className="text-sm font-semibold text-yellow-800">Your cart is empty</p>
-          <p className="text-xs text-yellow-600 mt-1">Tap "🛒 Load" on any item below to add it to today's focus</p>
+          <p className="text-xs text-yellow-600 mt-1">Tap "🛺 Add to Cart" on any item below to add it to today's focus</p>
         </div>
       )
     }
@@ -314,7 +314,7 @@ export default function MyBagPage() {
       <div className="border border-yellow-300 rounded-xl bg-yellow-50 overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b border-yellow-200">
           <div>
-            <p className="text-sm font-bold text-yellow-900">🛒 Today's Focus — {cartCount} item{cartCount !== 1 ? 's' : ''} loaded</p>
+            <p className="text-sm font-bold text-yellow-900">🛺 Today's Focus — {cartCount} item{cartCount !== 1 ? 's' : ''} loaded</p>
             <p className="text-xs text-yellow-600 mt-0.5">Items stay in your Bag — this is just what you're working on today</p>
           </div>
           <button
@@ -363,13 +363,13 @@ export default function MyBagPage() {
                 showCart ? 'border-yellow-400 bg-yellow-50 text-yellow-800' : 'border-gray-200 text-gray-600 hover:border-yellow-300'
               }`}
             >
-              <span className="text-lg">🛒</span>
+              <span className="text-lg">🛺</span>
               {cartCount > 0 && (
                 <span className="absolute -top-1.5 -right-1.5 bg-yellow-400 text-yellow-900 text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                   {cartCount}
                 </span>
               )}
-              <span className="text-sm font-semibold">Cart</span>
+              <span className="text-sm font-semibold">My Cart</span>
             </button>
           </div>
           <div className="flex items-center gap-1">
@@ -384,7 +384,7 @@ export default function MyBagPage() {
         {/* Cart panel — shown when toggled */}
         {showCart && (
           <div className="mb-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-3">🛒 My Cart</h2>
+            <h2 className="text-lg font-bold text-gray-900 mb-3">🛺 My Cart</h2>
             {renderCart()}
           </div>
         )}
