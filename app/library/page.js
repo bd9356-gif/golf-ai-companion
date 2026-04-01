@@ -24,6 +24,7 @@ export default function MyBagPage() {
   const [savedVideos, setSavedVideos] = useState([])
   const [savedArticles, setSavedArticles] = useState([])
   const [savedAnswers, setSavedAnswers] = useState([])
+  const [cartItems, setCartItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [currentSkillLevel, setCurrentSkillLevel] = useState('')
   const [playingId, setPlayingId] = useState(null)
@@ -31,7 +32,8 @@ export default function MyBagPage() {
   const [relatedVideos, setRelatedVideos] = useState({})
   const [playingRelatedId, setPlayingRelatedId] = useState(null)
   const [openAnswerId, setOpenAnswerId] = useState(null)
-  const [viewMode, setViewMode] = useState('journey') // 'journey' or 'type'
+  const [viewMode, setViewMode] = useState('journey')
+  const [showCart, setShowCart] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -48,7 +50,7 @@ export default function MyBagPage() {
 
   async function loadAll(userId) {
     setLoading(true)
-    const [videosRes, articlesRes, answersRes] = await Promise.all([
+    const [videosRes, articlesRes, answersRes, cartRes] = await Promise.all([
       supabase.from('saved_videos')
         .select('video_id, created_at, skill_level, videos(id, title, url, thumbnail_url, youtube_video_id, channel_name)')
         .eq('user_id', userId)
@@ -60,27 +62,71 @@ export default function MyBagPage() {
       supabase.from('saved_answers')
         .select('id, question, answer, created_at, skill_level')
         .eq('user_id', userId)
-        .order('created_at', { ascending: false })
+        .order('created_at', { ascending: false }),
+      supabase.from('cart_items')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false }),
     ])
     if (videosRes.data) setSavedVideos(videosRes.data.filter(s => s.videos))
     if (articlesRes.data) setSavedArticles(articlesRes.data.filter(s => s.articles))
     if (answersRes.data) setSavedAnswers(answersRes.data)
+    if (cartRes.data) setCartItems(cartRes.data)
     setLoading(false)
   }
 
+  // ── Cart functions ──────────────────────────────────────────
+  function isInCart(itemId, itemType) {
+    return cartItems.some(c => c.item_id === String(itemId) && c.item_type === itemType)
+  }
+
+  async function addToCart(itemId, itemType, itemTitle) {
+    if (!user || isInCart(itemId, itemType)) return
+    const { data, error } = await supabase.from('cart_items').insert({
+      user_id: user.id,
+      item_id: String(itemId),
+      item_type: itemType,
+      item_title: itemTitle,
+    }).select().single()
+    if (!error && data) {
+      setCartItems(prev => [data, ...prev])
+    }
+  }
+
+  async function removeFromCart(itemId, itemType) {
+    if (!user) return
+    await supabase.from('cart_items')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('item_id', String(itemId))
+      .eq('item_type', itemType)
+    setCartItems(prev => prev.filter(c => !(c.item_id === String(itemId) && c.item_type === itemType)))
+  }
+
+  async function clearCart() {
+    if (!user) return
+    await supabase.from('cart_items').delete().eq('user_id', user.id)
+    setCartItems([])
+  }
+
+  // ── Bag remove functions (unchanged) ───────────────────────
   async function removeVideo(videoId) {
     await supabase.from('saved_videos').delete().eq('user_id', user.id).eq('video_id', videoId)
     setSavedVideos(prev => prev.filter(s => s.video_id !== videoId))
+    // Also remove from cart if present
+    removeFromCart(videoId, 'video')
   }
 
   async function removeArticle(articleId) {
     await supabase.from('saved_articles').delete().eq('user_id', user.id).eq('article_id', articleId)
     setSavedArticles(prev => prev.filter(s => s.article_id !== articleId))
+    removeFromCart(articleId, 'article')
   }
 
   async function removeAnswer(id) {
     await supabase.from('saved_answers').delete().eq('user_id', user.id).eq('id', id)
     setSavedAnswers(prev => prev.filter(s => s.id !== id))
+    removeFromCart(id, 'answer')
   }
 
   async function fetchRelatedVideos(articleId, topic) {
@@ -109,32 +155,47 @@ export default function MyBagPage() {
   }
 
   const total = savedVideos.length + savedArticles.length + savedAnswers.length
+  const cartCount = cartItems.length
 
-  // Group all items by skill level
   function getJourneyGroups() {
     const allItems = [
       ...savedVideos.map(s => ({ ...s, itemType: 'video' })),
       ...savedArticles.map(s => ({ ...s, itemType: 'article' })),
       ...savedAnswers.map(s => ({ ...s, itemType: 'answer' })),
     ]
-
     const grouped = {}
     allItems.forEach(item => {
       const level = item.skill_level || 'unknown'
       if (!grouped[level]) grouped[level] = []
       grouped[level].push(item)
     })
-
-    // Sort levels - current first, then by tier order descending
     const sortedKeys = Object.keys(grouped).sort((a, b) => {
       if (a === currentSkillLevel) return -1
       if (b === currentSkillLevel) return 1
       return TIER_ORDER.indexOf(b) - TIER_ORDER.indexOf(a)
     })
-
     return sortedKeys.map(level => ({ level, items: grouped[level] }))
   }
 
+  // ── Cart button component ───────────────────────────────────
+  function CartButton({ itemId, itemType, itemTitle }) {
+    const inCart = isInCart(itemId, itemType)
+    return (
+      <button
+        onClick={() => inCart ? removeFromCart(itemId, itemType) : addToCart(itemId, itemType, itemTitle)}
+        className={`text-xs font-semibold transition-colors px-2 py-1 rounded-lg ${
+          inCart
+            ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
+            : 'bg-gray-100 text-gray-500 hover:bg-yellow-50 hover:text-yellow-700'
+        }`}
+        title={inCart ? 'Remove from cart' : 'Load to cart'}
+      >
+        {inCart ? '🛒 In Cart' : '🛒 Load'}
+      </button>
+    )
+  }
+
+  // ── Card renderers ──────────────────────────────────────────
   function renderVideoCard(saved) {
     const video = saved.videos
     const ytId = getYouTubeId(video)
@@ -144,12 +205,18 @@ export default function MyBagPage() {
         {isPlaying && ytId ? (
           <div>
             <div className="relative w-full aspect-video bg-black">
-              <iframe src={`https://www.youtube.com/embed/${ytId}?autoplay=1`} className="w-full h-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+              <iframe
+                src={`https://www.youtube.com/embed/${ytId}?autoplay=1`}
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
               <button onClick={() => setPlayingId(null)} className="absolute top-2 right-2 bg-black/60 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm">✕</button>
             </div>
-            <div className="p-3 flex items-center justify-between">
-              <p className="font-semibold text-gray-900 text-sm">{video.title}</p>
-              <button onClick={() => removeVideo(saved.video_id)} className="text-xs text-red-400 hover:text-red-600 ml-2 shrink-0">Remove</button>
+            <div className="p-3 flex items-center justify-between gap-2">
+              <p className="font-semibold text-gray-900 text-sm flex-1">{video.title}</p>
+              <CartButton itemId={saved.video_id} itemType="video" itemTitle={video.title} />
+              <button onClick={() => removeVideo(saved.video_id)} className="text-xs text-red-400 hover:text-red-600 shrink-0">Remove</button>
             </div>
           </div>
         ) : (
@@ -171,7 +238,10 @@ export default function MyBagPage() {
               <p className="font-semibold text-gray-900 text-sm leading-snug mt-1 line-clamp-2">{video.title}</p>
               {video.channel_name && <p className="text-xs text-gray-400 mt-0.5">{video.channel_name}</p>}
             </div>
-            <button onClick={() => removeVideo(saved.video_id)} className="text-xs text-red-400 hover:text-red-600 shrink-0">Remove</button>
+            <div className="flex flex-col gap-1 items-end shrink-0">
+              <CartButton itemId={saved.video_id} itemType="video" itemTitle={video.title} />
+              <button onClick={() => removeVideo(saved.video_id)} className="text-xs text-red-400 hover:text-red-600">Remove</button>
+            </div>
           </div>
         )}
       </div>
@@ -190,13 +260,14 @@ export default function MyBagPage() {
             <p className="text-xs text-gray-500 mt-1 line-clamp-2">{article.summary}</p>
             <span className="text-xs text-green-700 mt-1 inline-block">{isOpen ? 'Close ▲' : 'Read ▼'}</span>
           </button>
-          <button onClick={() => removeArticle(saved.article_id)} className="text-xs text-red-400 hover:text-red-600 shrink-0">Remove</button>
+          <div className="flex flex-col gap-1 items-end shrink-0">
+            <CartButton itemId={saved.article_id} itemType="article" itemTitle={article.title} />
+            <button onClick={() => removeArticle(saved.article_id)} className="text-xs text-red-400 hover:text-red-600">Remove</button>
+          </div>
         </div>
         {isOpen && article.content && (
           <div className="px-4 pb-4 border-t border-gray-100 pt-4">
-            <div className="text-sm text-gray-700 leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: (article.content || '').split('\n\n').join('</p><p class="mb-3">').split('\n').join('<br/>') }}
-            />
+            <div className="text-sm text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: (article.content || '').split('\n\n').join('</p><p class="mb-3">').split('\n').join('<br/>') }} />
           </div>
         )}
       </div>
@@ -213,7 +284,10 @@ export default function MyBagPage() {
             <p className="font-semibold text-gray-900 text-sm mt-1">{item.question}</p>
             <span className="text-xs text-green-700 mt-1 inline-block">{isOpen ? 'Close ▲' : 'Read ▼'}</span>
           </button>
-          <button onClick={() => removeAnswer(item.id)} className="text-xs text-red-400 hover:text-red-600 shrink-0">Remove</button>
+          <div className="flex flex-col gap-1 items-end shrink-0">
+            <CartButton itemId={item.id} itemType="answer" itemTitle={item.question} />
+            <button onClick={() => removeAnswer(item.id)} className="text-xs text-red-400 hover:text-red-600">Remove</button>
+          </div>
         </div>
         {isOpen && (
           <div className="px-4 pb-4 border-t border-gray-100 pt-4">
@@ -224,17 +298,79 @@ export default function MyBagPage() {
     )
   }
 
-  if (!user) return null
+  // ── Cart panel ──────────────────────────────────────────────
+  function renderCart() {
+    if (cartCount === 0) {
+      return (
+        <div className="text-center py-8 border border-dashed border-yellow-200 rounded-xl bg-yellow-50">
+          <p className="text-3xl mb-2">🛒</p>
+          <p className="text-sm font-semibold text-yellow-800">Your cart is empty</p>
+          <p className="text-xs text-yellow-600 mt-1">Tap "🛒 Load" on any item below to add it to today's focus</p>
+        </div>
+      )
+    }
 
+    return (
+      <div className="border border-yellow-300 rounded-xl bg-yellow-50 overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-yellow-200">
+          <div>
+            <p className="text-sm font-bold text-yellow-900">🛒 Today's Focus — {cartCount} item{cartCount !== 1 ? 's' : ''} loaded</p>
+            <p className="text-xs text-yellow-600 mt-0.5">Items stay in your Bag — this is just what you're working on today</p>
+          </div>
+          <button
+            onClick={clearCart}
+            className="text-xs text-red-400 hover:text-red-600 font-semibold whitespace-nowrap ml-3"
+          >
+            Clear All
+          </button>
+        </div>
+        <div className="divide-y divide-yellow-100">
+          {cartItems.map(item => (
+            <div key={item.id} className="flex items-center gap-3 px-4 py-3">
+              <span className="text-lg">
+                {item.item_type === 'video' ? '🎬' : item.item_type === 'article' ? '📖' : '🤖'}
+              </span>
+              <p className="flex-1 text-sm font-medium text-gray-800 line-clamp-1">{item.item_title}</p>
+              <button
+                onClick={() => removeFromCart(item.item_id, item.item_type)}
+                className="text-xs text-gray-400 hover:text-red-500 shrink-0 font-semibold"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (!user) return null
   const journeyGroups = getJourneyGroups()
 
   return (
     <div className="min-h-screen bg-white">
       <header className="border-b border-gray-100 bg-white sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-4 pt-5 pb-3">
-          <div className="mb-3">
-            <h1 className="text-3xl font-bold text-gray-900">⛳ MyGolf Companion</h1>
-            <p className="text-base text-gray-500 mt-1">Your AI guide to better golf</p>
+          <div className="mb-3 flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">⛳ MyGolf Companion</h1>
+              <p className="text-base text-gray-500 mt-1">Your AI guide to better golf</p>
+            </div>
+            {/* Cart icon in header */}
+            <button
+              onClick={() => setShowCart(s => !s)}
+              className={`relative flex items-center gap-1.5 px-3 py-2 rounded-xl border-2 transition-colors ${
+                showCart ? 'border-yellow-400 bg-yellow-50 text-yellow-800' : 'border-gray-200 text-gray-600 hover:border-yellow-300'
+              }`}
+            >
+              <span className="text-lg">🛒</span>
+              {cartCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-yellow-400 text-yellow-900 text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                  {cartCount}
+                </span>
+              )}
+              <span className="text-sm font-semibold">Cart</span>
+            </button>
           </div>
           <div className="flex items-center gap-1">
             <button onClick={() => window.location.href='/welcome'} className="text-sm font-medium text-gray-500 hover:text-gray-700 px-2 py-2">← Back</button>
@@ -244,6 +380,15 @@ export default function MyBagPage() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-6">
+
+        {/* Cart panel — shown when toggled */}
+        {showCart && (
+          <div className="mb-6">
+            <h2 className="text-lg font-bold text-gray-900 mb-3">🛒 My Cart</h2>
+            {renderCart()}
+          </div>
+        )}
+
         <div className="mb-6 flex items-start justify-between">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">🏌️ MyBag</h2>
@@ -283,7 +428,7 @@ export default function MyBagPage() {
                 <div className="flex items-center gap-3 mb-3">
                   <div className={`flex-1 h-px ${level === currentSkillLevel ? 'bg-green-300' : 'bg-gray-200'}`} />
                   <span className={`text-sm font-bold px-3 py-1 rounded-full ${level === currentSkillLevel ? 'bg-green-700 text-white' : 'bg-gray-100 text-gray-600'}`}>
-                    {level === currentSkillLevel ? '📍 ' : ''}{TIER_LABELS[level] || 'Other'} {level === currentSkillLevel ? '(current)' : ''}
+                    {level === currentSkillLevel ? '📍 ' : ''}{TIER_LABELS[level] || 'Other'}{level === currentSkillLevel ? ' (current)' : ''}
                   </span>
                   <div className={`flex-1 h-px ${level === currentSkillLevel ? 'bg-green-300' : 'bg-gray-200'}`} />
                 </div>
