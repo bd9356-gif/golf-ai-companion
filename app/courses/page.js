@@ -197,7 +197,7 @@ export default function CoursesPage() {
               <div key={course.id} className="border border-gray-200 rounded-xl p-5 hover:border-green-200 transition-colors">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1">
-                    <h3 className="font-bold text-gray-900 text-lg">{course.name}</h3>
+                    <h3 className="font-bold text-gray-900 text-lg cursor-pointer hover:text-green-700 transition-colors" onClick={() => startEdit(course)}>{course.name}</h3>
                     {course.notes && <p className="text-sm text-gray-600 mt-1 leading-relaxed whitespace-pre-wrap">{course.notes}</p>}
                     {course.tee_time_url && (
                       <a

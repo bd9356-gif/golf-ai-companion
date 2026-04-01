@@ -113,7 +113,7 @@ export default function MyBagPage() {
 
             {savedVideos.length > 0 && (
               <div>
-                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">🎬 Videos ({savedVideos.length})</h3>
+                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">🎬 MyVideos ({savedVideos.length})</h3>
                 <div className="space-y-3">
                   {savedVideos.map(saved => {
                     const video = saved.videos
@@ -162,7 +162,7 @@ export default function MyBagPage() {
 
             {savedArticles.length > 0 && (
               <div>
-                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">📖 Guides ({savedArticles.length})</h3>
+                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">📖 MyGuides ({savedArticles.length})</h3>
                 <div className="space-y-3">
                   {savedArticles.map(saved => {
                     const article = saved.articles
@@ -197,7 +197,7 @@ export default function MyBagPage() {
 
             {savedAnswers.length > 0 && (
               <div>
-                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">🤖 AI Answers ({savedAnswers.length})</h3>
+                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">🤖 MyPro Answers ({savedAnswers.length})</h3>
                 <div className="space-y-3">
                   {savedAnswers.map(item => {
                     const isOpen = openAnswerId === item.id
