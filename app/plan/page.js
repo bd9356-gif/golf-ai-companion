@@ -303,7 +303,7 @@ export default function MyPlanPage() {
                           onClick={(e) => { e.stopPropagation(); toggleSaved(video.id) }}
                           className={`mt-1 ml-4 text-sm font-semibold transition-colors ${isSaved ? 'text-green-600' : 'text-gray-400 hover:text-gray-600'}`}
                         >
-                          {isSaved ? '🔖 Saved to Library' : '🔖 Save to Library'}
+                          {isSaved ? '🔖 Saved to MyBag' : '🔖 Save to MyBag'}
                         </button>
                         {isExpanded && (
                           <div className="mt-3 border-t border-gray-100 pt-3">

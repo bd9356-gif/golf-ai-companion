@@ -112,7 +112,6 @@ export default function AskCompanionTab({ skillLevel = 'all', onBack }: Props) {
       </div>
 
       <p className="text-sm text-gray-500 text-center mb-4">Choose a question or ask anything you want — get instant, personalized guidance from your AI Pro.</p>
-      <p className="text-sm text-gray-500 text-center mb-4 leading-relaxed">Choose a question or ask anything you want — get instant, personalized guidance from your AI Pro.</p>
       <div className="flex-1 overflow-y-auto space-y-4 pb-4">
         {messages.length === 0 && (
           <div className="space-y-2">
@@ -149,7 +148,7 @@ export default function AskCompanionTab({ skillLevel = 'all', onBack }: Props) {
                     onClick={() => saveAnswer(i)}
                     className={`mt-1 text-xs font-semibold transition-colors ${savedIndexes.has(i) ? 'text-green-600' : 'text-gray-400 hover:text-gray-600'}`}
                   >
-                    {savedIndexes.has(i) ? '🔖 Saved to Library' : '🔖 Save Answer'}
+                    {savedIndexes.has(i) ? '🔖 Saved to MyBag' : '🔖 Save Answer'}
                   </button>
                 )}
               </div>
