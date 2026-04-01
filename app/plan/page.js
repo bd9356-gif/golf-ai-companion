@@ -28,6 +28,7 @@ const TIER_SUBLABELS = {
   senior_player: 'Prioritizing mobility, rhythm, balance, and joint-friendly mechanics',
 }
 
+// Fallback topics if assessment wasn't completed
 const TIER_TOPICS = {
   beginner: ['swing', 'grip', 'stance', 'putting', 'chipping'],
   building_game: ['swing', 'driving', 'chipping', 'putting', 'course management'],
@@ -41,6 +42,8 @@ export default function MyPlanPage() {
   const [videos, setVideos] = useState([])
   const [loading, setLoading] = useState(true)
   const [skillLevel, setSkillLevel] = useState('')
+  const [personalizedTopics, setPersonalizedTopics] = useState([])
+  const [assessmentAnswers, setAssessmentAnswers] = useState(null)
   const [showCount, setShowCount] = useState(10)
   const [expandedIds, setExpandedIds] = useState(new Set())
   const [playingId, setPlayingId] = useState(null)
@@ -51,7 +54,6 @@ export default function MyPlanPage() {
 
   useEffect(() => {
     async function init() {
-      // Check auth
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
         router.push('/login')
@@ -59,7 +61,6 @@ export default function MyPlanPage() {
       }
       setUser(session.user)
 
-      // Check skill level
       const level = localStorage.getItem('golf_skill_level')
       if (!level || !TIER_LABELS[level]) {
         router.push('/onboarding')
@@ -67,44 +68,81 @@ export default function MyPlanPage() {
       }
       setSkillLevel(level)
 
-      // Load saved videos from Supabase
+      // Load personalized topics from assessment
+      const savedTopics = localStorage.getItem('golf_topics')
+      const topics = savedTopics ? JSON.parse(savedTopics) : (TIER_TOPICS[level] ?? [])
+      setPersonalizedTopics(topics)
+
+      // Load assessment answers for context display
+      const savedAnswers = localStorage.getItem('golf_answers')
+      if (savedAnswers) setAssessmentAnswers(JSON.parse(savedAnswers))
+
+      // Load saved videos
       const { data: saved } = await supabase
         .from('saved_videos')
         .select('video_id')
         .eq('user_id', session.user.id)
       if (saved) setSavedIds(new Set(saved.map(s => s.video_id)))
 
-      fetchPlanVideos(level)
+      fetchPlanVideos(level, topics)
+
       const tabParam = new URLSearchParams(window.location.search).get('tab')
       if (tabParam === 'ask') setActiveTab('ask')
     }
     init()
   }, [])
 
-  async function fetchPlanVideos(level) {
+  async function fetchPlanVideos(level, topics) {
     setLoading(true)
-    const topics = TIER_TOPICS[level] ?? []
     const { data, error } = await supabase
       .from('videos')
       .select(`
-        id, title, url, thumbnail_url, youtube_video_id, channel_name, description, published_at,
+        id, title, url, thumbnail_url, youtube_video_id,
+        channel_name, description, published_at,
         video_metadata!video_metadata_video_id_fkey (
           skill_tiers, topics, ai_summary, quality_score
         )
       `)
+
     if (!error && data) {
-      const matched = data.filter(v => {
-        const meta = Array.isArray(v.video_metadata) ? v.video_metadata[0] : v.video_metadata
-        const vTiers = meta?.skill_tiers ?? []
-        const vTopics = (meta?.topics ?? []).map(t => t.toLowerCase())
-        return vTiers.includes(level) && topics.some(t => vTopics.includes(t.toLowerCase()))
+      // Score each video based on how many of the user's priority topics it matches
+      // Topics are ordered by priority (index 0 = most important)
+      const scored = data
+        .map(v => {
+          const meta = Array.isArray(v.video_metadata) ? v.video_metadata[0] : v.video_metadata
+          const vTiers = meta?.skill_tiers ?? []
+          const vTopics = (meta?.topics ?? []).map(t => t.toLowerCase())
+          const qualityScore = meta?.quality_score ?? 0
+
+          // Must match the skill tier
+          if (!vTiers.includes(level)) return null
+
+          // Score by topic match — earlier topics in the list are worth more
+          let topicScore = 0
+          topics.forEach((topic, index) => {
+            if (vTopics.includes(topic.toLowerCase())) {
+              topicScore += (topics.length - index) // Higher weight for priority topics
+            }
+          })
+
+          // Must match at least one topic
+          if (topicScore === 0) return null
+
+          return { ...v, _topicScore: topicScore, _qualityScore: qualityScore }
+        })
+        .filter(Boolean)
+
+      // Sort by topic relevance first, then quality score
+      const sorted = scored.sort((a, b) => {
+        if (b._topicScore !== a._topicScore) return b._topicScore - a._topicScore
+        return b._qualityScore - a._qualityScore
       })
-      const sorted = matched.sort((a, b) => {
-        const aMeta = Array.isArray(a.video_metadata) ? a.video_metadata[0] : a.video_metadata
-        const bMeta = Array.isArray(b.video_metadata) ? b.video_metadata[0] : b.video_metadata
-        return (bMeta?.quality_score ?? 0) - (aMeta?.quality_score ?? 0)
-      })
-      setVideos(sorted.slice(0, 50).sort(() => Math.random() - 0.5))
+
+      // Take top 50, then shuffle slightly to keep it fresh
+      const top50 = sorted.slice(0, 50)
+      const topCore = top50.slice(0, 10) // Keep top 10 always at top
+      const rest = top50.slice(10).sort(() => Math.random() - 0.5)
+      setVideos([...topCore, ...rest])
     }
     setLoading(false)
   }
@@ -117,7 +155,9 @@ export default function MyPlanPage() {
         .eq('user_id', user.id).eq('video_id', videoId)
       setSavedIds(prev => { const next = new Set(prev); next.delete(videoId); return next })
     } else {
-      await supabase.from('saved_videos').insert({ user_id: user.id, video_id: videoId, skill_level: skillLevel })
+      await supabase.from('saved_videos').insert({
+        user_id: user.id, video_id: videoId, skill_level: skillLevel
+      })
       setSavedIds(prev => new Set([...prev, videoId]))
     }
   }
@@ -152,6 +192,11 @@ export default function MyPlanPage() {
   const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Golfer'
 
   if (!skillLevel) return null
+
+  // Build a friendly focus label from assessment answers
+  const focusLabel = assessmentAnswers?.struggle
+    ? assessmentAnswers.struggle.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+    : null
 
   return (
     <div className="min-h-screen bg-white">
@@ -215,6 +260,20 @@ export default function MyPlanPage() {
           <>
             <SkillBanner skillLevel={skillLevel} context="videos" count={savedIds.size} />
 
+            {/* Personalization summary */}
+            {focusLabel && (
+              <div className="mb-5 bg-green-50 border border-green-200 rounded-xl px-4 py-3 flex items-center gap-3">
+                <span className="text-2xl">🎯</span>
+                <div>
+                  <p className="text-sm font-semibold text-green-800">
+                    Videos focused on: {focusLabel}
+                  </p>
+                  <p className="text-xs text-green-600">
+                    Based on your assessment · <a href="/onboarding" className="underline hover:text-green-800">Retake assessment</a>
+                  </p>
+                </div>
+              </div>
+            )}
 
             {!loading && (
               <p className="text-lg font-bold text-gray-800 mb-5">
@@ -323,4 +382,3 @@ export default function MyPlanPage() {
     </div>
   )
 }
-

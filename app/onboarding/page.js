@@ -1,114 +1,111 @@
 'use client'
-
-import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
+import { createClient } from '@supabase/supabase-js'
 
-const TIERS = [
-  {
-    value: 'beginner',
-    label: 'Beginner',
-    sublabel: 'Just starting, learning the basics',
-    topics: ['swing', 'grip', 'stance', 'putting', 'chipping'],
-  },
-  {
-    value: 'building_game',
-    label: 'Building Your Game',
-    sublabel: 'Scoring 100+, working on consistency',
-    topics: ['swing', 'driving', 'chipping', 'putting', 'course management'],
-  },
-  {
-    value: 'building_consistency',
-    label: 'Building Consistency',
-    sublabel: 'Scoring 90–100, improving fundamentals',
-    topics: ['iron play', 'driving', 'short game', 'putting', 'mental game'],
-  },
-  {
-    value: 'improving_player',
-    label: 'Improving Player',
-    sublabel: 'Scoring 80–90, solid intermediate skills',
-    topics: ['iron play', 'short game', 'bunker', 'course management', 'mental game'],
-  },
-  {
-    value: 'advanced_player',
-    label: 'Advanced Player',
-    sublabel: 'Scoring 70–80, low-handicap and scoring well',
-    topics: ['driving', 'iron play', 'short game', 'bunker', 'course management'],
-  },
-  {
-    value: 'senior_player',
-    label: 'Senior Player',
-    sublabel: 'Prioritizing mobility, rhythm, balance, and joint-friendly mechanics',
-    topics: ['swing', 'fitness', 'course management', 'mental game', 'putting'],
-  },
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+)
+
+const STATS = [
+  { stat: '767', label: 'Instruction Videos' },
+  { stat: '6', label: 'Skill Levels' },
+  { stat: '40+', label: 'Expert Articles' },
+  { stat: 'AI', label: 'Personalized Plans' },
 ]
 
-export default function OnboardingPage() {
-  const [selected, setSelected] = useState(null)
-  const router = useRouter()
+export default function HomePage() {
+  const [hasPlan, setHasPlan] = useState(false)
+  const [user, setUser] = useState(null)
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const level = params.get('level')
-    if (level && TIERS.find(t => t.value === level)) {
-      setSelected(level)
-    }
+    const level = localStorage.getItem('golf_skill_level')
+    if (level) setHasPlan(true)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) setUser(session.user)
+    })
   }, [])
 
-  function handleSubmit() {
-    if (!selected) return
-    const tier = TIERS.find(t => t.value === selected)
-    localStorage.setItem('golf_skill_level', tier.value)
-    localStorage.setItem('golf_topics', JSON.stringify(tier.topics))
-    localStorage.setItem('golf_answers', JSON.stringify({ level: tier.value }))
-    router.push('/welcome')
-  }
+  const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'My Profile'
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
       <header className="border-b border-gray-100 px-4 py-4">
-        <div className="max-w-2xl mx-auto flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-gray-900">⛳ MyGolf Companion</h1>
-          <button onClick={() => router.back()} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">⛳ MyGolf Companion</h1>
+            <p className="text-sm text-gray-500">Your AI guide to better golf</p>
+          </div>
+          {user ? (
+            <div className="flex items-center gap-2">
+              <a href="/plan" className="text-sm font-semibold text-white bg-green-700 rounded-xl px-4 py-2 hover:bg-green-800 transition-colors">
+                🎯 MyGolfClubhouse
+              </a>
+              <a href="/profile" className="text-sm font-medium text-gray-500 hover:text-gray-700">
+                👤 {userName}
+              </a>
+            </div>
+          ) : (
+            <a href="/login" className="text-sm font-semibold text-green-700 border-2 border-green-700 rounded-xl px-4 py-2 hover:bg-green-50 transition-colors">
+              Sign In
+            </a>
+          )}
         </div>
       </header>
 
-      <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-10 flex flex-col">
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Set Your Skill Level</h2>
-          <p className="text-gray-500 text-base">
-            Select your current skill level to unlock personalized videos, tips, and guidance — and explore all other levels whenever you want.
+      <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-8">
+        <div className="text-center mb-2">
+          <span className="inline-block bg-green-100 text-green-800 text-xs font-semibold px-3 py-1 rounded-full">
+            AI-Powered Golf Instruction
+          </span>
+        </div>
+
+        <div className="text-center mb-8">
+          <h2 className="text-4xl font-bold text-gray-900 mb-2 leading-tight">Play Better Golf.</h2>
+          <h2 className="text-4xl font-bold text-green-700 mb-4 leading-tight">Starting Today.</h2>
+          <p className="text-base text-gray-500 max-w-md mx-auto">
+            767 curated instruction videos and expert articles — matched to your skill level by AI. From beginner basics to advanced shot shaping.
           </p>
         </div>
 
-        <div className="space-y-3 flex-1">
-          {TIERS.map((tier) => (
-            <button
-              key={tier.value}
-              onClick={() => setSelected(tier.value)}
-              className={`w-full text-left px-5 py-4 rounded-xl border-2 transition-all ${
-                selected === tier.value
-                  ? 'border-green-600 bg-green-50'
-                  : 'border-gray-200 hover:border-green-300 hover:bg-green-50'
-              }`}
-            >
-              <p className={`font-semibold text-base ${selected === tier.value ? 'text-green-800' : 'text-gray-800'}`}>
-                {tier.label}
-              </p>
-              <p className={`text-sm mt-0.5 ${selected === tier.value ? 'text-green-600' : 'text-gray-500'}`}>
-                {tier.sublabel}
-              </p>
-            </button>
-          ))}
+        <div className="space-y-3 mb-8">
+          {/* Primary CTA — Assessment */}
+          <a
+            href="/onboarding"
+            className="block w-full px-6 py-4 bg-green-700 text-white rounded-xl font-bold text-base hover:bg-green-800 transition-colors text-center"
+          >
+            🎯 Get My Video Plan
+            <p className="text-sm font-normal text-green-100 mt-0.5">
+              Answer a few quick questions and I'll recommend the best videos for your game
+            </p>
+          </a>
+
+          <a href="/videos" className="block w-full px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors text-center">
+            Browse Videos
+          </a>
+          <a href="/learn" className="block w-full px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors text-center">
+            📖 MyGuides
+          </a>
+          <a href="/videos?tab=ask" className="block w-full px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors text-center">
+            🏌️ MyPro
+          </a>
+          {hasPlan && (
+            <a href="/plan" className="block w-full px-6 py-3 border-2 border-green-200 text-green-700 rounded-xl font-semibold text-base hover:bg-green-50 transition-colors text-center">
+              🎯 MyGolfClubhouse
+            </a>
+          )}
+          <a href="/about" className="block w-full px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors text-center">
+            ℹ️ About
+          </a>
         </div>
 
-        <div className="mt-8">
-          <button
-            onClick={handleSubmit}
-            disabled={!selected}
-            className="w-full py-4 bg-green-700 text-white rounded-xl text-base font-semibold hover:bg-green-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            Go to MyGolfClubhouse →
-          </button>
+        <div className="grid grid-cols-2 gap-4">
+          {STATS.map(({ stat, label }) => (
+            <div key={label} className="text-center p-4 bg-gray-50 rounded-xl">
+              <p className="text-3xl font-bold text-green-700">{stat}</p>
+              <p className="text-sm text-gray-500 mt-1">{label}</p>
+            </div>
+          ))}
         </div>
       </main>
     </div>
