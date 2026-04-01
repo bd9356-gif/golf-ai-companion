@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import SkillBanner from '@/components/SkillBanner'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -164,6 +165,7 @@ export default function ArticlesPage() {
           </div>
         )}
 
+        <SkillBanner skillLevel={skillLevel} context="guides" count={savedIds.size} />
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-gray-900">MyGuides</h2>
           <p className="text-gray-500 mt-1">AI-crafted guides matched to your game — talk it over with your buddies.</p>
