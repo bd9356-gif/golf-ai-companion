@@ -160,7 +160,16 @@ export default function Home() {
 
       <main className="max-w-4xl mx-auto px-4 py-6">
         {activeTab === 'ask' ? (
-          <AskCompanionTab />
+          user ? (
+            <AskCompanionTab />
+          ) : (
+            <div className="text-center py-16">
+              <p className="text-3xl mb-3">🎓</p>
+              <p className="text-gray-900 font-bold text-xl mb-2">Meet Your Club Pro</p>
+              <p className="text-gray-500 mb-6">Get personalized AI guidance — sign in to start a conversation with MyPro.</p>
+              <a href="/login" className="inline-block px-8 py-3 bg-green-700 text-white rounded-xl font-bold text-lg hover:bg-green-800 transition-colors">Sign In to Ask MyPro</a>
+            </div>
+          )
         ) : (
           <>
             <div className="mb-6">
