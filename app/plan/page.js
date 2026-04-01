@@ -116,7 +116,7 @@ export default function MyPlanPage() {
         .eq('user_id', user.id).eq('video_id', videoId)
       setSavedIds(prev => { const next = new Set(prev); next.delete(videoId); return next })
     } else {
-      await supabase.from('saved_videos').insert({ user_id: user.id, video_id: videoId })
+      await supabase.from('saved_videos').insert({ user_id: user.id, video_id: videoId, skill_level: skillLevel })
       setSavedIds(prev => new Set([...prev, videoId]))
     }
   }

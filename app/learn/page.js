@@ -112,7 +112,7 @@ export default function ArticlesPage() {
         .eq('user_id', user.id).eq('article_id', articleId)
       setSavedIds(prev => { const next = new Set(prev); next.delete(articleId); return next })
     } else {
-      await supabase.from('saved_articles').insert({ user_id: user.id, article_id: articleId })
+      await supabase.from('saved_articles').insert({ user_id: user.id, article_id: articleId, skill_level: skillLevel })
       setSavedIds(prev => new Set([...prev, articleId]))
     }
   }

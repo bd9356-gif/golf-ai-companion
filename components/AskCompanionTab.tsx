@@ -83,6 +83,7 @@ export default function AskCompanionTab({ skillLevel = 'all', onBack }: Props) {
       user_id: user.id,
       question,
       answer,
+      skill_level: skillLevel,
     })
 
     if (!error) {
