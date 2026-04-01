@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
 import AskCompanionTab from '@/components/AskCompanionTab'
+import SkillBanner from '@/components/SkillBanner'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -212,6 +213,7 @@ export default function MyPlanPage() {
           )
         ) : (
           <>
+            <SkillBanner skillLevel={skillLevel} context="videos" count={savedIds.size} />
             <div className="mb-6 p-5 bg-green-50 border border-green-100 rounded-2xl">
               <p className="text-xs font-semibold text-green-600 uppercase tracking-wide mb-1">Your Video Plan</p>
               <h2 className="text-2xl font-bold text-green-900">{TIER_LABELS[skillLevel]}</h2>
