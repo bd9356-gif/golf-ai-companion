@@ -214,19 +214,7 @@ export default function MyPlanPage() {
         ) : (
           <>
             <SkillBanner skillLevel={skillLevel} context="videos" count={savedIds.size} />
-            <div className="mb-6 p-5 bg-green-50 border border-green-100 rounded-2xl">
-              <p className="text-xs font-semibold text-green-600 uppercase tracking-wide mb-1">Your Video Plan</p>
-              <h2 className="text-2xl font-bold text-green-900">{TIER_LABELS[skillLevel]}</h2>
-              <p className="text-green-700 mt-0.5">{TIER_SUBLABELS[skillLevel]}</p>
-              {!loading && (
-                <p className="text-sm text-green-700 mt-3 font-medium">
-                  {videos.length} videos matched to your level
-                  {savedIds.size > 0 && (
-                    <span className="ml-3 text-green-600">· 🔖 {savedIds.size} saved</span>
-                  )}
-                </p>
-              )}
-            </div>
+
 
             {!loading && (
               <p className="text-lg font-bold text-gray-800 mb-5">

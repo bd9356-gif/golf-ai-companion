@@ -93,7 +93,7 @@ export default function ClubhousePage() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <h3 className="font-bold text-base text-gray-900">{section.title}</h3>
-                    <span className="text-xs text-gray-400 font-medium">— {section.subtitle}</span>
+                    <span className="text-xs text-green-700 font-semibold">— {section.subtitle}</span>
                   </div>
                   <p className="text-sm mt-0.5 leading-relaxed text-gray-500">{section.description}</p>
                 </div>
