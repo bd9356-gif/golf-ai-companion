@@ -154,17 +154,6 @@ export default function ArticlesPage() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-6">
-        {skillLevel ? (
-          <div className="mb-6 px-4 py-3 bg-green-50 border border-green-100 rounded-xl text-sm text-green-800 flex items-center justify-between">
-            <span>🎯 Showing articles for your plan: <strong>{TIER_LABELS[skillLevel]}</strong></span>
-            <a href="/onboarding" className="text-xs text-green-600 hover:text-green-800 whitespace-nowrap ml-3">Update plan</a>
-          </div>
-        ) : (
-          <div className="mb-6 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-600">
-            <span>📖 Browsing all articles — <a href="/onboarding" className="text-green-700 font-semibold hover:underline">Get My Video Plan</a> to see articles matched to your game</span>
-          </div>
-        )}
-
         <SkillBanner skillLevel={skillLevel} context="guides" count={savedIds.size} />
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-gray-900">MyGuides</h2>
