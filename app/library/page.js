@@ -28,6 +28,8 @@ export default function MyBagPage() {
   const [currentSkillLevel, setCurrentSkillLevel] = useState('')
   const [playingId, setPlayingId] = useState(null)
   const [openArticleId, setOpenArticleId] = useState(null)
+  const [relatedVideos, setRelatedVideos] = useState({})
+  const [playingRelatedId, setPlayingRelatedId] = useState(null)
   const [openAnswerId, setOpenAnswerId] = useState(null)
   const [viewMode, setViewMode] = useState('journey') // 'journey' or 'type'
   const router = useRouter()
@@ -79,6 +81,25 @@ export default function MyBagPage() {
   async function removeAnswer(id) {
     await supabase.from('saved_answers').delete().eq('user_id', user.id).eq('id', id)
     setSavedAnswers(prev => prev.filter(s => s.id !== id))
+  }
+
+  async function fetchRelatedVideos(articleId, topic) {
+    if (relatedVideos[articleId]) return
+    const { data } = await supabase.from('videos')
+      .select('id, title, url, thumbnail_url, youtube_video_id, video_metadata!video_metadata_video_id_fkey(topics, quality_score)')
+      .limit(200)
+    if (data) {
+      const matched = data.filter(v => {
+        const meta = Array.isArray(v.video_metadata) ? v.video_metadata[0] : v.video_metadata
+        const tops = (meta?.topics ?? []).map(t => t.toLowerCase())
+        return tops.some(t => t.includes(topic?.toLowerCase()) || topic?.toLowerCase().includes(t))
+      }).sort((a, b) => {
+        const am = Array.isArray(a.video_metadata) ? a.video_metadata[0] : a.video_metadata
+        const bm = Array.isArray(b.video_metadata) ? b.video_metadata[0] : b.video_metadata
+        return (bm?.quality_score ?? 0) - (am?.quality_score ?? 0)
+      }).slice(0, 3)
+      setRelatedVideos(prev => ({ ...prev, [articleId]: matched }))
+    }
   }
 
   function getYouTubeId(video) {
