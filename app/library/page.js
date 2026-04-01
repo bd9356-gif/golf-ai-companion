@@ -33,15 +33,15 @@ export default function MyBagPage() {
     setLoading(true)
     const [videosRes, articlesRes, answersRes] = await Promise.all([
       supabase.from('saved_videos')
-        .select('video_id, created_at, videos(id, title, url, thumbnail_url, youtube_video_id, channel_name)')
+        .select('video_id, created_at, skill_level, videos(id, title, url, thumbnail_url, youtube_video_id, channel_name)')
         .eq('user_id', userId)
         .order('created_at', { ascending: false }),
       supabase.from('saved_articles')
-        .select('article_id, created_at, articles(id, title, summary, topic, read_time_minutes, content)')
+        .select('article_id, created_at, skill_level, articles(id, title, summary, topic, read_time_minutes, content)')
         .eq('user_id', userId)
         .order('created_at', { ascending: false }),
       supabase.from('saved_answers')
-        .select('id, question, answer, created_at')
+        .select('id, question, answer, created_at, skill_level')
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
     ])
@@ -173,6 +173,7 @@ export default function MyBagPage() {
                           <button onClick={() => setOpenArticleId(isOpen ? null : saved.article_id)} className="flex-1 text-left">
                             <h3 className="font-semibold text-gray-900 text-sm leading-snug">{article.title}</h3>
                             <p className="text-xs text-gray-500 mt-1 line-clamp-2">{article.summary}</p>
+                            {saved.skill_level && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full mt-1 inline-block">Saved from {saved.skill_level.replace(/_/g, " ")}</span>}
                             <div className="flex items-center gap-2 mt-1">
                               <span className="text-xs text-gray-400">{article.read_time_minutes} min read</span>
                               <span className="text-xs text-gray-300">·</span>
@@ -206,6 +207,7 @@ export default function MyBagPage() {
                         <div className="flex items-start gap-3 p-4">
                           <button onClick={() => setOpenAnswerId(isOpen ? null : item.id)} className="flex-1 text-left">
                             <p className="font-semibold text-gray-900 text-sm">{item.question}</p>
+                            {item.skill_level && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full mt-1 inline-block">Saved from {item.skill_level.replace(/_/g, " ")}</span>}
                             <span className="text-xs text-green-700">{isOpen ? 'Close ▲' : 'Read ▼'}</span>
                           </button>
                           <button onClick={() => removeAnswer(item.id)} className="text-xs text-red-400 hover:text-red-600 shrink-0">Remove</button>
