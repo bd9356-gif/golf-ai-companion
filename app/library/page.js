@@ -183,7 +183,7 @@ export default function MyBagPage() {
           inCart ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' : 'bg-gray-100 text-gray-500 hover:bg-yellow-50 hover:text-yellow-700'
         }`}
       >
-        {inCart ? '🛺 Added' : '🛺 Add to Cart'}
+        {inCart ? '🛺 Added' : '🛺 Add'}
       </button>
     )
   }
@@ -196,7 +196,7 @@ export default function MyBagPage() {
     const videoUrl = video.url || (ytId ? `https://www.youtube.com/watch?v=${ytId}` : null)
 
     return (
-      <div key={saved.video_id} className="border border-gray-200 rounded-xl overflow-hidden hover:border-green-200 transition-colors">
+      <div key={saved.video_id} id={`item-${saved.video_id}`} className="border border-gray-200 rounded-xl overflow-hidden hover:border-green-200 transition-colors">
         {isPlaying && ytId ? (
           <div>
             <div className="relative w-full aspect-video bg-black">
@@ -253,7 +253,7 @@ export default function MyBagPage() {
     const article = saved.articles
     const isOpen = openArticleId === saved.article_id
     return (
-      <div key={saved.article_id} className="border border-gray-200 rounded-xl overflow-hidden hover:border-green-200 transition-colors">
+      <div key={saved.article_id} id={`item-${saved.article_id}`} className="border border-gray-200 rounded-xl overflow-hidden hover:border-green-200 transition-colors">
         <div className="flex items-start gap-3 p-4">
           <button onClick={() => setOpenArticleId(isOpen ? null : saved.article_id)} className="flex-1 text-left">
             <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">📖 Guide</span>
@@ -278,7 +278,7 @@ export default function MyBagPage() {
   function renderAnswerCard(item) {
     const isOpen = openAnswerId === item.id
     return (
-      <div key={item.id} className="border border-gray-200 rounded-xl overflow-hidden hover:border-green-200 transition-colors">
+      <div key={item.id} id={`item-${item.id}`} className="border border-gray-200 rounded-xl overflow-hidden hover:border-green-200 transition-colors">
         <div className="flex items-start gap-3 p-4">
           <button onClick={() => setOpenAnswerId(isOpen ? null : item.id)} className="flex-1 text-left">
             <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">🤖 MyPro Answer</span>
@@ -324,32 +324,32 @@ export default function MyBagPage() {
         </div>
         <div className="divide-y divide-yellow-100">
           {cartItems.map(item => {
-            // Build link for each cart item
-            let href = null
-            if (item.item_type === 'video') {
-              const match = savedVideos.find(s => String(s.video_id) === item.item_id)
-              const vid = match?.videos
-              if (vid?.url) href = vid.url
-              else if (vid?.youtube_video_id) href = `https://www.youtube.com/watch?v=${vid.youtube_video_id}`
-            } else if (item.item_type === 'article') {
-              href = `/learn`
-            } else if (item.item_type === 'answer') {
-              href = `/plan?tab=ask`
+            function handleCartItemClick() {
+              setShowCart(false)
+              setViewMode('journey')
+              if (item.item_type === 'video') {
+                setPlayingId(item.item_id)
+              } else if (item.item_type === 'article') {
+                setOpenArticleId(item.item_id)
+              } else if (item.item_type === 'answer') {
+                setOpenAnswerId(item.item_id)
+              }
+              setTimeout(() => {
+                const el = document.getElementById(`item-${item.item_id}`)
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+              }, 150)
             }
-
             return (
               <div key={item.id} className="flex items-center gap-3 px-4 py-3">
                 <span className="text-lg">
                   {item.item_type === 'video' ? '🎬' : item.item_type === 'article' ? '📖' : '🤖'}
                 </span>
-                {href ? (
-                  <a href={href} target={item.item_type === 'video' ? '_blank' : '_self'} rel="noopener noreferrer"
-                    className="flex-1 text-sm font-medium text-green-700 hover:underline line-clamp-1">
-                    {item.item_title}
-                  </a>
-                ) : (
-                  <p className="flex-1 text-sm font-medium text-gray-800 line-clamp-1">{item.item_title}</p>
-                )}
+                <button
+                  onClick={handleCartItemClick}
+                  className="flex-1 text-sm font-medium text-green-700 hover:underline text-left line-clamp-1"
+                >
+                  {item.item_title}
+                </button>
                 <button onClick={() => removeFromCart(item.item_id, item.item_type)} className="text-xs text-gray-400 hover:text-red-500 shrink-0 font-semibold">✕</button>
               </div>
             )
