@@ -1,5 +1,4 @@
 'use client'
-
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
@@ -13,6 +12,13 @@ const TIER_LABELS = {
 }
 
 const SECTIONS = [
+  {
+    icon: '🏌️',
+    title: 'MyBag',
+    subtitle: 'Your Golf Bag',
+    href: '/library',
+    description: 'Your saved videos, guides, and AI answers — everything you carry with you.',
+  },
   {
     icon: '⛳',
     title: 'MyVideos',
@@ -35,13 +41,19 @@ const SECTIONS = [
     description: 'Personal AI guidance for your game — step inside and talk with your club pro.',
   },
   {
-    icon: '🏌️',
-    title: 'MyBag',
-    subtitle: 'Your Golf Bag',
-    href: '/library',
-    description: 'Your saved videos, guides, and AI answers — everything you carry with you.',
+    icon: '🎬',
+    title: 'Browse All Videos',
+    subtitle: 'Full Video Library',
+    href: '/videos',
+    description: 'Explore the full library of 767 instruction videos — browse by skill and topic.',
   },
-  { icon: '🏌️', title: 'MyCourses', subtitle: 'Your Home Courses', href: '/courses', description: 'Save your favorite courses — notes, tips, and tee time links all in one place.' },
+  {
+    icon: '🏌️',
+    title: 'MyCourses',
+    subtitle: 'Your Home Courses',
+    href: '/courses',
+    description: 'Save your favorite courses — notes, tips, and tee time links all in one place.',
+  },
 ]
 
 export default function ClubhousePage() {
@@ -71,7 +83,7 @@ export default function ClubhousePage() {
       <main className="max-w-4xl mx-auto px-4 py-8">
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-gray-900 mb-1">
-            MyGolfClubhouse
+            MyClubhouse
           </h2>
           <p className="text-gray-500 text-base mb-1">
             Your AI-powered starting point for everything in your game.

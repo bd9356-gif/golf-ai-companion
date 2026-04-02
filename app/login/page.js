@@ -22,7 +22,7 @@ export default function LoginPage() {
       setError(error.message)
       setLoading(false)
     } else {
-      window.location.href = '/plan'
+      window.location.href = '/welcome'
     }
   }
 
@@ -30,7 +30,7 @@ export default function LoginPage() {
     setLoading(true)
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/plan` }
+      options: { redirectTo: `${window.location.origin}/welcome` }
     })
     if (error) {
       setError(error.message)

@@ -1,5 +1,4 @@
 'use client'
-
 import { useState, useEffect } from 'react'
 import SkillBanner from '@/components/SkillBanner'
 import { createClient } from '@supabase/supabase-js'
@@ -102,17 +101,16 @@ export default function ArticlesPage() {
   }
 
   async function toggleSaved(articleId) {
-    if (!user) {
-      window.location.href = '/login'
-      return
-    }
+    if (!user) { window.location.href = '/login'; return }
     const isSaved = savedIds.has(articleId)
     if (isSaved) {
       await supabase.from('saved_articles').delete()
         .eq('user_id', user.id).eq('article_id', articleId)
       setSavedIds(prev => { const next = new Set(prev); next.delete(articleId); return next })
     } else {
-      await supabase.from('saved_articles').insert({ user_id: user.id, article_id: articleId, skill_level: skillLevel })
+      await supabase.from('saved_articles').insert({
+        user_id: user.id, article_id: articleId, skill_level: skillLevel
+      })
       setSavedIds(prev => new Set([...prev, articleId]))
     }
   }
@@ -123,14 +121,8 @@ export default function ArticlesPage() {
     alert('Added to MyBag!')
   }
 
-  const topicFiltered = selectedTopic === 'all'
-    ? articles
-    : articles.filter(a => a.topic === selectedTopic)
-
-  const sorted = skillLevel
-    ? topicFiltered.filter(a => a.skill_tiers?.includes(skillLevel))
-    : topicFiltered
-
+  const topicFiltered = selectedTopic === 'all' ? articles : articles.filter(a => a.topic === selectedTopic)
+  const sorted = skillLevel ? topicFiltered.filter(a => a.skill_tiers?.includes(skillLevel)) : topicFiltered
   const topics = ['all', ...Object.keys(TOPIC_LABELS)]
 
   return (
@@ -147,7 +139,8 @@ export default function ArticlesPage() {
             <span className="px-3 py-2 text-sm font-semibold text-green-800 border-b-2 border-green-700">MyGuides</span>
             <a href="/videos?tab=ask" className="px-3 py-2 text-sm font-semibold text-gray-500 border-b-2 border-transparent hover:text-gray-700 transition-colors">MyPro</a>
             <div className="ml-auto">
-              <a href="/plan" className="text-sm font-semibold text-green-700 border-2 border-green-700 rounded-xl px-4 py-2 hover:bg-green-50 transition-colors whitespace-nowrap">MyLevel</a>
+              {/* Fixed: was pointing to /plan, now correctly points to /onboarding */}
+              <a href="/onboarding" className="text-sm font-semibold text-green-700 border-2 border-green-700 rounded-xl px-4 py-2 hover:bg-green-50 transition-colors whitespace-nowrap">MyLevel</a>
             </div>
           </div>
         </div>
@@ -155,6 +148,7 @@ export default function ArticlesPage() {
 
       <main className="max-w-4xl mx-auto px-4 py-6">
         <SkillBanner skillLevel={skillLevel} context="guides" count={savedIds.size} />
+
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-gray-900">MyGuides</h2>
           <p className="text-gray-500 mt-1">AI-crafted guides matched to your game — talk it over with your buddies.</p>
@@ -247,7 +241,12 @@ export default function ArticlesPage() {
                                 {playingVideoId === v.id ? (
                                   <div>
                                     <div className="relative w-full aspect-video bg-black">
-                                      <iframe src={`https://www.youtube.com/embed/${v.youtube_video_id}?autoplay=1`} className="w-full h-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+                                      <iframe
+                                        src={`https://www.youtube.com/embed/${v.youtube_video_id}?autoplay=1`}
+                                        className="w-full h-full"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                        allowFullScreen
+                                      />
                                       <button onClick={() => setPlayingVideoId(null)} className="absolute top-2 right-2 bg-black/60 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs">✕</button>
                                     </div>
                                     <div className="p-2 flex items-center justify-between">
@@ -258,7 +257,11 @@ export default function ArticlesPage() {
                                 ) : (
                                   <div className="flex items-center gap-3 p-2">
                                     <button onClick={() => setPlayingVideoId(v.id)} className="relative shrink-0">
-                                      <img src={v.thumbnail_url || `https://img.youtube.com/vi/${v.youtube_video_id}/mqdefault.jpg`} alt={v.title} className="w-20 h-12 object-cover rounded-lg" />
+                                      <img
+                                        src={v.thumbnail_url || `https://img.youtube.com/vi/${v.youtube_video_id}/mqdefault.jpg`}
+                                        alt={v.title}
+                                        className="w-20 h-12 object-cover rounded-lg"
+                                      />
                                       <div className="absolute inset-0 flex items-center justify-center">
                                         <div className="w-7 h-7 bg-white/90 rounded-full flex items-center justify-center shadow">
                                           <svg viewBox="0 0 24 24" className="w-3 h-3 text-green-800 ml-0.5" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
