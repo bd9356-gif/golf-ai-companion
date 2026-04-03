@@ -106,7 +106,7 @@ export default function OnboardingPage() {
             disabled={!selected}
             className="w-full py-4 bg-green-700 text-white rounded-xl text-base font-semibold hover:bg-green-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
-            Go to MyClubhouse →
+            Go to MyClubHouse →
           </button>
         </div>
       </main>

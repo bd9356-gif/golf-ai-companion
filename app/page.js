@@ -39,7 +39,7 @@ export default function HomePage() {
           {user ? (
             <div className="flex items-center gap-2">
               <a href="/welcome" className="text-sm font-semibold text-white bg-green-700 rounded-xl px-4 py-2 hover:bg-green-800 transition-colors">
-                🎯 MyClubhouse
+                🎯 MyClubHouse
               </a>
               <a href="/profile" className="text-sm font-medium text-gray-500 hover:text-gray-700">
                 👤 {userName}
@@ -69,10 +69,10 @@ export default function HomePage() {
         </div>
 
         <div className="space-y-3 mb-8">
-          {/* MyClubhouse first */}
+          {/* MyClubHouse first */}
           {hasPlan && (
             <a href="/welcome" className="block w-full px-6 py-3 border-2 border-green-600 bg-green-700 text-white rounded-xl font-semibold text-base hover:bg-green-800 transition-colors text-center">
-              🎯 MyClubhouse
+              🎯 MyClubHouse
             </a>
           )}
           <a href="/videos" className="block w-full px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-base hover:bg-gray-50 transition-colors text-center">

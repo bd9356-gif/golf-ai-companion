@@ -83,14 +83,16 @@ export default function ClubhousePage() {
       <main className="max-w-4xl mx-auto px-4 py-8">
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-gray-900 mb-1">
-            MyClubhouse
+            MyClubHouse
           </h2>
           <p className="text-gray-500 text-base mb-1">
             Your AI-powered starting point for everything in your game.
           </p>
-          <p className="text-sm text-green-700 font-medium">
-            Playing as: {TIER_LABELS[skillLevel]} · <a href="/onboarding" className="underline hover:text-green-900">Change level</a>
-          </p>
+          <div className="inline-flex items-center gap-2 bg-green-700 text-white px-5 py-2.5 rounded-full mt-1">
+            <span className="text-base font-bold">⛳ {TIER_LABELS[skillLevel]}</span>
+            <span className="text-green-200">·</span>
+            <a href="/onboarding" className="text-green-200 hover:text-white underline text-sm font-medium">Change level</a>
+          </div>
         </div>
 
         <div className="space-y-3">
