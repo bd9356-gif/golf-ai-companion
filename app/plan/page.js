@@ -160,7 +160,7 @@ export default function MyPlanPage() {
           </div>
           {skillLevel && (
             <div className="px-0 pb-2">
-              <SkillBanner skillLevel={skillLevel} context="videos" count={savedIds.size} />
+              <SkillBanner skillLevel={skillLevel} context={activeTab === 'ask' ? 'pro' : 'videos'} count={savedIds.size} />
             </div>
           )}
         </div>
