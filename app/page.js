@@ -51,43 +51,41 @@ export default function HomePage() {
       </header>
 
       {/* Hero */}
-      <main className="flex-1 max-w-lg mx-auto w-full px-6 py-12 flex flex-col items-center text-center">
+      <main className="flex-1 max-w-lg mx-auto w-full px-6 pt-6 pb-12 flex flex-col items-center text-center">
 
-        {/* Hero image - golf course banner */}
-        <div className="w-full rounded-2xl overflow-hidden mb-8" style={{height: '180px'}}>
+        {/* Hero image with text overlay */}
+        <div className="w-full rounded-2xl overflow-hidden mb-6 relative" style={{height: '240px'}}>
           <img
             src="https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=800&q=80&fit=crop"
             alt="Golf course"
             className="w-full h-full object-cover"
           />
+          {/* Dark overlay for text readability */}
+          <div className="absolute inset-0 bg-black/40 rounded-2xl" />
+          {/* Text on top of image */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
+            <span className="text-4xl mb-3">⛳</span>
+            {userName ? (
+              <>
+                <h1 className="text-2xl font-bold text-white mb-1 leading-tight drop-shadow">
+                  Welcome back, {userName}!
+                </h1>
+                <p className="text-green-200 text-sm leading-relaxed drop-shadow">
+                  Your ClubHouse is ready — let's play.
+                </p>
+              </>
+            ) : (
+              <>
+                <h1 className="text-2xl font-bold text-white mb-1 leading-tight drop-shadow">
+                  Welcome to MyGolf Companion
+                </h1>
+                <p className="text-green-200 text-sm leading-relaxed drop-shadow">
+                  Your ClubHouse is waiting. 767 videos matched to your game.
+                </p>
+              </>
+            )}
+          </div>
         </div>
-
-        {/* Welcome icon */}
-        <div className="w-20 h-20 bg-green-50 border-2 border-green-200 rounded-full flex items-center justify-center mb-6">
-          <span style={{fontSize: '40px'}}>⛳</span>
-        </div>
-
-        {/* Personalized greeting or generic */}
-        {userName ? (
-          <>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2 leading-tight">
-              Welcome back, {userName}!
-            </h1>
-            <p className="text-gray-500 text-base mb-8 leading-relaxed">
-              Your ClubHouse is ready — videos, guides, and your AI pro are waiting inside.
-            </p>
-          </>
-        ) : (
-          <>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2 leading-tight">
-              Welcome to<br />MyGolf Companion
-            </h1>
-            <p className="text-gray-500 text-base mb-8 leading-relaxed">
-              Your ClubHouse is waiting.<br />
-              767 videos and expert guides — matched to your game by AI.
-            </p>
-          </>
-        )}
 
         {/* Primary CTA */}
         <a
@@ -104,7 +102,7 @@ export default function HomePage() {
         )}
 
         {/* Stats — scorecard style */}
-        <div className="w-full mt-12 border border-gray-200 rounded-2xl overflow-hidden">
+        <div className="w-full mt-8 border border-gray-200 rounded-2xl overflow-hidden">
           <div className="bg-green-800 px-4 py-2">
             <p className="text-green-200 text-xs font-semibold tracking-wider text-center uppercase">Course Card</p>
           </div>
