@@ -1,6 +1,12 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { createClient } from '@supabase/supabase-js'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+)
 
 const TIER_LABELS = {
   beginner: 'Beginner',
@@ -61,9 +67,18 @@ export default function ClubhousePage() {
   const router = useRouter()
 
   useEffect(() => {
-    const level = localStorage.getItem('golf_skill_level')
-    if (!level) { router.push('/onboarding'); return }
-    setSkillLevel(level)
+    async function init() {
+      // If there's a hash token (OAuth implicit flow), let Supabase process it
+      if (window.location.hash && window.location.hash.includes('access_token')) {
+        await supabase.auth.getSession()
+        window.history.replaceState({}, document.title, window.location.pathname)
+      }
+
+      const level = localStorage.getItem('golf_skill_level')
+      if (!level) { router.push('/onboarding'); return }
+      setSkillLevel(level)
+    }
+    init()
   }, [])
 
   if (!skillLevel) return null
