@@ -158,6 +158,11 @@ export default function MyPlanPage() {
               <a href="/onboarding" className="text-sm font-semibold text-green-700 border-2 border-green-700 rounded-xl px-4 py-2 hover:bg-green-50 transition-colors whitespace-nowrap">MyLevel</a>
             </div>
           </div>
+          {skillLevel && (
+            <div className="px-0 pb-2">
+              <SkillBanner skillLevel={skillLevel} context="videos" count={savedIds.size} />
+            </div>
+          )}
         </div>
       </header>
 
@@ -175,7 +180,6 @@ export default function MyPlanPage() {
           )
         ) : (
           <>
-            <SkillBanner skillLevel={skillLevel} context="videos" count={savedIds.size} />
             {!loading && (
               <p className="text-lg font-bold text-gray-800 mb-5">
                 Showing {Math.min(showCount, videos.length)} of {videos.length} videos

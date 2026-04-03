@@ -19,10 +19,7 @@ export default function SkillBanner({ skillLevel, context = 'videos', count = nu
   }[context] || `Playing as a ${label}`
 
   return (
-    <div
-      className="sticky z-30 mb-4 px-4 py-2.5 bg-green-50 border border-green-100 rounded-xl flex items-center justify-between"
-      style={{ top: 'var(--header-height, 88px)' }}
-    >
+    <div className="px-4 py-2 bg-green-50 border-t border-green-100 flex items-center justify-between">
       <span className="text-sm text-green-800">
         🎯 {contextText}
       </span>

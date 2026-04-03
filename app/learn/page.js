@@ -144,11 +144,15 @@ export default function ArticlesPage() {
             </div>
           </div>
         </div>
+          {skillLevel && (
+            <div className="pb-2">
+              <SkillBanner skillLevel={skillLevel} context="guides" count={savedIds.size} />
+            </div>
+          )}
+        </div>
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-6">
-        <SkillBanner skillLevel={skillLevel} context="guides" count={savedIds.size} />
-
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-gray-900">MyGuides</h2>
           <p className="text-gray-500 mt-1">AI-crafted guides matched to your game — talk it over with your buddies.</p>
