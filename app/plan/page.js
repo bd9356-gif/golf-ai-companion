@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useLayoutEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
 import AskCompanionTab from '@/components/AskCompanionTab'
@@ -40,8 +40,12 @@ export default function MyPlanPage() {
   const [user, setUser] = useState(null)
   const router = useRouter()
 
+  useLayoutEffect(() => {
+    document.documentElement.scrollTop = 0
+    document.body.scrollTop = 0
+  }, [])
+
   useEffect(() => {
-    window.scrollTo(0, 0)
     async function init() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { router.push('/login'); return }

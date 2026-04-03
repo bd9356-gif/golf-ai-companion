@@ -214,14 +214,14 @@ export default function CoursesPage() {
                     {course.phone && (
                       <a
                         href={`tel:${course.phone.replace(/\D/g, '')}`}
-                        className="inline-flex items-center gap-1.5 mt-2 text-sm text-green-700 font-semibold hover:text-green-900"
+                        className="inline-flex items-center gap-1.5 mt-3 text-sm text-green-700 font-semibold hover:text-green-900"
                       >
                         📞 {course.phone}
                       </a>
                     )}
 
                     {course.notes && (
-                      <p className="text-sm text-gray-600 mt-2 leading-relaxed whitespace-pre-wrap">{course.notes}</p>
+                      <p className="text-sm text-gray-600 mt-3 leading-relaxed whitespace-pre-wrap">{course.notes}</p>
                     )}
 
                     {course.tee_time_url && (
@@ -229,16 +229,16 @@ export default function CoursesPage() {
                         href={course.tee_time_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 mt-3 text-sm text-green-700 font-semibold hover:text-green-900"
+                        className="inline-flex items-center gap-1 mt-5 text-sm text-green-700 font-semibold hover:text-green-900"
                       >
                         🕐 Book Tee Time →
                       </a>
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button onClick={() => startEdit(course)} className="text-sm text-gray-400 hover:text-gray-600">Edit</button>
-                    <button onClick={() => deleteCourse(course.id)} className="text-sm text-red-400 hover:text-red-600">Delete</button>
+                  <div className="flex flex-col gap-3 items-end shrink-0">
+                    <button onClick={() => startEdit(course)} className="text-sm font-medium text-gray-500 hover:text-gray-700">Edit</button>
+                    <button onClick={() => deleteCourse(course.id)} className="text-sm font-medium text-red-400 hover:text-red-600">Delete</button>
                   </div>
                 </div>
               </div>
