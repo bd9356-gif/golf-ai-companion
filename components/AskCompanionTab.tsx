@@ -1,5 +1,4 @@
 'use client'
-
 import { useState, useRef, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
@@ -16,6 +15,7 @@ type Message = {
 type Props = {
   skillLevel?: string
   onBack?: () => void
+  onClearChat?: () => void
 }
 
 const SUGGESTED_QUESTIONS = [
@@ -26,6 +26,16 @@ const SUGGESTED_QUESTIONS = [
   'How do I get more distance off the tee?',
   'What should I work on to break 90?',
 ]
+
+const TIER_LABEL: Record<string, string> = {
+  beginner: 'Beginner',
+  building_game: 'Building Your Game',
+  building_consistency: 'Building Consistency',
+  improving_player: 'Improving Player',
+  advanced_player: 'Advanced Player',
+  senior_player: 'Senior Player',
+  all: 'All Levels',
+}
 
 export default function AskCompanionTab({ skillLevel = 'all', onBack }: Props) {
   const [messages, setMessages] = useState<Message[]>([])
@@ -53,7 +63,6 @@ export default function AskCompanionTab({ skillLevel = 'all', onBack }: Props) {
     setMessages(newMessages)
     setInput('')
     setLoading(true)
-
     try {
       const res = await fetch('/api/ask-companion', {
         method: 'POST',
@@ -71,48 +80,29 @@ export default function AskCompanionTab({ skillLevel = 'all', onBack }: Props) {
   }
 
   async function saveAnswer(index: number) {
-    if (!user) {
-      window.location.href = '/login'
-      return
-    }
-    // Find the question (message before this answer)
+    if (!user) { window.location.href = '/login'; return }
     const question = messages[index - 1]?.content || 'Golf question'
     const answer = messages[index].content
-
     const { error } = await supabase.from('saved_answers').insert({
-      user_id: user.id,
-      question,
-      answer,
-      skill_level: skillLevel,
+      user_id: user.id, question, answer, skill_level: skillLevel,
     })
-
-    if (!error) {
-      setSavedIndexes(prev => new Set([...prev, index]))
-    }
-  }
-
-  const TIER_LABEL: Record<string, string> = {
-    beginner: 'Beginner',
-    building_game: 'Building Your Game',
-    building_consistency: 'Building Consistency',
-    improving_player: 'Improving Player',
-    advanced_player: 'Advanced Player',
-    senior_player: 'Senior Player',
-    all: 'All Levels',
+    if (!error) setSavedIndexes(prev => new Set([...prev, index]))
   }
 
   return (
     <div className="flex flex-col h-full">
-      <div className="mb-4 px-3 py-2 bg-green-50 border border-green-100 rounded-xl flex items-center justify-between">
-        <span className="text-sm text-green-800">
-          🏌️ Chatting as a <strong>{TIER_LABEL[skillLevel] || 'All Levels'}</strong> golfer
-          {' · '}
-          <button onClick={() => window.location.href = '/onboarding'} className="text-green-600 hover:text-green-800 underline text-xs">retake assessment</button>
-        </span>
-        <button onClick={() => setMessages([])} className="text-xs text-green-600 hover:text-green-800">Clear chat</button>
+      {/* Clear chat button — top right, no duplicate banner */}
+      <div className="flex justify-end mb-3">
+        <button
+          onClick={() => setMessages([])}
+          className="text-xs text-gray-400 hover:text-gray-600 border border-gray-200 rounded-lg px-3 py-1"
+        >
+          Clear chat
+        </button>
       </div>
 
       <p className="text-sm text-gray-500 text-center mb-4">Choose a question or ask anything you want — get instant, personalized guidance from your AI Pro.</p>
+
       <div className="flex-1 overflow-y-auto space-y-4 pb-4">
         {messages.length === 0 && (
           <div className="space-y-2">
