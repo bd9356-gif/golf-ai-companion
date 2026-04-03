@@ -41,6 +41,7 @@ export default function MyPlanPage() {
   const router = useRouter()
 
   useEffect(() => {
+    window.scrollTo(0, 0)
     async function init() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { router.push('/login'); return }

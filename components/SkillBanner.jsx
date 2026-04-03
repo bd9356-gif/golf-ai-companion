@@ -11,7 +11,6 @@ export default function SkillBanner({ skillLevel, context = 'videos', count = nu
   if (!skillLevel) return null
 
   const label = TIER_LABELS[skillLevel] || skillLevel
-
   const contextText = {
     videos: `Showing videos for a ${label}`,
     guides: `Showing guides for a ${label}`,
@@ -20,7 +19,7 @@ export default function SkillBanner({ skillLevel, context = 'videos', count = nu
   }[context] || `Playing as a ${label}`
 
   return (
-    <div className="mb-4 px-4 py-2.5 bg-green-50 border border-green-100 rounded-xl flex items-center justify-between">
+    <div className="sticky top-[88px] z-30 mb-4 px-4 py-2.5 bg-green-50 border border-green-100 rounded-xl flex items-center justify-between">
       <span className="text-sm text-green-800">
         🎯 {contextText}
       </span>

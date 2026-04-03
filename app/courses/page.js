@@ -14,7 +14,7 @@ export default function CoursesPage() {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState(null)
-  const [form, setForm] = useState({ name: '', notes: '', tee_time_url: '' })
+  const [form, setForm] = useState({ name: '', notes: '', tee_time_url: '', phone: '' })
   const [saving, setSaving] = useState(false)
   const router = useRouter()
 
@@ -60,6 +60,7 @@ export default function CoursesPage() {
     }
     setForm({ name: '', notes: '', tee_time_url: '', phone: '' })
     setEditingId(null)
+    setShowForm(false)
     setSaving(false)
     loadCourses(user.id)
   }
@@ -70,13 +71,18 @@ export default function CoursesPage() {
   }
 
   function startEdit(course) {
-    setForm({ name: course.name, notes: course.notes || '', tee_time_url: course.tee_time_url || '' })
+    setForm({
+      name: course.name,
+      notes: course.notes || '',
+      tee_time_url: course.tee_time_url || '',
+      phone: course.phone || '',
+    })
     setEditingId(course.id)
     setShowForm(true)
   }
 
   function cancelForm() {
-    setForm({ name: '', notes: '', tee_time_url: '' })
+    setForm({ name: '', notes: '', tee_time_url: '', phone: '' })
     setEditingId(null)
     setShowForm(false)
   }
@@ -89,14 +95,14 @@ export default function CoursesPage() {
         <div className="max-w-4xl mx-auto px-4 pt-5 pb-3">
           <div className="mb-3">
             <h1 className="text-3xl font-bold text-gray-900">⛳ MyGolf Companion</h1>
-            <p className="text-base text-gray-500 mt-1">Your AI guide to better golf · <a href="/library" className="text-green-700 font-semibold hover:underline"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{display:"inline",verticalAlign:"middle",marginRight:"3px"}}><rect x="8" y="7" width="8" height="11" rx="2" stroke="currentColor" strokeWidth="1.5"/><path d="M8 9H16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M9 12L15 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M14 4L17 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M17 7H18.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M8 18H16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>MyBag</a></p>
+            <p className="text-base text-gray-500 mt-1">Your AI guide to better golf · <a href="/library" className="text-green-700 font-semibold hover:underline"><img src="/bag-icon.svg" width="64" height="64" style={{display:"inline",verticalAlign:"middle",marginRight:"3px"}} alt="MyBag" /></a></p>
           </div>
           <div className="flex items-center gap-1">
             <button onClick={() => window.location.href='/welcome'} className="text-sm font-medium text-gray-500 hover:text-gray-700 px-2 py-2">← Back</button>
             <span className="px-3 py-2 text-sm font-semibold text-green-800 border-b-2 border-green-700">MyCourses</span>
             <div className="ml-auto">
               <button
-                onClick={() => { setShowForm(true); setEditingId(null); setForm({ name: '', notes: '', tee_time_url: '' }) }}
+                onClick={() => { setShowForm(true); setEditingId(null); setForm({ name: '', notes: '', tee_time_url: '', phone: '' }) }}
                 className="text-sm font-semibold text-green-700 border-2 border-green-700 rounded-xl px-4 py-2 hover:bg-green-50 transition-colors"
               >
                 + Add Course
@@ -150,7 +156,7 @@ export default function CoursesPage() {
                   type="tel"
                   value={form.phone || ''}
                   onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
-                  placeholder="Course phone number"
+                  placeholder="e.g. (239) 555-1234"
                   className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-green-300"
                 />
               </div>
@@ -197,8 +203,27 @@ export default function CoursesPage() {
               <div key={course.id} className="border border-gray-200 rounded-xl p-5 hover:border-green-200 transition-colors">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1">
-                    <h3 className="font-bold text-gray-900 text-lg cursor-pointer hover:text-green-700 transition-colors" onClick={() => startEdit(course)}>{course.name}</h3>
-                    {course.notes && <p className="text-sm text-gray-600 mt-1 leading-relaxed whitespace-pre-wrap">{course.notes}</p>}
+                    <h3
+                      className="font-bold text-gray-900 text-lg cursor-pointer hover:text-green-700 transition-colors"
+                      onClick={() => startEdit(course)}
+                    >
+                      {course.name}
+                    </h3>
+
+                    {/* Phone number — clickable tel: link */}
+                    {course.phone && (
+                      <a
+                        href={`tel:${course.phone.replace(/\D/g, '')}`}
+                        className="inline-flex items-center gap-1.5 mt-2 text-sm text-green-700 font-semibold hover:text-green-900"
+                      >
+                        📞 {course.phone}
+                      </a>
+                    )}
+
+                    {course.notes && (
+                      <p className="text-sm text-gray-600 mt-2 leading-relaxed whitespace-pre-wrap">{course.notes}</p>
+                    )}
+
                     {course.tee_time_url && (
                       <a
                         href={course.tee_time_url}
@@ -210,6 +235,7 @@ export default function CoursesPage() {
                       </a>
                     )}
                   </div>
+
                   <div className="flex items-center gap-2 shrink-0">
                     <button onClick={() => startEdit(course)} className="text-sm text-gray-400 hover:text-gray-600">Edit</button>
                     <button onClick={() => deleteCourse(course.id)} className="text-sm text-red-400 hover:text-red-600">Delete</button>

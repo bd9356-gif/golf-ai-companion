@@ -239,9 +239,9 @@ export default function MyBagPage() {
               )}
               {video.channel_name && <p className="text-xs text-gray-400 mt-0.5">{video.channel_name}</p>}
             </div>
-            <div className="flex flex-col gap-1 items-end shrink-0">
+            <div className="flex flex-col gap-3 items-end shrink-0">
+              <button onClick={() => removeVideo(saved.video_id)} className="text-xs text-red-400 hover:text-red-600 font-medium">Remove</button>
               <CartButton itemId={saved.video_id} itemType="video" itemTitle={video.title} />
-              <button onClick={() => removeVideo(saved.video_id)} className="text-xs text-red-400 hover:text-red-600">Remove</button>
             </div>
           </div>
         )}
@@ -261,9 +261,9 @@ export default function MyBagPage() {
             <p className="text-xs text-gray-500 mt-1 line-clamp-2">{article.summary}</p>
             <span className="text-xs text-green-700 mt-1 inline-block">{isOpen ? 'Close ▲' : 'Read ▼'}</span>
           </button>
-          <div className="flex flex-col gap-1 items-end shrink-0">
+          <div className="flex flex-col gap-3 items-end shrink-0">
+            <button onClick={() => removeArticle(saved.article_id)} className="text-xs text-red-400 hover:text-red-600 font-medium">Remove</button>
             <CartButton itemId={saved.article_id} itemType="article" itemTitle={article.title} />
-            <button onClick={() => removeArticle(saved.article_id)} className="text-xs text-red-400 hover:text-red-600">Remove</button>
           </div>
         </div>
         {isOpen && article.content && (
@@ -285,9 +285,9 @@ export default function MyBagPage() {
             <p className="font-semibold text-gray-900 text-sm mt-1 hover:text-green-700">{item.question}</p>
             <span className="text-xs text-green-700 mt-1 inline-block">{isOpen ? 'Close ▲' : 'Read ▼'}</span>
           </button>
-          <div className="flex flex-col gap-1 items-end shrink-0">
+          <div className="flex flex-col gap-3 items-end shrink-0">
+            <button onClick={() => removeAnswer(item.id)} className="text-xs text-red-400 hover:text-red-600 font-medium">Remove</button>
             <CartButton itemId={item.id} itemType="answer" itemTitle={item.question} />
-            <button onClick={() => removeAnswer(item.id)} className="text-xs text-red-400 hover:text-red-600">Remove</button>
           </div>
         </div>
         {isOpen && (
