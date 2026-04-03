@@ -131,7 +131,7 @@ export default function ArticlesPage() {
         <div className="max-w-4xl mx-auto px-4 pt-5 pb-3">
           <div className="mb-3">
             <h1 className="text-3xl font-bold text-gray-900 leading-tight tracking-tight">⛳ MyGolf Companion</h1>
-            <p className="text-base text-gray-500 mt-1">Your AI guide to better golf · <a href="/library" className="text-green-700 font-semibold hover:underline"><img src="/bag-icon.svg" width="28" height="28" style={{display:"inline",verticalAlign:"middle",marginRight:"3px"}} alt="MyBag" /></a></p>
+            <p className="text-base text-gray-500 mt-1">Your AI guide to better golf · <a href="/library" className="text-green-700 font-semibold hover:underline"><img src="/bag-icon.svg" width="48" height="48" style={{display:"inline",verticalAlign:"middle",marginRight:"3px"}} alt="MyBag" /></a></p>
           </div>
           <div className="flex items-center gap-1">
             <button onClick={() => window.location.href='/welcome'} className="text-sm font-medium text-gray-500 hover:text-gray-700 px-2 py-2">← Back</button>
