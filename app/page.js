@@ -51,7 +51,7 @@ export default function HomePage() {
       </header>
 
       {/* Hero */}
-      <main className="flex-1 max-w-lg mx-auto w-full px-6 pt-6 pb-12 flex flex-col items-center text-center">
+      <main className="flex-1 max-w-lg mx-auto w-full px-6 pt-2 pb-12 flex flex-col items-center text-center">
 
         {/* Hero image with text overlay */}
         <div className="w-full rounded-2xl overflow-hidden mb-6 relative" style={{height: '240px'}}>
@@ -64,7 +64,6 @@ export default function HomePage() {
           <div className="absolute inset-0 bg-black/40 rounded-2xl" />
           {/* Text on top of image */}
           <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
-            <span className="text-4xl mb-3">⛳</span>
             {userName ? (
               <>
                 <h1 className="text-2xl font-bold text-white mb-1 leading-tight drop-shadow">
