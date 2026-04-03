@@ -133,7 +133,7 @@ export default function MyPlanPage() {
               <h1 className="text-3xl font-bold text-gray-900 leading-tight tracking-tight">
                 ⛳ MyGolf Companion
               </h1>
-              <p className="text-base text-gray-500 mt-1">Your AI guide to better golf · <a href="/library" className="text-green-700 font-semibold hover:underline"><img src="/bag-icon.svg" width="48" height="48" style={{display:"inline",verticalAlign:"middle",marginRight:"3px"}} alt="MyBag" /></a></p>
+              <p className="text-base text-gray-500 mt-1">Your AI guide to better golf · <a href="/library" className="text-green-700 font-semibold hover:underline"><img src="/bag-icon.svg" width="64" height="64" style={{display:"inline",verticalAlign:"middle",marginRight:"3px"}} alt="MyBag" /></a></p>
             </div>
             <div className="flex items-center gap-2">
               <a href="/profile" className="text-sm text-gray-500 hover:text-gray-700 font-medium">👤 {userName}</a>
