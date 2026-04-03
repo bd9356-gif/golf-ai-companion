@@ -1,5 +1,4 @@
 'use client'
-
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 
@@ -74,9 +73,9 @@ export default function OnboardingPage() {
 
       <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-10 flex flex-col">
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Set Your Skill Level</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Your Golf Journey</h2>
           <p className="text-gray-500 text-base">
-            Select your current skill level to unlock personalized videos, tips, and guidance — and explore all other levels whenever you want.
+            Set or update your skill level anytime to get videos and guidance matched to your game.
           </p>
         </div>
 
@@ -107,7 +106,7 @@ export default function OnboardingPage() {
             disabled={!selected}
             className="w-full py-4 bg-green-700 text-white rounded-xl text-base font-semibold hover:bg-green-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
-            Go to MyGolfClubhouse →
+            Go to MyClubhouse →
           </button>
         </div>
       </main>
