@@ -53,6 +53,15 @@ export default function HomePage() {
       {/* Hero */}
       <main className="flex-1 max-w-lg mx-auto w-full px-6 py-12 flex flex-col items-center text-center">
 
+        {/* Hero image - golf course banner */}
+        <div className="w-full rounded-2xl overflow-hidden mb-8" style={{height: '180px'}}>
+          <img
+            src="https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=800&q=80&fit=crop"
+            alt="Golf course"
+            className="w-full h-full object-cover"
+          />
+        </div>
+
         {/* Welcome icon */}
         <div className="w-20 h-20 bg-green-50 border-2 border-green-200 rounded-full flex items-center justify-center mb-6">
           <span style={{fontSize: '40px'}}>⛳</span>
