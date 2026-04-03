@@ -19,15 +19,6 @@ const TIER_LABELS = {
   senior_player: 'Senior Player',
 }
 
-const TIER_SUBLABELS = {
-  beginner: 'Just starting, learning the basics',
-  building_game: 'Scoring 100+, working on consistency',
-  building_consistency: 'Scoring 90–100, improving fundamentals',
-  improving_player: 'Scoring 80–90, solid intermediate skills',
-  advanced_player: 'Scoring 70–80, low-handicap and scoring well',
-  senior_player: 'Prioritizing mobility, rhythm, balance, and joint-friendly mechanics',
-}
-
 const TIER_TOPICS = {
   beginner: ['swing', 'grip', 'stance', 'putting', 'chipping'],
   building_game: ['swing', 'driving', 'chipping', 'putting', 'course management'],
@@ -51,29 +42,14 @@ export default function MyPlanPage() {
 
   useEffect(() => {
     async function init() {
-      // Check auth
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
-        router.push('/login')
-        return
-      }
+      if (!session) { router.push('/login'); return }
       setUser(session.user)
-
-      // Check skill level
       const level = localStorage.getItem('golf_skill_level')
-      if (!level || !TIER_LABELS[level]) {
-        router.push('/onboarding')
-        return
-      }
+      if (!level || !TIER_LABELS[level]) { router.push('/onboarding'); return }
       setSkillLevel(level)
-
-      // Load saved videos from Supabase
-      const { data: saved } = await supabase
-        .from('saved_videos')
-        .select('video_id')
-        .eq('user_id', session.user.id)
+      const { data: saved } = await supabase.from('saved_videos').select('video_id').eq('user_id', session.user.id)
       if (saved) setSavedIds(new Set(saved.map(s => s.video_id)))
-
       fetchPlanVideos(level)
       const tabParam = new URLSearchParams(window.location.search).get('tab')
       if (tabParam === 'ask') setActiveTab('ask')
@@ -84,14 +60,10 @@ export default function MyPlanPage() {
   async function fetchPlanVideos(level) {
     setLoading(true)
     const topics = TIER_TOPICS[level] ?? []
-    const { data, error } = await supabase
-      .from('videos')
-      .select(`
-        id, title, url, thumbnail_url, youtube_video_id, channel_name, description, published_at,
-        video_metadata!video_metadata_video_id_fkey (
-          skill_tiers, topics, ai_summary, quality_score
-        )
-      `)
+    const { data, error } = await supabase.from('videos').select(`
+      id, title, url, thumbnail_url, youtube_video_id, channel_name, description, published_at,
+      video_metadata!video_metadata_video_id_fkey ( skill_tiers, topics, ai_summary, quality_score )
+    `)
     if (!error && data) {
       const matched = data.filter(v => {
         const meta = Array.isArray(v.video_metadata) ? v.video_metadata[0] : v.video_metadata
@@ -113,8 +85,7 @@ export default function MyPlanPage() {
     if (!user) return
     const isSaved = savedIds.has(videoId)
     if (isSaved) {
-      await supabase.from('saved_videos').delete()
-        .eq('user_id', user.id).eq('video_id', videoId)
+      await supabase.from('saved_videos').delete().eq('user_id', user.id).eq('video_id', videoId)
       setSavedIds(prev => { const next = new Set(prev); next.delete(videoId); return next })
     } else {
       await supabase.from('saved_videos').insert({ user_id: user.id, video_id: videoId, skill_level: skillLevel })
@@ -162,38 +133,24 @@ export default function MyPlanPage() {
               <h1 className="text-3xl font-bold text-gray-900 leading-tight tracking-tight">
                 ⛳ MyGolf Companion
               </h1>
-              <p className="text-base text-gray-500 mt-1">Your AI guide to better golf · <a href="/library" className="text-green-700 font-semibold hover:underline"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{display:"inline",verticalAlign:"middle",marginRight:"3px"}}><rect x="8" y="7" width="8" height="11" rx="2" stroke="currentColor" strokeWidth="1.5"/><path d="M8 9H16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M9 12L15 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M14 4L17 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M17 7H18.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M8 18H16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>MyBag</a></p>
+              <p className="text-base text-gray-500 mt-1">Your AI guide to better golf · <a href="/library" className="text-green-700 font-semibold hover:underline"><img src="/bag-icon.svg" width="20" height="20" style={{display:"inline",verticalAlign:"middle",marginRight:"3px"}} alt="MyBag" />MyBag</a></p>
             </div>
             <div className="flex items-center gap-2">
-              <a href="/profile" className="text-sm text-gray-500 hover:text-gray-700 font-medium">
-                👤 {userName}
-              </a>
-              <button onClick={handleSignOut} className="text-xs text-gray-400 hover:text-gray-600">
-                Sign out
-              </button>
+              <a href="/profile" className="text-sm text-gray-500 hover:text-gray-700 font-medium">👤 {userName}</a>
+              <button onClick={handleSignOut} className="text-xs text-gray-400 hover:text-gray-600">Sign out</button>
             </div>
           </div>
           <div className="flex items-center gap-1">
             <a href="/welcome" className="text-sm font-medium text-gray-500 hover:text-gray-700 px-2 py-2">← Back</a>
-            <button
-              onClick={() => setActiveTab('videos')}
-              className={`px-3 py-2 text-sm font-semibold border-b-2 transition-colors ${activeTab === 'videos' ? 'text-green-800 border-green-700' : 'text-gray-500 border-transparent hover:text-gray-700'}`}
-            >
+            <button onClick={() => setActiveTab('videos')} className={`px-3 py-2 text-sm font-semibold border-b-2 transition-colors ${activeTab === 'videos' ? 'text-green-800 border-green-700' : 'text-gray-500 border-transparent hover:text-gray-700'}`}>
               MyVideos
             </button>
-            <a href="/learn" className="px-3 py-2 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors">
-              MyGuides
-            </a>
-            <button
-              onClick={() => setActiveTab('ask')}
-              className={`px-3 py-2 text-sm font-semibold border-b-2 transition-colors ${activeTab === 'ask' ? 'text-green-800 border-green-700' : 'text-gray-500 border-transparent hover:text-gray-700'}`}
-            >
+            <a href="/learn" className="px-3 py-2 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors">MyGuides</a>
+            <button onClick={() => setActiveTab('ask')} className={`px-3 py-2 text-sm font-semibold border-b-2 transition-colors ${activeTab === 'ask' ? 'text-green-800 border-green-700' : 'text-gray-500 border-transparent hover:text-gray-700'}`}>
               MyPro
             </button>
             <div className="ml-auto">
-              <a href="/onboarding" className="text-sm font-semibold text-green-700 border-2 border-green-700 rounded-xl px-4 py-2 hover:bg-green-50 transition-colors whitespace-nowrap">
-                MyLevel
-              </a>
+              <a href="/onboarding" className="text-sm font-semibold text-green-700 border-2 border-green-700 rounded-xl px-4 py-2 hover:bg-green-50 transition-colors whitespace-nowrap">MyLevel</a>
             </div>
           </div>
         </div>
@@ -214,14 +171,11 @@ export default function MyPlanPage() {
         ) : (
           <>
             <SkillBanner skillLevel={skillLevel} context="videos" count={savedIds.size} />
-
-
             {!loading && (
               <p className="text-lg font-bold text-gray-800 mb-5">
                 Showing {Math.min(showCount, videos.length)} of {videos.length} videos
               </p>
             )}
-
             {loading ? (
               <div className="space-y-4">
                 {Array.from({ length: 5 }).map((_, i) => (
@@ -243,27 +197,17 @@ export default function MyPlanPage() {
                   const meta = getMeta(video)
                   const summary = meta?.ai_summary ?? ''
                   const isSaved = savedIds.has(video.id)
-
                   return (
                     <div key={video.id} className="border border-green-200 rounded-xl overflow-hidden hover:border-green-300 transition-colors">
                       {isPlaying && ytId && (
                         <div className="relative w-full aspect-video bg-black">
-                          <iframe
-                            src={`https://www.youtube.com/embed/${ytId}?autoplay=1`}
-                            className="w-full h-full"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowFullScreen
-                          />
+                          <iframe src={`https://www.youtube.com/embed/${ytId}?autoplay=1`} className="w-full h-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
                           <button onClick={() => setPlayingId(null)} className="absolute top-2 right-2 bg-black/60 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm hover:bg-black/80">✕</button>
                         </div>
                       )}
                       {!isPlaying && ytId && (
                         <button onClick={() => setPlayingId(video.id)} className="w-full relative block group" aria-label={`Play ${video.title}`}>
-                          <img
-                            src={video.thumbnail_url || `https://img.youtube.com/vi/${ytId}/mqdefault.jpg`}
-                            alt={video.title}
-                            className="w-full object-cover h-48 sm:h-56"
-                          />
+                          <img src={video.thumbnail_url || `https://img.youtube.com/vi/${ytId}/mqdefault.jpg`} alt={video.title} className="w-full object-cover h-48 sm:h-56" />
                           <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors flex items-center justify-center">
                             <div className="w-14 h-14 bg-white/90 rounded-full flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
                               <svg viewBox="0 0 24 24" className="w-6 h-6 text-green-800 ml-0.5" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
@@ -277,22 +221,15 @@ export default function MyPlanPage() {
                             <h3 className="font-semibold text-gray-900 text-base leading-snug">{video.title}</h3>
                             <div className="flex flex-wrap gap-1.5 mt-2">
                               <span className="text-xs bg-green-100 text-green-700 px-2.5 py-1 rounded-full font-medium">🎯 {TIER_LABELS[skillLevel]}</span>
-                              {video.channel_name && (
-                                <span className="text-xs bg-gray-50 text-gray-500 px-2.5 py-1 rounded-full">{video.channel_name}</span>
-                              )}
+                              {video.channel_name && <span className="text-xs bg-gray-50 text-gray-500 px-2.5 py-1 rounded-full">{video.channel_name}</span>}
                             </div>
-                            {!isPlaying && (
-                              <a href={video.url} target="_blank" rel="noopener noreferrer" className="text-sm text-gray-400 hover:text-gray-600" title="Open on YouTube">↗</a>
-                            )}
+                            {!isPlaying && <a href={video.url} target="_blank" rel="noopener noreferrer" className="text-sm text-gray-400 hover:text-gray-600" title="Open on YouTube">↗</a>}
                           </div>
                         </div>
                         <button onClick={() => toggleExpanded(video.id)} className="mt-2 text-sm text-green-700 hover:text-green-900 font-medium transition-colors">
                           {isExpanded ? 'Hide Details ▲' : 'See Details ▼'}
                         </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); toggleSaved(video.id) }}
-                          className={`mt-1 ml-4 text-sm font-semibold transition-colors ${isSaved ? 'text-green-600' : 'text-gray-400 hover:text-gray-600'}`}
-                        >
+                        <button onClick={(e) => { e.stopPropagation(); toggleSaved(video.id) }} className={`mt-1 ml-4 text-sm font-semibold transition-colors ${isSaved ? 'text-green-600' : 'text-gray-400 hover:text-gray-600'}`}>
                           {isSaved ? '🔖 Saved to MyBag' : '🔖 Save to MyBag'}
                         </button>
                         {isExpanded && (
@@ -306,13 +243,9 @@ export default function MyPlanPage() {
                 })}
               </div>
             )}
-
             {hasMore && (
               <div className="mt-6 text-center">
-                <button
-                  onClick={() => setShowCount(c => Math.min(c + 10, videos.length))}
-                  className="px-8 py-3 bg-green-700 text-white rounded-xl text-base font-semibold hover:bg-green-800 transition-colors"
-                >
+                <button onClick={() => setShowCount(c => Math.min(c + 10, videos.length))} className="px-8 py-3 bg-green-700 text-white rounded-xl text-base font-semibold hover:bg-green-800 transition-colors">
                   Get 10 More Videos →
                 </button>
               </div>
@@ -323,4 +256,3 @@ export default function MyPlanPage() {
     </div>
   )
 }
-
