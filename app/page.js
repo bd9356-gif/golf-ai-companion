@@ -4,12 +4,12 @@ import { createClient } from '@supabase/supabase-js'
 
 const COURSE_IMAGES = [
   { url: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=800&q=80&fit=crop', name: 'Morning Round' },
-  { url: 'https://images.unsplash.com/photo-1593111774240-d529f12cf4bb?w=800&q=80&fit=crop', name: 'Fairway at Dawn' },
   { url: 'https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=800&q=80&fit=crop', name: 'Golden Hour' },
-  { url: 'https://images.unsplash.com/photo-1548438294-1ad5d5f4f063?w=800&q=80&fit=crop', name: 'Links Course' },
-  { url: 'https://images.unsplash.com/photo-1600965962102-9d260a71890d?w=800&q=80&fit=crop', name: 'The Approach' },
-  { url: 'https://images.unsplash.com/photo-1574258495973-f010dfbb5371?w=800&q=80&fit=crop', name: 'Sunset Green' },
-  { url: 'https://images.unsplash.com/photo-1614726365952-510103b1bbb4?w=800&q=80&fit=crop', name: 'Early Morning Tee' },
+  { url: 'https://images.unsplash.com/photo-1593111774240-d529f12cf4bb?w=800&q=80&fit=crop', name: 'Fairway at Dawn' },
+  { url: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=800&q=80&fit=crop', name: 'The Approach' },
+  { url: 'https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=800&q=80&fit=crop', name: 'Links Course' },
+  { url: 'https://images.unsplash.com/photo-1593111774240-d529f12cf4bb?w=800&q=80&fit=crop', name: 'Sunset Green' },
+  { url: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=800&q=80&fit=crop', name: 'Early Morning Tee' },
 ]
 
 function getDailyImage() {
