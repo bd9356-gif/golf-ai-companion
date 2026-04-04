@@ -183,7 +183,7 @@ export default function MyBagPage() {
           inCart ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' : 'bg-gray-100 text-gray-500 hover:bg-yellow-50 hover:text-yellow-700'
         }`}
       >
-        {inCart ? '🛺 In Plan' : '🛺 Add to Plan'}
+        {inCart ? '🛺 Added' : '🛺 Add'}
       </button>
     )
   }
@@ -240,7 +240,7 @@ export default function MyBagPage() {
               {video.channel_name && <p className="text-xs text-gray-400 mt-0.5">{video.channel_name}</p>}
             </div>
             <div className="flex flex-col gap-5 items-end shrink-0">
-              <button onClick={() => removeVideo(saved.video_id)} className="text-sm text-red-400 hover:text-red-600 font-semibold py-1 px-2 flex items-center gap-1"><img src="/bag-icon.svg" width="40" height="40" style={{display:"inline",verticalAlign:"middle"}} alt="" /> Remove</button>
+              <button onClick={() => removeVideo(saved.video_id)} className="text-sm text-red-400 hover:text-red-600 font-semibold py-1 px-2">Remove</button>
               <CartButton itemId={saved.video_id} itemType="video" itemTitle={video.title} />
             </div>
           </div>
@@ -262,13 +262,19 @@ export default function MyBagPage() {
             <span className="text-xs text-green-700 mt-1 inline-block">{isOpen ? 'Close ▲' : 'Read ▼'}</span>
           </button>
           <div className="flex flex-col gap-5 items-end shrink-0">
-            <button onClick={() => removeArticle(saved.article_id)} className="text-sm text-red-400 hover:text-red-600 font-semibold py-1 px-2 flex items-center gap-1"><img src="/bag-icon.svg" width="40" height="40" style={{display:"inline",verticalAlign:"middle"}} alt="" /> Remove</button>
+            <button onClick={() => removeArticle(saved.article_id)} className="text-sm text-red-400 hover:text-red-600 font-semibold py-1 px-2">Remove</button>
             <CartButton itemId={saved.article_id} itemType="article" itemTitle={article.title} />
           </div>
         </div>
         {isOpen && article.content && (
           <div className="px-4 pb-4 border-t border-gray-100 pt-4">
             <div className="text-sm text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: (article.content || '').split('\n\n').join('</p><p class="mb-3">').split('\n').join('<br/>') }} />
+            <button
+              onClick={() => setOpenArticleId(null)}
+              className="mt-4 w-full py-2 text-sm text-gray-500 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+            >
+              Close Guide ▲
+            </button>
           </div>
         )}
       </div>
@@ -286,7 +292,7 @@ export default function MyBagPage() {
             <span className="text-xs text-green-700 mt-1 inline-block">{isOpen ? 'Close ▲' : 'Read ▼'}</span>
           </button>
           <div className="flex flex-col gap-5 items-end shrink-0">
-            <button onClick={() => removeAnswer(item.id)} className="text-sm text-red-400 hover:text-red-600 font-semibold py-1 px-2 flex items-center gap-1"><img src="/bag-icon.svg" width="40" height="40" style={{display:"inline",verticalAlign:"middle"}} alt="" /> Remove</button>
+            <button onClick={() => removeAnswer(item.id)} className="text-sm text-red-400 hover:text-red-600 font-semibold py-1 px-2">Remove</button>
             <CartButton itemId={item.id} itemType="answer" itemTitle={item.question} />
           </div>
         </div>
@@ -316,7 +322,7 @@ export default function MyBagPage() {
         <div className="flex items-center justify-between px-4 py-3 border-b border-yellow-200">
           <div>
             <p className="text-sm font-bold text-yellow-900">🛺 My Plan — {cartCount} item{cartCount !== 1 ? 's' : ''} loaded</p>
-            <p className="text-xs text-yellow-600 mt-0.5">Items stay in your Bag — this is just what you're working on today</p>
+            <p className="text-xs text-yellow-600 mt-0.5">You're prioritizing what you've saved for your plan — nothing leaves your Bag.</p>
           </div>
           <button onClick={clearCart} className="text-xs text-red-400 hover:text-red-600 font-semibold whitespace-nowrap ml-3">
             Clear All
@@ -441,7 +447,7 @@ export default function MyBagPage() {
               <div key={level}>
                 <div className="flex items-center gap-3 mb-3">
                   <div className={`flex-1 h-px ${level === currentSkillLevel ? 'bg-green-300' : 'bg-gray-200'}`} />
-                  <span className={`text-sm font-bold px-3 py-1 rounded-full ${level === currentSkillLevel ? 'bg-green-700 text-white' : 'bg-gray-100 text-gray-600'}`}>
+                  <span className={`text-sm font-bold px-3 py-1 rounded-full ${level === currentSkillLevel ? 'bg-green-700 text-white' : 'bg-green-100 text-green-700'}`}>
                     {level === currentSkillLevel ? '📍 ' : ''}{TIER_LABELS[level] || 'Other'}{level === currentSkillLevel ? ' (current)' : ''}
                   </span>
                   <div className={`flex-1 h-px ${level === currentSkillLevel ? 'bg-green-300' : 'bg-gray-200'}`} />

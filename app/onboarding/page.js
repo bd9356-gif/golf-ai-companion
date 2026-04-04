@@ -53,13 +53,14 @@ export default function OnboardingPage() {
     }
   }, [])
 
-  function handleSubmit() {
-    if (!selected) return
-    const tier = TIERS.find(t => t.value === selected)
+  function selectLevel(value) {
+    const tier = TIERS.find(t => t.value === value)
+    setSelected(value)
     localStorage.setItem('golf_skill_level', tier.value)
     localStorage.setItem('golf_topics', JSON.stringify(tier.topics))
     localStorage.setItem('golf_answers', JSON.stringify({ level: tier.value }))
-    router.push('/welcome')
+    // Small delay so user sees their selection highlighted before navigating
+    setTimeout(() => router.push('/welcome'), 300)
   }
 
   return (
@@ -83,7 +84,7 @@ export default function OnboardingPage() {
           {TIERS.map((tier) => (
             <button
               key={tier.value}
-              onClick={() => setSelected(tier.value)}
+              onClick={() => selectLevel(tier.value)}
               className={`w-full text-left px-5 py-4 rounded-xl border-2 transition-all ${
                 selected === tier.value
                   ? 'border-green-600 bg-green-50'
@@ -100,15 +101,7 @@ export default function OnboardingPage() {
           ))}
         </div>
 
-        <div className="mt-8">
-          <button
-            onClick={handleSubmit}
-            disabled={!selected}
-            className="w-full py-4 bg-green-700 text-white rounded-xl text-base font-semibold hover:bg-green-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            Go to MyClubHouse →
-          </button>
-        </div>
+
       </main>
     </div>
   )

@@ -3,6 +3,21 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 
+const CLUBHOUSE_IMAGES = [
+  { url: 'https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=800&q=80&fit=crop', name: 'Golden Hour' },
+  { url: 'https://images.unsplash.com/photo-1574258495973-f010dfbb5371?w=800&q=80&fit=crop', name: 'Sunset Green' },
+  { url: 'https://images.unsplash.com/photo-1600965962102-9d260a71890d?w=800&q=80&fit=crop', name: 'The Approach' },
+  { url: 'https://images.unsplash.com/photo-1593111774240-d529f12cf4bb?w=800&q=80&fit=crop', name: 'Fairway at Dawn' },
+  { url: 'https://images.unsplash.com/photo-1548438294-1ad5d5f4f063?w=800&q=80&fit=crop', name: 'Links Course' },
+  { url: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=800&q=80&fit=crop', name: 'Morning Round' },
+  { url: 'https://images.unsplash.com/photo-1614726365952-510103b1bbb4?w=800&q=80&fit=crop', name: 'Early Morning Tee' },
+]
+
+function getDailyImage() {
+  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000)
+  return CLUBHOUSE_IMAGES[(dayOfYear + 3) % CLUBHOUSE_IMAGES.length]
+}
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -96,6 +111,15 @@ export default function ClubhousePage() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-8">
+        {/* Daily rotating course image */}
+        <div className="relative w-full rounded-2xl overflow-hidden mb-6" style={{height: '180px'}}>
+          <img src={getDailyImage().url} alt={getDailyImage().name} className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-black/30 rounded-2xl" />
+          <div className="absolute bottom-2 right-3">
+            <span className="text-white/70 text-xs font-medium">{getDailyImage().name}</span>
+          </div>
+        </div>
+
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-gray-900 mb-1">
             MyClubHouse
