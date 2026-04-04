@@ -111,26 +111,27 @@ export default function ClubhousePage() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-8">
-        {/* Daily rotating course image */}
-        <div className="relative w-full rounded-2xl overflow-hidden mb-6" style={{height: '180px'}}>
+        {/* Daily rotating course image with text overlay */}
+        <div className="relative w-full rounded-2xl overflow-hidden mb-6" style={{height: '220px'}}>
           <img src={getDailyImage().url} alt={getDailyImage().name} className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-black/30 rounded-2xl" />
-          <div className="absolute bottom-2 right-3">
-            <span className="text-white/70 text-xs font-medium">{getDailyImage().name}</span>
+          <div className="absolute inset-0 bg-black/45 rounded-2xl" />
+          {/* Text overlaid on image */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
+            <h2 className="text-3xl font-bold text-white mb-1 drop-shadow">
+              MyClubHouse
+            </h2>
+            <p className="text-green-200 text-sm mb-3">
+              Your AI-powered starting point for everything in your game.
+            </p>
+            <div className="inline-flex items-center gap-2 bg-green-700/90 text-white px-4 py-2 rounded-full">
+              <span className="text-sm font-bold">⛳ {TIER_LABELS[skillLevel]}</span>
+              <span className="text-green-300">·</span>
+              <a href="/onboarding" className="text-green-200 hover:text-white underline text-xs font-medium">Change level</a>
+            </div>
           </div>
-        </div>
-
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-1">
-            MyClubHouse
-          </h2>
-          <p className="text-gray-500 text-base mb-1">
-            Your AI-powered starting point for everything in your game.
-          </p>
-          <div className="inline-flex items-center gap-2 bg-green-700 text-white px-5 py-2.5 rounded-full mt-1">
-            <span className="text-base font-bold">⛳ {TIER_LABELS[skillLevel]}</span>
-            <span className="text-green-200">·</span>
-            <a href="/onboarding" className="text-green-200 hover:text-white underline text-sm font-medium">Change level</a>
+          {/* Course name watermark */}
+          <div className="absolute bottom-2 right-3">
+            <span className="text-white/50 text-xs">{getDailyImage().name}</span>
           </div>
         </div>
 
