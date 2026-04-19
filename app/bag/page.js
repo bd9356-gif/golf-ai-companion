@@ -24,6 +24,30 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
+// Fixed, locked 5-bucket structure. Order is enforced.
+const FIXED_BUCKETS = [
+  { name: 'Holding Bucket',    position: 0, icon: '📥', hint: 'Every new save lands here. Move it into a bucket below when you decide what to work on.' },
+  { name: 'Full Swing',        position: 1, icon: '🏌️', hint: null },
+  { name: 'Short Game',        position: 2, icon: '🪓', hint: null },
+  { name: 'Putting',           position: 3, icon: '⛳', hint: null },
+  { name: 'Course Management', position: 4, icon: '🗺️', hint: null },
+]
+const BUCKET_META = Object.fromEntries(FIXED_BUCKETS.map(b => [b.name, b]))
+
+async function ensureFixedBuckets(userId) {
+  const { data: existing } = await supabase
+    .from('focus_leaves')
+    .select('id, name')
+    .eq('user_id', userId)
+  const existingNames = new Set((existing || []).map(r => r.name))
+  const toInsert = FIXED_BUCKETS
+    .filter(b => !existingNames.has(b.name))
+    .map(b => ({ user_id: userId, name: b.name, position: b.position }))
+  if (toInsert.length > 0) {
+    await supabase.from('focus_leaves').insert(toInsert)
+  }
+}
+
 // ════════════════════════════════════════════════════════════════════
 // Page
 // ════════════════════════════════════════════════════════════════════
@@ -38,10 +62,6 @@ export default function BagPage() {
   const [loading, setLoading] = useState(true)
   const [showCart, setShowCart] = useState(false)
   const [collapsed, setCollapsed] = useState(new Set())   // leaf ids that are collapsed
-  const [renamingLeafId, setRenamingLeafId] = useState(null)
-  const [renameDraft, setRenameDraft] = useState('')
-  const [creatingLeaf, setCreatingLeaf] = useState(false)
-  const [newLeafName, setNewLeafName] = useState('')
   const [playingVideoKey, setPlayingVideoKey] = useState(null) // 'video:<id>' or null
   const [openArticleKey, setOpenArticleKey] = useState(null)
   const [openAnswerKey, setOpenAnswerKey] = useState(null)
@@ -55,6 +75,7 @@ export default function BagPage() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { router.push('/login'); return }
       setUser(session.user)
+      await ensureFixedBuckets(session.user.id)
       await loadAll(session.user.id)
     }
     init()
@@ -105,57 +126,6 @@ export default function BagPage() {
     }
     return map
   }, [leaves, leafItems])
-
-  const leafIds = useMemo(() => leaves.map(l => l.id), [leaves])
-
-  // ── Leaf CRUD ────────────────────────────────────────────────────
-  async function createLeaf() {
-    const name = newLeafName.trim()
-    if (!name || !user) return
-    const position = leaves.length
-    const { data, error } = await supabase
-      .from('focus_leaves')
-      .insert({ user_id: user.id, name, position })
-      .select()
-      .single()
-    if (!error && data) {
-      setLeaves(prev => [...prev, data])
-      setNewLeafName('')
-      setCreatingLeaf(false)
-    }
-  }
-
-  async function renameLeaf(leafId) {
-    const name = renameDraft.trim()
-    if (!name || !user) { setRenamingLeafId(null); return }
-    const { error } = await supabase.from('focus_leaves').update({ name }).eq('id', leafId)
-    if (!error) setLeaves(prev => prev.map(l => l.id === leafId ? { ...l, name } : l))
-    setRenamingLeafId(null)
-    setRenameDraft('')
-  }
-
-  async function deleteLeaf(leafId) {
-    if (!user) return
-    const leaf = leaves.find(l => l.id === leafId)
-    if (!leaf) return
-    const itemCount = (itemsByLeafId[leafId] || []).length
-    const msg = itemCount > 0
-      ? `Delete leaf "${leaf.name}" and remove its ${itemCount} item${itemCount !== 1 ? 's' : ''} from the leaf? (saved items stay in your bag)`
-      : `Delete leaf "${leaf.name}"?`
-    if (!confirm(msg)) return
-
-    const { error } = await supabase.from('focus_leaves').delete().eq('id', leafId)
-    if (!error) {
-      setLeaves(prev => prev.filter(l => l.id !== leafId))
-      setLeafItems(prev => prev.filter(li => li.leaf_id !== leafId))
-    }
-  }
-
-  async function persistLeafOrder(nextLeaves) {
-    // Update all positions in a single upsert
-    const rows = nextLeaves.map((l, i) => ({ id: l.id, user_id: l.user_id, name: l.name, position: i }))
-    await supabase.from('focus_leaves').upsert(rows)
-  }
 
   // ── Leaf-item CRUD ───────────────────────────────────────────────
   async function persistItemOrder(leafId, nextItems) {
@@ -257,17 +227,6 @@ export default function BagPage() {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   )
 
-  function onLeavesDragEnd(e) {
-    const { active, over } = e
-    if (!over || active.id === over.id) return
-    const oldIdx = leaves.findIndex(l => l.id === active.id)
-    const newIdx = leaves.findIndex(l => l.id === over.id)
-    if (oldIdx < 0 || newIdx < 0) return
-    const next = arrayMove(leaves, oldIdx, newIdx)
-    setLeaves(next)
-    persistLeafOrder(next)
-  }
-
   function onItemsDragEnd(leafId) {
     return (e) => {
       const { active, over } = e
@@ -361,105 +320,56 @@ export default function BagPage() {
           </div>
         )}
 
-        <div className="mb-6 flex items-start justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">🏌️ Your Golf Bag</h2>
-            <p className="text-gray-500 mt-1">
-              {totalSaved} saved item{totalSaved !== 1 ? 's' : ''} · {leaves.length} leaf{leaves.length !== 1 ? 'ves' : ''} of focus
-            </p>
-          </div>
-          <button
-            onClick={() => { setCreatingLeaf(true); setTimeout(() => document.getElementById('new-leaf-input')?.focus(), 0) }}
-            className="text-sm font-semibold text-green-700 border-2 border-green-700 rounded-xl px-4 py-2 hover:bg-green-50 transition-colors whitespace-nowrap"
-          >
-            ➕ New leaf
-          </button>
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-gray-900">🏌️ Your Golf Bag</h2>
+          <p className="text-gray-500 mt-1">
+            {totalSaved} saved item{totalSaved !== 1 ? 's' : ''} across 5 buckets · Everything new lands in your Holding Bucket.
+          </p>
         </div>
-
-        {creatingLeaf && (
-          <div className="mb-4 p-4 border-2 border-dashed border-green-300 rounded-xl bg-green-50">
-            <p className="text-xs font-semibold text-green-800 mb-2">Name your new leaf of focus</p>
-            <div className="flex gap-2">
-              <input
-                id="new-leaf-input"
-                type="text"
-                value={newLeafName}
-                onChange={e => setNewLeafName(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') createLeaf(); if (e.key === 'Escape') { setCreatingLeaf(false); setNewLeafName('') } }}
-                placeholder="e.g. Putting, Short Game, Driver…"
-                className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300"
-              />
-              <button onClick={createLeaf} className="px-4 py-2 bg-green-700 text-white rounded-lg text-sm font-semibold hover:bg-green-800">Create</button>
-              <button onClick={() => { setCreatingLeaf(false); setNewLeafName('') }} className="px-3 py-2 text-sm text-gray-500 hover:text-gray-700">Cancel</button>
-            </div>
-          </div>
-        )}
 
         {loading ? (
           <div className="space-y-4">
             {Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-32 bg-gray-100 rounded-xl animate-pulse" />)}
           </div>
-        ) : leaves.length === 0 ? (
-          <div className="text-center py-16 border border-dashed border-gray-200 rounded-xl">
-            <p className="text-4xl mb-3">🌿</p>
-            <p className="text-gray-600 font-semibold text-lg">Your bag has no leaves of focus yet</p>
-            <p className="text-sm text-gray-400 mt-1">Create a leaf like “Putting” or “Driver” to start organizing what you save.</p>
-            <button
-              onClick={() => setCreatingLeaf(true)}
-              className="mt-4 inline-block text-sm text-green-700 font-semibold hover:underline"
-            >
-              ➕ Create your first leaf
-            </button>
-          </div>
         ) : (
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onLeavesDragEnd}>
-            <SortableContext items={leafIds} strategy={verticalListSortingStrategy}>
-              <div className="space-y-4">
-                {leaves.map(leaf => (
-                  <SortableLeaf
-                    key={leaf.id}
-                    leaf={leaf}
-                    leaves={leaves}
-                    items={itemsByLeafId[leaf.id] || []}
-                    collapsed={collapsed.has(leaf.id)}
-                    toggleCollapsed={() => toggleCollapsed(leaf.id)}
-                    renamingLeafId={renamingLeafId}
-                    renameDraft={renameDraft}
-                    setRenameDraft={setRenameDraft}
-                    setRenamingLeafId={setRenamingLeafId}
-                    renameLeaf={renameLeaf}
-                    deleteLeaf={deleteLeaf}
-                    sensors={sensors}
-                    onItemsDragEnd={onItemsDragEnd(leaf.id)}
-                    savedVideos={savedVideos}
-                    savedArticles={savedArticles}
-                    savedAnswers={savedAnswers}
-                    moveItemToLeaf={moveItemToLeaf}
-                    removeLeafItem={removeLeafItem}
-                    removeSavedVideo={removeSavedVideo}
-                    removeSavedArticle={removeSavedArticle}
-                    removeSavedAnswer={removeSavedAnswer}
-                    moveMenuItemId={moveMenuItemId}
-                    setMoveMenuItemId={setMoveMenuItemId}
-                    playingVideoKey={playingVideoKey}
-                    setPlayingVideoKey={setPlayingVideoKey}
-                    openArticleKey={openArticleKey}
-                    setOpenArticleKey={setOpenArticleKey}
-                    openAnswerKey={openAnswerKey}
-                    setOpenAnswerKey={setOpenAnswerKey}
-                    isInCart={isInCart}
-                    addToCart={addToCart}
-                    removeFromCart={removeFromCart}
-                    getYouTubeId={getYouTubeId}
-                  />
-                ))}
-              </div>
-            </SortableContext>
-          </DndContext>
+          <div className="space-y-4">
+            {leaves.map(leaf => (
+              <Bucket
+                key={leaf.id}
+                leaf={leaf}
+                leaves={leaves}
+                items={itemsByLeafId[leaf.id] || []}
+                collapsed={collapsed.has(leaf.id)}
+                toggleCollapsed={() => toggleCollapsed(leaf.id)}
+                sensors={sensors}
+                onItemsDragEnd={onItemsDragEnd(leaf.id)}
+                savedVideos={savedVideos}
+                savedArticles={savedArticles}
+                savedAnswers={savedAnswers}
+                moveItemToLeaf={moveItemToLeaf}
+                removeLeafItem={removeLeafItem}
+                removeSavedVideo={removeSavedVideo}
+                removeSavedArticle={removeSavedArticle}
+                removeSavedAnswer={removeSavedAnswer}
+                moveMenuItemId={moveMenuItemId}
+                setMoveMenuItemId={setMoveMenuItemId}
+                playingVideoKey={playingVideoKey}
+                setPlayingVideoKey={setPlayingVideoKey}
+                openArticleKey={openArticleKey}
+                setOpenArticleKey={setOpenArticleKey}
+                openAnswerKey={openAnswerKey}
+                setOpenAnswerKey={setOpenAnswerKey}
+                isInCart={isInCart}
+                addToCart={addToCart}
+                removeFromCart={removeFromCart}
+                getYouTubeId={getYouTubeId}
+              />
+            ))}
+          </div>
         )}
 
         <p className="text-xs text-gray-400 text-center mt-8">
-          Tip: drag the ⋮⋮ handle to reorder leaves or items within a leaf.
+          Tip: tap <span className="font-semibold">Move ▾</span> on any item to send it to another bucket. Drag the ⋮⋮ handle to reorder items within a bucket.
         </p>
       </main>
     </div>
@@ -467,12 +377,11 @@ export default function BagPage() {
 }
 
 // ════════════════════════════════════════════════════════════════════
-// SortableLeaf
+// Bucket (fixed, locked order — no drag, no rename, no delete)
 // ════════════════════════════════════════════════════════════════════
-function SortableLeaf(props) {
+function Bucket(props) {
   const {
     leaf, leaves, items, collapsed, toggleCollapsed,
-    renamingLeafId, renameDraft, setRenameDraft, setRenamingLeafId, renameLeaf, deleteLeaf,
     sensors, onItemsDragEnd,
     savedVideos, savedArticles, savedAnswers,
     moveItemToLeaf, removeLeafItem,
@@ -485,66 +394,34 @@ function SortableLeaf(props) {
     getYouTubeId,
   } = props
 
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: leaf.id })
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.6 : 1,
-  }
-
-  const renaming = renamingLeafId === leaf.id
+  const meta = BUCKET_META[leaf.name] || { icon: '📁', hint: null }
+  const isHolding = leaf.name === 'Holding Bucket'
   const itemIds = items.map(i => i.id)
 
   return (
-    <div ref={setNodeRef} style={style} className="border border-gray-200 rounded-2xl bg-white overflow-hidden">
-      <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 border-b border-gray-100">
-        <button
-          {...attributes}
-          {...listeners}
-          className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 px-1 touch-none"
-          aria-label={`Drag ${leaf.name}`}
-          title="Drag to reorder"
-        >
-          ⋮⋮
-        </button>
+    <div className={`border rounded-2xl bg-white overflow-hidden ${isHolding ? 'border-yellow-300 ring-1 ring-yellow-100' : 'border-gray-200'}`}>
+      <div className={`flex items-center gap-2 px-4 py-3 border-b ${isHolding ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50 border-gray-100'}`}>
         <button onClick={toggleCollapsed} className="text-gray-500 hover:text-gray-700 text-sm">
           {collapsed ? '▶' : '▼'}
         </button>
-
-        {renaming ? (
-          <input
-            value={renameDraft}
-            onChange={e => setRenameDraft(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') renameLeaf(leaf.id); if (e.key === 'Escape') { setRenamingLeafId(null); setRenameDraft('') } }}
-            onBlur={() => renameLeaf(leaf.id)}
-            autoFocus
-            className="flex-1 border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-green-300"
-          />
-        ) : (
-          <h3 className="flex-1 font-bold text-gray-900 text-base">{leaf.name}</h3>
-        )}
-
-        <span className="text-xs text-gray-500">{items.length} item{items.length !== 1 ? 's' : ''}</span>
-        <button
-          onClick={() => { setRenamingLeafId(leaf.id); setRenameDraft(leaf.name) }}
-          className="text-xs text-gray-400 hover:text-gray-700"
-          title="Rename"
-        >
-          ✏️
-        </button>
-        <button
-          onClick={() => deleteLeaf(leaf.id)}
-          className="text-xs text-gray-400 hover:text-red-500"
-          title="Delete leaf"
-        >
-          🗑
-        </button>
+        <span className="text-xl">{meta.icon}</span>
+        <h3 className={`flex-1 font-bold text-base ${isHolding ? 'text-yellow-900' : 'text-gray-900'}`}>{leaf.name}</h3>
+        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${isHolding ? 'bg-yellow-200 text-yellow-800' : 'bg-gray-200 text-gray-600'}`}>
+          {items.length} item{items.length !== 1 ? 's' : ''}
+        </span>
       </div>
 
       {!collapsed && (
         <div className="p-3">
+          {meta.hint && items.length > 0 && (
+            <p className="text-xs text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2 mb-3">{meta.hint}</p>
+          )}
           {items.length === 0 ? (
-            <p className="text-xs text-gray-400 text-center py-6">No items in this leaf yet. Save videos, guides, or answers to your bag and move them here.</p>
+            <p className="text-xs text-gray-400 text-center py-6">
+              {isHolding
+                ? 'Your Holding Bucket is empty. New saves from Golf TV, Guides, and Club Pro land here first.'
+                : `Nothing in ${leaf.name} yet. Use the "Move ▾" button on any item in your Holding Bucket to send it here.`}
+            </p>
           ) : (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onItemsDragEnd}>
               <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>

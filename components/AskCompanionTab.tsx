@@ -79,17 +79,17 @@ export default function AskCompanionTab({ skillLevel = 'all', onBack }: Props) {
     }
   }
 
-  async function ensureUnsortedLeafId(userId: string): Promise<string | null> {
+  async function ensureHoldingBucketId(userId: string): Promise<string | null> {
     const { data: existing } = await supabase
       .from('focus_leaves')
       .select('id')
       .eq('user_id', userId)
-      .eq('name', 'Unsorted')
+      .eq('name', 'Holding Bucket')
       .maybeSingle()
     if ((existing as any)?.id) return (existing as any).id
     const { data: created } = await supabase
       .from('focus_leaves')
-      .insert({ user_id: userId, name: 'Unsorted', position: 9999 })
+      .insert({ user_id: userId, name: 'Holding Bucket', position: 0 })
       .select('id')
       .single()
     return (created as any)?.id ?? null
@@ -107,7 +107,7 @@ export default function AskCompanionTab({ skillLevel = 'all', onBack }: Props) {
     if (error) return
     const answerId = (inserted as any)?.id
     if (answerId) {
-      const leafId = await ensureUnsortedLeafId(user.id)
+      const leafId = await ensureHoldingBucketId(user.id)
       if (leafId) {
         const { data: maxRow } = await supabase
           .from('leaf_items')

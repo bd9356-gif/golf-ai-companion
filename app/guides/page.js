@@ -100,24 +100,24 @@ export default function ArticlesPage() {
     }
   }
 
-  async function ensureUnsortedLeafId(userId) {
+  async function ensureHoldingBucketId(userId) {
     const { data: existing } = await supabase
       .from('focus_leaves')
       .select('id')
       .eq('user_id', userId)
-      .eq('name', 'Unsorted')
+      .eq('name', 'Holding Bucket')
       .maybeSingle()
     if (existing?.id) return existing.id
     const { data: created } = await supabase
       .from('focus_leaves')
-      .insert({ user_id: userId, name: 'Unsorted', position: 9999 })
+      .insert({ user_id: userId, name: 'Holding Bucket', position: 0 })
       .select('id')
       .single()
     return created?.id ?? null
   }
 
-  async function addToUnsortedLeaf(userId, itemType, itemId) {
-    const leafId = await ensureUnsortedLeafId(userId)
+  async function addToHoldingBucket(userId, itemType, itemId) {
+    const leafId = await ensureHoldingBucketId(userId)
     if (!leafId) return
     const { data: maxRow } = await supabase
       .from('leaf_items')
@@ -146,7 +146,7 @@ export default function ArticlesPage() {
       await supabase.from('saved_articles').insert({
         user_id: user.id, article_id: articleId, skill_level: skillLevel
       })
-      await addToUnsortedLeaf(user.id, 'article', articleId)
+      await addToHoldingBucket(user.id, 'article', articleId)
       setSavedIds(prev => new Set([...prev, articleId]))
     }
   }
@@ -154,7 +154,7 @@ export default function ArticlesPage() {
   async function saveVideoToLibrary(videoId) {
     if (!user) { window.location.href = '/login'; return }
     await supabase.from('saved_videos').upsert({ user_id: user.id, video_id: videoId })
-    await addToUnsortedLeaf(user.id, 'video', videoId)
+    await addToHoldingBucket(user.id, 'video', videoId)
     alert('Added to MyBag!')
   }
 
