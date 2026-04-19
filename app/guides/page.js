@@ -100,17 +100,53 @@ export default function ArticlesPage() {
     }
   }
 
+  async function ensureUnsortedLeafId(userId) {
+    const { data: existing } = await supabase
+      .from('focus_leaves')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('name', 'Unsorted')
+      .maybeSingle()
+    if (existing?.id) return existing.id
+    const { data: created } = await supabase
+      .from('focus_leaves')
+      .insert({ user_id: userId, name: 'Unsorted', position: 9999 })
+      .select('id')
+      .single()
+    return created?.id ?? null
+  }
+
+  async function addToUnsortedLeaf(userId, itemType, itemId) {
+    const leafId = await ensureUnsortedLeafId(userId)
+    if (!leafId) return
+    const { data: maxRow } = await supabase
+      .from('leaf_items')
+      .select('position')
+      .eq('leaf_id', leafId)
+      .order('position', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    const nextPos = (maxRow?.position ?? -1) + 1
+    await supabase.from('leaf_items').upsert(
+      { leaf_id: leafId, user_id: userId, item_type: itemType, item_id: String(itemId), position: nextPos },
+      { onConflict: 'leaf_id,item_type,item_id', ignoreDuplicates: true }
+    )
+  }
+
   async function toggleSaved(articleId) {
     if (!user) { window.location.href = '/login'; return }
     const isSaved = savedIds.has(articleId)
     if (isSaved) {
       await supabase.from('saved_articles').delete()
         .eq('user_id', user.id).eq('article_id', articleId)
+      await supabase.from('leaf_items').delete()
+        .eq('user_id', user.id).eq('item_type', 'article').eq('item_id', String(articleId))
       setSavedIds(prev => { const next = new Set(prev); next.delete(articleId); return next })
     } else {
       await supabase.from('saved_articles').insert({
         user_id: user.id, article_id: articleId, skill_level: skillLevel
       })
+      await addToUnsortedLeaf(user.id, 'article', articleId)
       setSavedIds(prev => new Set([...prev, articleId]))
     }
   }
@@ -118,6 +154,7 @@ export default function ArticlesPage() {
   async function saveVideoToLibrary(videoId) {
     if (!user) { window.location.href = '/login'; return }
     await supabase.from('saved_videos').upsert({ user_id: user.id, video_id: videoId })
+    await addToUnsortedLeaf(user.id, 'video', videoId)
     alert('Added to MyBag!')
   }
 

@@ -86,14 +86,47 @@ export default function GolfTVPage() {
     setFiltered(result)
   }
 
+  async function ensureUnsortedLeafId(userId: string): Promise<string | null> {
+    const { data: existing } = await supabase
+      .from('focus_leaves')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('name', 'Unsorted')
+      .maybeSingle()
+    if ((existing as any)?.id) return (existing as any).id
+    const { data: created } = await supabase
+      .from('focus_leaves')
+      .insert({ user_id: userId, name: 'Unsorted', position: 9999 })
+      .select('id')
+      .single()
+    return (created as any)?.id ?? null
+  }
+
   async function toggleSaved(videoId: string) {
     if (!user) { setPreviewVideoId(videoId); return }
     const isSaved = savedIds.has(videoId)
     if (isSaved) {
       await supabase.from('saved_videos').delete().eq('user_id', user.id).eq('video_id', videoId)
+      await supabase.from('leaf_items').delete()
+        .eq('user_id', user.id).eq('item_type', 'video').eq('item_id', String(videoId))
       setSavedIds(prev => { const next = new Set(prev); next.delete(videoId); return next })
     } else {
       await supabase.from('saved_videos').insert({ user_id: user.id, video_id: videoId })
+      const leafId = await ensureUnsortedLeafId(user.id)
+      if (leafId) {
+        const { data: maxRow } = await supabase
+          .from('leaf_items')
+          .select('position')
+          .eq('leaf_id', leafId)
+          .order('position', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+        const nextPos = ((maxRow as any)?.position ?? -1) + 1
+        await supabase.from('leaf_items').upsert(
+          { leaf_id: leafId, user_id: user.id, item_type: 'video', item_id: String(videoId), position: nextPos },
+          { onConflict: 'leaf_id,item_type,item_id', ignoreDuplicates: true }
+        )
+      }
       setSavedIds(prev => new Set([...prev, videoId]))
     }
   }
