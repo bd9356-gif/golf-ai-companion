@@ -101,8 +101,8 @@ export default function ProfilePage() {
               </span>
             )}
           </div>
-          <a href="/welcome" className="text-sm font-semibold text-green-700 border-2 border-green-700 rounded-xl px-4 py-2 hover:bg-green-50 transition-colors">
-            MyGolfClubhouse
+          <a href="/clubhouse" className="text-sm font-semibold text-green-700 border-2 border-green-700 rounded-xl px-4 py-2 hover:bg-green-50 transition-colors">
+            MyClubhouse
           </a>
         </div>
 
@@ -150,7 +150,7 @@ export default function ProfilePage() {
               <div className="text-center py-12 border border-dashed border-gray-200 rounded-xl">
                 <p className="text-3xl mb-2">🔖</p>
                 <p className="text-gray-500 font-medium">No saved videos yet</p>
-                <a href="/plan" className="mt-4 inline-block text-sm text-green-700 font-semibold hover:underline">Go to MyGolf Plan →</a>
+                <a href="/bag" className="mt-4 inline-block text-sm text-green-700 font-semibold hover:underline">Go to Videos →</a>
               </div>
             ) : (
               <div className="space-y-3">
@@ -205,7 +205,7 @@ export default function ProfilePage() {
               <div className="text-center py-12 border border-dashed border-gray-200 rounded-xl">
                 <p className="text-3xl mb-2">📖</p>
                 <p className="text-gray-500 font-medium">No saved articles yet</p>
-                <a href="/learn" className="mt-4 inline-block text-sm text-green-700 font-semibold hover:underline">Browse Articles →</a>
+                <a href="/guides" className="mt-4 inline-block text-sm text-green-700 font-semibold hover:underline">Browse Guides →</a>
               </div>
             ) : (
               <div className="space-y-3">
@@ -258,8 +258,8 @@ export default function ProfilePage() {
               <div className="text-center py-12 border border-dashed border-gray-200 rounded-xl">
                 <p className="text-3xl mb-2">🤖</p>
                 <p className="text-gray-500 font-medium">No saved answers yet</p>
-                <p className="text-sm text-gray-400 mt-1">Save AI answers from MyPro</p>
-                <a href="/plan" className="mt-4 inline-block text-sm text-green-700 font-semibold hover:underline">Ask MyPro →</a>
+                <p className="text-sm text-gray-400 mt-1">Save AI answers from the Club Pro</p>
+                <a href="/club-pro" className="mt-4 inline-block text-sm text-green-700 font-semibold hover:underline">Ask the Club Pro →</a>
               </div>
             ) : (
               <div className="space-y-3">

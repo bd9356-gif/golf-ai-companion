@@ -95,11 +95,11 @@ export default function CoursesPage() {
         <div className="max-w-4xl mx-auto px-4 pt-5 pb-3">
           <div className="mb-3">
             <h1 className="text-3xl font-bold text-gray-900">⛳ MyGolf Companion</h1>
-            <p className="text-base text-gray-500 mt-1">Your AI guide to better golf · <a href="/library" className="text-green-700 font-semibold hover:underline"><img src="/bag-icon.svg" width="64" height="64" style={{display:"inline",verticalAlign:"middle",marginRight:"3px"}} alt="MyBag" /></a></p>
+            <p className="text-base text-gray-500 mt-1">Your AI guide to better golf · <a href="/bag" className="text-green-700 font-semibold hover:underline"><img src="/bag-icon.svg" width="64" height="64" style={{display:"inline",verticalAlign:"middle",marginRight:"3px"}} alt="Your Golf Bag" /></a></p>
           </div>
           <div className="flex items-center gap-1">
-            <button onClick={() => window.location.href='/welcome'} className="text-sm font-medium text-gray-500 hover:text-gray-700 px-2 py-2">← Back</button>
-            <span className="px-3 py-2 text-sm font-semibold text-green-800 border-b-2 border-green-700">MyCourses</span>
+            <button onClick={() => window.location.href='/clubhouse'} className="text-sm font-medium text-gray-500 hover:text-gray-700 px-2 py-2">← Back</button>
+            <span className="px-3 py-2 text-sm font-semibold text-green-800 border-b-2 border-green-700">Your Home Courses</span>
             <div className="ml-auto">
               <button
                 onClick={() => { setShowForm(true); setEditingId(null); setForm({ name: '', notes: '', tee_time_url: '', phone: '' }) }}

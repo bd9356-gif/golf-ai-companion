@@ -32,48 +32,44 @@ const TIER_LABELS = {
   senior_player: 'Senior Player',
 }
 
-const SECTIONS = [
-  {
-    icon: '🏌️',
-    title: 'MyBag',
-    subtitle: 'Your Golf Bag',
-    href: '/library',
-    description: 'Your saved videos, guides, and AI answers — everything you carry with you.',
-  },
+const JOURNEY_SECTIONS = [
   {
     icon: '⛳',
-    title: 'MyVideos',
+    title: 'Videos',
     subtitle: 'The Course',
-    href: '/plan',
-    description: 'Videos matched to your skill level — head out to the course and start improving.',
+    href: '/videos',
+    description: 'Browse instruction videos — pick the ones to save to your bag and work on.',
   },
   {
     icon: '📖',
-    title: 'MyGuides',
+    title: 'Guides',
     subtitle: 'The Buddies',
-    href: '/learn',
+    href: '/guides',
     description: 'AI-crafted golf articles matched to your game — talk it over with your buddies.',
   },
   {
-    icon: '🎓',
-    title: 'MyPro',
-    subtitle: 'Ask the Club Pro',
-    href: '/plan?tab=ask',
-    description: 'Personal AI guidance for your game — step inside and talk with your club pro.',
-  },
-  {
-    icon: '🎬',
-    title: 'Browse All Videos',
-    subtitle: 'Full Video Library',
-    href: '/videos',
-    description: 'Explore the full library of 767 instruction videos — browse by skill and topic.',
+    icon: '🏌️',
+    title: 'Your Golf Bag',
+    subtitle: 'MyBag',
+    href: '/bag',
+    description: 'Your saved videos, guides, and AI answers — organized into your leaves of focus.',
   },
   {
     icon: '🏌️',
-    title: 'MyCourses',
-    subtitle: 'Your Home Courses',
-    href: '/courses',
+    title: 'Your Home Courses',
+    subtitle: 'MyCourses',
+    href: '/home-courses',
     description: 'Save your favorite courses — notes, tips, and tee time links all in one place.',
+  },
+]
+
+const PROSHOP_SECTIONS = [
+  {
+    icon: '🎓',
+    title: 'Ask the Club Pro',
+    subtitle: 'Personal AI guidance',
+    href: '/club-pro',
+    description: 'Personal AI guidance for your game — step inside and talk with your club pro.',
   },
 ]
 
@@ -118,7 +114,7 @@ export default function ClubhousePage() {
           {/* Text overlaid on image */}
           <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
             <h2 className="text-3xl font-bold text-white mb-1 drop-shadow">
-              MyClubHouse
+              MyClubhouse
             </h2>
             <p className="text-green-200 text-sm mb-3">
               Your AI-powered starting point for everything in your game.
@@ -135,8 +131,38 @@ export default function ClubhousePage() {
           </div>
         </div>
 
+        {/* Your Golf Journey */}
+        <div className="mb-4">
+          <h3 className="text-xs font-bold tracking-wider text-gray-500 uppercase px-1">Your Golf Journey</h3>
+        </div>
         <div className="space-y-3">
-          {SECTIONS.map((section) => (
+          {JOURNEY_SECTIONS.map((section) => (
+            <a
+              key={section.title}
+              href={section.href}
+              className="block p-5 rounded-2xl border border-gray-200 hover:border-green-300 hover:shadow-sm transition-all bg-white"
+            >
+              <div className="flex items-start gap-3">
+                <span className="text-2xl">{section.icon}</span>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-base text-gray-900">{section.title}</h3>
+                    <span className="text-xs text-green-700 font-semibold">— {section.subtitle}</span>
+                  </div>
+                  <p className="text-sm mt-0.5 leading-relaxed text-gray-500">{section.description}</p>
+                </div>
+                <span className="text-gray-400 shrink-0 mt-1">→</span>
+              </div>
+            </a>
+          ))}
+        </div>
+
+        {/* AI ProShop */}
+        <div className="mb-4 mt-8">
+          <h3 className="text-xs font-bold tracking-wider text-gray-500 uppercase px-1">🤖 AI ProShop</h3>
+        </div>
+        <div className="space-y-3">
+          {PROSHOP_SECTIONS.map((section) => (
             <a
               key={section.title}
               href={section.href}

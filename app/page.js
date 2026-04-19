@@ -54,8 +54,8 @@ export default function HomePage() {
             <span className="text-green-100 text-lg font-semibold">MyGolf Companion</span>
           </div>
           {user ? (
-            <a href="/welcome" className="text-green-200 text-sm border border-green-600 rounded-xl px-4 py-1.5 hover:bg-green-700 transition-colors">
-              MyClubHouse →
+            <a href="/clubhouse" className="text-green-200 text-sm border border-green-600 rounded-xl px-4 py-1.5 hover:bg-green-700 transition-colors">
+              MyClubhouse →
             </a>
           ) : (
             <a href="/login" className="text-green-200 text-sm border border-green-600 rounded-xl px-4 py-1.5 hover:bg-green-700 transition-colors">
@@ -103,10 +103,10 @@ export default function HomePage() {
 
         {/* Primary CTA */}
         <a
-          href={user ? '/welcome' : '/login'}
+          href={user ? '/clubhouse' : '/login'}
           className="w-full py-4 bg-green-700 text-white rounded-2xl text-lg font-semibold hover:bg-green-800 transition-colors text-center block mb-3"
         >
-          ⛳ Drive to MyClubHouse
+          ⛳ Drive to MyClubhouse
         </a>
 
         {!user && (

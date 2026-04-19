@@ -17,7 +17,7 @@ export default function AuthConfirmPage() {
         await supabase.auth.exchangeCodeForSession(code)
       }
 
-      window.location.href = '/welcome'
+      window.location.href = '/clubhouse'
     }
     handleAuth()
   }, [])

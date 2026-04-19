@@ -60,7 +60,7 @@ export default function OnboardingPage() {
     localStorage.setItem('golf_topics', JSON.stringify(tier.topics))
     localStorage.setItem('golf_answers', JSON.stringify({ level: tier.value }))
     // Small delay so user sees their selection highlighted before navigating
-    setTimeout(() => router.push('/welcome'), 300)
+    setTimeout(() => router.push('/clubhouse'), 300)
   }
 
   return (

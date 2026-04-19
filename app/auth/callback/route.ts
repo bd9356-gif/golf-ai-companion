@@ -13,5 +13,5 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  return NextResponse.redirect(new URL("/welcome", request.url));
+  return NextResponse.redirect(new URL("/clubhouse", request.url));
 }
