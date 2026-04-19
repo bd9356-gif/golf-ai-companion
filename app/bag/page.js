@@ -399,8 +399,8 @@ function Bucket(props) {
   const itemIds = items.map(i => i.id)
 
   return (
-    <div className={`border rounded-2xl bg-white overflow-hidden ${isHolding ? 'border-yellow-300 ring-1 ring-yellow-100' : 'border-gray-200'}`}>
-      <div className={`flex items-center gap-2 px-4 py-3 border-b ${isHolding ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50 border-gray-100'}`}>
+    <div className={`border rounded-2xl bg-white ${isHolding ? 'border-yellow-300 ring-1 ring-yellow-100' : 'border-gray-200'}`}>
+      <div className={`flex items-center gap-2 px-4 py-3 border-b rounded-t-2xl ${isHolding ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50 border-gray-100'}`}>
         <button onClick={toggleCollapsed} className="text-gray-500 hover:text-gray-700 text-sm">
           {collapsed ? '▶' : '▼'}
         </button>
@@ -568,7 +568,7 @@ function SortableItem(props) {
           Move ▾
         </button>
         {moveMenuItemId === leafItem.id && (
-          <div className="absolute top-8 right-2 z-20 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[12rem] max-h-56 overflow-auto">
+          <div className="absolute top-8 right-2 z-30 bg-white border border-gray-200 rounded-lg shadow-xl py-1 min-w-[14rem] max-h-none overflow-visible">
             {otherLeaves.length === 0 ? (
               <p className="text-xs text-gray-400 px-3 py-2">No other leaves yet</p>
             ) : otherLeaves.map(l => (
