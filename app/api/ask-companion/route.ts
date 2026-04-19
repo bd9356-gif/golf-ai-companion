@@ -36,7 +36,7 @@ Your role:
 Keep responses concise (2-4 short paragraphs typically). Use plain text — no markdown headers or bullet point lists, just natural conversational paragraphs.`
 
     const response = await client.messages.create({
-      model: 'claude-opus-4-5',
+      model: 'claude-sonnet-4-6',
       max_tokens: 600,
       system: systemPrompt,
       messages: messages.map((m: { role: string; content: string }) => ({
