@@ -337,7 +337,7 @@ export default function BagPage() {
           <div className="flex items-center gap-1">
             <a href="/clubhouse" className="text-sm font-medium text-gray-500 hover:text-gray-700 px-2 py-2">← Back</a>
             <span className="px-3 py-2 text-sm font-semibold text-green-800 border-b-2 border-green-700">Your Golf Bag</span>
-            <a href="/videos" className="px-3 py-2 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors">Videos</a>
+            <a href="/golf-tv" className="px-3 py-2 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors">Golf TV</a>
             <a href="/guides" className="px-3 py-2 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors">Guides</a>
             <a href="/club-pro" className="px-3 py-2 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors">Club Pro</a>
           </div>

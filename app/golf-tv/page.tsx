@@ -164,9 +164,6 @@ export default function GolfTVPage() {
           </div>
           <div className="flex items-center gap-1 flex-wrap">
             <button onClick={() => window.location.href='/clubhouse'} className="text-sm font-medium text-gray-500 hover:text-gray-700 px-2 py-2">← Back</button>
-            <a href="/videos" className="px-3 py-2 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors">
-              Matched Videos
-            </a>
             <span className="px-3 py-2 text-sm font-semibold border-b-2 text-green-800 border-green-700">
               Golf TV
             </span>

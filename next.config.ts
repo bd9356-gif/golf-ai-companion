@@ -12,6 +12,8 @@ const nextConfig: NextConfig = {
       { source: "/plan/:path*", destination: "/bag/:path*", permanent: true },
       { source: "/library", destination: "/bag", permanent: true },
       { source: "/library/:path*", destination: "/bag/:path*", permanent: true },
+      { source: "/videos", destination: "/golf-tv", permanent: true },
+      { source: "/videos/:path*", destination: "/golf-tv/:path*", permanent: true },
     ];
   },
 };

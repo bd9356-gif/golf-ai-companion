@@ -34,18 +34,11 @@ const TIER_LABELS = {
 
 const JOURNEY_SECTIONS = [
   {
-    icon: '⛳',
-    title: 'Videos',
-    subtitle: 'Matched to your level',
-    href: '/videos',
-    description: 'Instruction videos matched to your MyLevel — save any to your bag.',
-  },
-  {
     icon: '📺',
     title: 'Golf TV',
-    subtitle: 'Your Netflix for golf',
+    subtitle: 'Build your plan',
     href: '/golf-tv',
-    description: 'Browse every video in the library — no level filter. Add any to your bag.',
+    description: 'Browse every instruction video — save any to your bag to build your own plan.',
   },
   {
     icon: '📖',
