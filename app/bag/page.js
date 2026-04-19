@@ -548,18 +548,18 @@ function SortableItem(props) {
   const otherLeaves = leaves.filter(l => l.id !== leafItem.leaf_id)
 
   return (
-    <div ref={setNodeRef} style={style} className="flex items-stretch gap-2 border border-gray-100 rounded-xl overflow-hidden hover:border-green-200 transition-colors">
+    <div ref={setNodeRef} style={style} className="flex items-stretch gap-2 border border-gray-100 rounded-xl hover:border-green-200 transition-colors">
       <button
         {...attributes}
         {...listeners}
-        className="cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 px-2 touch-none bg-gray-50 border-r border-gray-100"
+        className="cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 px-2 touch-none bg-gray-50 border-r border-gray-100 rounded-l-xl"
         aria-label="Drag to reorder"
         title="Drag to reorder"
       >
         ⋮⋮
       </button>
       <div className="flex-1 min-w-0">{content}</div>
-      <div className="flex flex-col items-end justify-between gap-1 px-2 py-2 border-l border-gray-100 bg-gray-50/50 relative">
+      <div className="flex flex-col items-end justify-between gap-1 px-2 py-2 border-l border-gray-100 bg-gray-50/50 relative rounded-r-xl">
         <button
           onClick={() => setMoveMenuItemId(moveMenuItemId === leafItem.id ? null : leafItem.id)}
           className="text-xs text-gray-400 hover:text-gray-700 whitespace-nowrap"
