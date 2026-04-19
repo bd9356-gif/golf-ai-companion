@@ -24,7 +24,7 @@ type VideoRow = {
 type Tab = 'videos' | 'ask'
 
 const CATEGORIES = [
-  { label: 'All Videos', value: '' },
+  { label: 'All Topics', value: '' },
   { label: 'Swing Tips', value: 'swing' },
   { label: 'Putting', value: 'putting' },
   { label: 'Short Game', value: 'short game' },
@@ -32,6 +32,15 @@ const CATEGORIES = [
   { label: 'Mental Game', value: 'mental game' },
   { label: 'Fitness', value: 'fitness' },
 ]
+
+const TIER_LABELS: Record<string, string> = {
+  beginner: 'Beginner',
+  building_game: 'Building Your Game',
+  building_consistency: 'Building Consistency',
+  improving_player: 'Improving Player',
+  advanced_player: 'Advanced Player',
+  senior_player: 'Senior Player',
+}
 
 export default function Home() {
   const [videos, setVideos] = useState<VideoRow[]>([])
@@ -46,10 +55,19 @@ export default function Home() {
   const [playingId, setPlayingId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<Tab>('videos')
   const [selectedCategory, setSelectedCategory] = useState('')
+  const [skillTier, setSkillTier] = useState<string>('')
+  const [tierChecked, setTierChecked] = useState(false)
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     if (params.get('tab') === 'ask') setActiveTab('ask')
+    const level = localStorage.getItem('golf_skill_level') || ''
+    if (!level) {
+      window.location.href = '/onboarding'
+      return
+    }
+    setSkillTier(level)
+    setTierChecked(true)
   }, [])
 
   useEffect(() => {
@@ -63,7 +81,7 @@ export default function Home() {
     })
   }, [])
 
-  useEffect(() => { applyFilters() }, [videos, search, selectedCategory])
+  useEffect(() => { applyFilters() }, [videos, search, selectedCategory, skillTier])
 
   async function fetchVideos() {
     setLoading(true)
@@ -81,6 +99,14 @@ export default function Home() {
 
   function applyFilters() {
     let result = [...videos]
+    // Hard skill-tier lock — videos are pure skill-level driven
+    if (skillTier) {
+      result = result.filter((v) => {
+        const meta = Array.isArray(v.video_metadata) ? v.video_metadata[0] : v.video_metadata
+        const tiers = (meta?.skill_tiers ?? []) as string[]
+        return tiers.includes(skillTier)
+      })
+    }
     if (search.trim()) {
       const s = search.toLowerCase()
       result = result.filter((v) => v.title?.toLowerCase().includes(s) || v.channel_name?.toLowerCase().includes(s))
@@ -132,14 +158,17 @@ export default function Home() {
             <h1 className="text-3xl font-bold text-gray-900 leading-tight tracking-tight">⛳ MyGolf Companion</h1>
             <p className="text-base text-gray-500 mt-1">Your AI guide to better golf · <a href="/bag" className="text-green-700 font-semibold hover:underline"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{display:"inline",verticalAlign:"middle",marginRight:"3px"}}><rect x="8" y="7" width="8" height="11" rx="2" stroke="currentColor" strokeWidth="1.5"/><path d="M8 9H16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M9 12L15 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M14 4L17 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M17 7H18.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M8 18H16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>Your Bag</a></p>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 flex-wrap">
             <button onClick={() => window.location.href='/clubhouse'} className="text-sm font-medium text-gray-500 hover:text-gray-700 px-2 py-2">← Back</button>
             <button
               onClick={() => setActiveTab('videos')}
               className={`px-3 py-2 text-sm font-semibold border-b-2 transition-colors ${activeTab === 'videos' ? 'text-green-800 border-green-700' : 'text-gray-500 border-transparent hover:text-gray-700'}`}
             >
-              Videos
+              Matched Videos
             </button>
+            <a href="/golf-tv" className="px-3 py-2 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors">
+              Golf TV
+            </a>
             <a href="/guides" className="px-3 py-2 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors">
               Guides
             </a>
@@ -173,8 +202,13 @@ export default function Home() {
         ) : (
           <>
             <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-1">Browse Videos</h2>
-              <p className="text-gray-500 text-sm">{filtered.length} videos available · Free for everyone</p>
+              <h2 className="text-2xl font-bold text-gray-900 mb-1">Your Matched Videos</h2>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="inline-flex items-center gap-1.5 bg-green-50 border border-green-200 text-green-800 text-xs font-semibold px-3 py-1 rounded-full">
+                  ⛳ MyLevel: {TIER_LABELS[skillTier] || '—'}
+                </span>
+                <p className="text-gray-500 text-sm">{filtered.length} videos matched · <a href="/golf-tv" className="text-green-700 font-semibold hover:underline">Browse all in Golf TV →</a></p>
+              </div>
             </div>
 
             <div className="mb-4">

@@ -36,9 +36,16 @@ const JOURNEY_SECTIONS = [
   {
     icon: '⛳',
     title: 'Videos',
-    subtitle: 'The Course',
+    subtitle: 'Matched to your level',
     href: '/videos',
-    description: 'Browse instruction videos — pick the ones to save to your bag and work on.',
+    description: 'Instruction videos matched to your MyLevel — save any to your bag.',
+  },
+  {
+    icon: '📺',
+    title: 'Golf TV',
+    subtitle: 'Your Netflix for golf',
+    href: '/golf-tv',
+    description: 'Browse every video in the library — no level filter. Add any to your bag.',
   },
   {
     icon: '📖',
