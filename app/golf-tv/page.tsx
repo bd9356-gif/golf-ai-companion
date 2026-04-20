@@ -33,7 +33,7 @@ type VideoRow = {
   editorial_status: string
   pro_id: string | null
   video_metadata: any
-  pros: ProRow | null
+  pros: ProRow[] | ProRow | null
 }
 
 const CATEGORIES = [
@@ -88,7 +88,7 @@ export default function GolfTVPage() {
 
     if (!error && data) {
       // Sort: featured videos first, then quality score desc, then newest
-      const sorted = (data as VideoRow[]).sort((a, b) => {
+      const sorted = (data as unknown as VideoRow[]).sort((a, b) => {
         if (!!a.is_featured !== !!b.is_featured) return a.is_featured ? -1 : 1
         const qa = getQuality(a)
         const qb = getQuality(b)
