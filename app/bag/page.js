@@ -38,6 +38,63 @@ const FIXED_BUCKETS = [
 const BUCKET_META = Object.fromEntries(FIXED_BUCKETS.map(b => [b.name, b]))
 const labelFor = (name) => BUCKET_META[name]?.label || name
 
+// Per-skill color scheme. Each bucket paints its own open area so you can
+// tell at a glance which skill you're inside. Tailwind classes are written
+// out as full strings so the v4 scanner can pick them up.
+const BUCKET_COLORS = {
+  'Holding Bucket': {
+    outer: 'border-yellow-300',
+    headerBg: 'bg-yellow-50',
+    headerBorder: 'border-yellow-200',
+    title: 'text-yellow-900',
+    pill: 'bg-yellow-200 text-yellow-800',
+    ring: 'ring-yellow-200',
+    bodyBg: 'bg-yellow-50/40',
+    hint: 'bg-yellow-50 border-yellow-200 text-yellow-700',
+  },
+  'Full Swing': {
+    outer: 'border-green-300',
+    headerBg: 'bg-green-50',
+    headerBorder: 'border-green-200',
+    title: 'text-green-900',
+    pill: 'bg-green-200 text-green-800',
+    ring: 'ring-green-200',
+    bodyBg: 'bg-green-50/40',
+    hint: 'bg-green-50 border-green-200 text-green-700',
+  },
+  'Short Game': {
+    outer: 'border-orange-300',
+    headerBg: 'bg-orange-50',
+    headerBorder: 'border-orange-200',
+    title: 'text-orange-900',
+    pill: 'bg-orange-200 text-orange-800',
+    ring: 'ring-orange-200',
+    bodyBg: 'bg-orange-50/40',
+    hint: 'bg-orange-50 border-orange-200 text-orange-700',
+  },
+  'Putting': {
+    outer: 'border-sky-300',
+    headerBg: 'bg-sky-50',
+    headerBorder: 'border-sky-200',
+    title: 'text-sky-900',
+    pill: 'bg-sky-200 text-sky-800',
+    ring: 'ring-sky-200',
+    bodyBg: 'bg-sky-50/40',
+    hint: 'bg-sky-50 border-sky-200 text-sky-700',
+  },
+  'Course Management': {
+    outer: 'border-purple-300',
+    headerBg: 'bg-purple-50',
+    headerBorder: 'border-purple-200',
+    title: 'text-purple-900',
+    pill: 'bg-purple-200 text-purple-800',
+    ring: 'ring-purple-200',
+    bodyBg: 'bg-purple-50/40',
+    hint: 'bg-purple-50 border-purple-200 text-purple-700',
+  },
+}
+const colorsFor = (name) => BUCKET_COLORS[name] || BUCKET_COLORS['Holding Bucket']
+
 async function ensureFixedBuckets(userId) {
   const { data: existing } = await supabase
     .from('focus_leaves')
@@ -325,34 +382,38 @@ export default function BagPage() {
   return (
     <div className="min-h-screen bg-white">
       <header className="border-b border-gray-100 bg-white sticky top-0 z-40">
-        <div className="max-w-4xl mx-auto px-4 pt-5 pb-3">
-          <div className="mb-3 flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">⛳ MyGolf Companion</h1>
-              <p className="text-base text-gray-500 mt-1">Your AI guide to better golf</p>
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+          <a
+            href="/clubhouse"
+            className="text-gray-500 hover:text-gray-800 text-sm font-medium shrink-0"
+            aria-label="Back to Clubhouse"
+          >
+            ← Clubhouse
+          </a>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-2xl shrink-0">🏌️</span>
+            <div className="min-w-0">
+              <h1 className="text-lg font-bold text-gray-900 truncate leading-tight">Your Golf Bag</h1>
+              <p className="text-xs text-green-700 font-semibold leading-tight">
+                {totalSaved} saved · 5 skills
+              </p>
             </div>
-            <button
-              onClick={() => setShowCart(s => !s)}
-              className={`relative flex items-center gap-1.5 px-3 py-2 rounded-xl border-2 transition-colors ${
-                showCart ? 'border-yellow-400 bg-yellow-50 text-yellow-800' : 'border-gray-200 text-gray-600 hover:border-yellow-300'
-              }`}
-            >
-              <span className="text-lg">🛺</span>
-              {cartCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 bg-yellow-400 text-yellow-900 text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                  {cartCount}
-                </span>
-              )}
-              <span className="text-sm font-semibold">My Plan</span>
-            </button>
           </div>
-          <div className="flex items-center gap-1">
-            <a href="/clubhouse" className="text-sm font-medium text-gray-500 hover:text-gray-700 px-2 py-2">← Back</a>
-            <span className="px-3 py-2 text-sm font-semibold text-green-800 border-b-2 border-green-700">Your Golf Bag</span>
-            <a href="/golf-tv" className="px-3 py-2 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors">Golf TV</a>
-            <a href="/guides" className="px-3 py-2 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors">Guides</a>
-            <a href="/club-pro" className="px-3 py-2 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors">Club Pro</a>
-          </div>
+          <button
+            onClick={() => setShowCart(s => !s)}
+            className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-xl border-2 transition-colors shrink-0 ${
+              showCart ? 'border-yellow-400 bg-yellow-50 text-yellow-800' : 'border-gray-200 text-gray-600 hover:border-yellow-300'
+            }`}
+            aria-label="My Plan"
+          >
+            <span className="text-base">🛺</span>
+            {cartCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 bg-yellow-400 text-yellow-900 text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                {cartCount}
+              </span>
+            )}
+            <span className="text-xs font-semibold hidden sm:inline">My Plan</span>
+          </button>
         </div>
       </header>
 
@@ -378,10 +439,9 @@ export default function BagPage() {
           </div>
         )}
 
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">🏌️ Your Golf Bag</h2>
-          <p className="text-gray-500 mt-1">
-            {totalSaved} saved item{totalSaved !== 1 ? 's' : ''} across 5 skills · New items wait at The Starter until you move them.
+        <div className="mb-5">
+          <p className="text-sm text-gray-500">
+            New saves wait at The Starter until you move them into a skill.
           </p>
         </div>
 
@@ -470,24 +530,25 @@ function Bucket(props) {
   const meta = BUCKET_META[leaf.name] || { icon: '📁', hint: null }
   const isHolding = leaf.name === 'Holding Bucket'
   const itemIds = items.map(i => i.id)
+  const color = colorsFor(leaf.name)
 
   return (
-    <div className={`border rounded-2xl bg-white ${isHolding ? 'border-yellow-300 ring-1 ring-yellow-100' : 'border-gray-200'}`}>
-      <div className={`flex items-center gap-2 px-4 py-3 border-b rounded-t-2xl ${isHolding ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50 border-gray-100'}`}>
-        <button onClick={toggleCollapsed} className="text-gray-500 hover:text-gray-700 text-sm">
+    <div className={`border-2 rounded-2xl bg-white transition-all ${color.outer} ${!collapsed ? `ring-2 ${color.ring}` : ''}`}>
+      <div className={`flex items-center gap-2 px-4 py-3 rounded-t-2xl ${color.headerBg} ${!collapsed ? `border-b ${color.headerBorder}` : 'rounded-b-2xl'}`}>
+        <button onClick={toggleCollapsed} className={`text-sm ${color.title} opacity-70 hover:opacity-100`}>
           {collapsed ? '▶' : '▼'}
         </button>
         <span className="text-xl">{meta.icon}</span>
-        <h3 className={`flex-1 font-bold text-base ${isHolding ? 'text-yellow-900' : 'text-gray-900'}`}>{labelFor(leaf.name)}</h3>
-        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${isHolding ? 'bg-yellow-200 text-yellow-800' : 'bg-gray-200 text-gray-600'}`}>
+        <h3 className={`flex-1 font-bold text-base ${color.title}`}>{labelFor(leaf.name)}</h3>
+        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${color.pill}`}>
           {items.length} item{items.length !== 1 ? 's' : ''}
         </span>
       </div>
 
       {!collapsed && (
-        <div className="p-3">
+        <div className={`p-3 rounded-b-2xl ${color.bodyBg}`}>
           {meta.hint && items.length > 0 && (
-            <p className="text-xs text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2 mb-3">{meta.hint}</p>
+            <p className={`text-xs border rounded-lg px-3 py-2 mb-3 ${color.hint}`}>{meta.hint}</p>
           )}
           {items.length === 0 ? (
             <p className="text-xs text-gray-400 text-center py-6">
