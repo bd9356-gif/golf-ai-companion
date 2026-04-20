@@ -632,37 +632,39 @@ function VideoRow({ saved, playing, play, stop, removeSaved, isInCart, addToCart
           </div>
         </div>
       ) : (
-        <div className="flex items-start gap-3 p-3">
-          <button onClick={play} className="relative shrink-0">
-            {ytId && (
-              <div className="relative">
-                <img src={video.thumbnail_url || `https://img.youtube.com/vi/${ytId}/mqdefault.jpg`} alt={video.title} className="w-28 h-20 object-cover rounded-lg" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-8 h-8 bg-white/90 rounded-full flex items-center justify-center shadow">
-                    <svg viewBox="0 0 24 24" className="w-4 h-4 text-green-800 ml-0.5" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+        <div className="p-3">
+          <div className="flex items-start gap-3">
+            <button onClick={play} className="relative shrink-0">
+              {ytId && (
+                <div className="relative">
+                  <img src={video.thumbnail_url || `https://img.youtube.com/vi/${ytId}/mqdefault.jpg`} alt={video.title} className="w-24 h-16 sm:w-28 sm:h-20 object-cover rounded-lg" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-8 h-8 bg-white/90 rounded-full flex items-center justify-center shadow">
+                      <svg viewBox="0 0 24 24" className="w-4 h-4 text-green-800 ml-0.5" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </button>
-          <div className="flex-1 min-w-0">
-            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">🎬 Video</span>
-            {videoUrl ? (
-              <a href={videoUrl} target="_blank" rel="noopener noreferrer" className="block font-semibold text-gray-900 text-sm leading-snug mt-1 line-clamp-2 hover:text-green-700">
-                {video.title}
-              </a>
-            ) : (
-              <p className="font-semibold text-gray-900 text-sm leading-snug mt-1 line-clamp-2">{video.title}</p>
-            )}
-            {video.channel_name && <p className="text-xs text-gray-400 mt-0.5">{video.channel_name}</p>}
-            {video.description && (
-              <p className="text-xs text-gray-500 mt-1 leading-snug line-clamp-3">{video.description}</p>
-            )}
+              )}
+            </button>
+            <div className="flex-1 min-w-0">
+              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">🎬 Video</span>
+              {videoUrl ? (
+                <a href={videoUrl} target="_blank" rel="noopener noreferrer" className="block font-semibold text-gray-900 text-sm leading-snug mt-1 line-clamp-2 hover:text-green-700">
+                  {video.title}
+                </a>
+              ) : (
+                <p className="font-semibold text-gray-900 text-sm leading-snug mt-1 line-clamp-2">{video.title}</p>
+              )}
+              {video.channel_name && <p className="text-xs text-gray-400 mt-0.5 truncate">{video.channel_name}</p>}
+            </div>
+            <div className="flex flex-col items-end gap-1.5 shrink-0">
+              <CartButton itemId={saved.video_id} itemType="video" itemTitle={video.title} isInCart={isInCart} addToCart={addToCart} removeFromCart={removeFromCart} />
+              <button onClick={removeSaved} className="text-xs text-red-400 hover:text-red-600 font-semibold">Remove</button>
+            </div>
           </div>
-          <div className="flex flex-col items-end gap-1.5 shrink-0">
-            <CartButton itemId={saved.video_id} itemType="video" itemTitle={video.title} isInCart={isInCart} addToCart={addToCart} removeFromCart={removeFromCart} />
-            <button onClick={removeSaved} className="text-xs text-red-400 hover:text-red-600 font-semibold">Remove</button>
-          </div>
+          {video.description && (
+            <p className="text-xs text-gray-500 mt-2 leading-relaxed line-clamp-3 whitespace-pre-line">{video.description}</p>
+          )}
         </div>
       )}
     </div>
