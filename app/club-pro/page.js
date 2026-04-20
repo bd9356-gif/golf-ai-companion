@@ -1,25 +1,7 @@
 'use client'
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import AskCompanionTab from '../../components/AskCompanionTab'
 
 export default function ClubProPage() {
-  const [skillLevel, setSkillLevel] = useState('')
-  const [ready, setReady] = useState(false)
-  const router = useRouter()
-
-  useEffect(() => {
-    const level = typeof window !== 'undefined' ? localStorage.getItem('golf_skill_level') : null
-    if (!level) {
-      router.push('/onboarding')
-      return
-    }
-    setSkillLevel(level)
-    setReady(true)
-  }, [])
-
-  if (!ready) return null
-
   return (
     <div className="min-h-screen bg-white flex flex-col">
       <header className="border-b border-gray-100 px-4 py-4">
@@ -36,7 +18,7 @@ export default function ClubProPage() {
       </header>
 
       <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-6 flex flex-col" style={{minHeight: 'calc(100vh - 73px)'}}>
-        <AskCompanionTab skillLevel={skillLevel} />
+        <AskCompanionTab />
       </main>
     </div>
   )

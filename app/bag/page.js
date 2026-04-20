@@ -24,15 +24,18 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
-// Fixed, locked 5-bucket structure. Order is enforced.
+// Fixed, locked 5-skill structure. Order is enforced.
+// Note: 'Holding Bucket' is the DB name (kept for back-compat); the user-facing
+// label is 'Collection Area'.
 const FIXED_BUCKETS = [
-  { name: 'Holding Bucket',    position: 0, icon: '📥', hint: 'Every new save lands here. Move it into a bucket below when you decide what to work on.' },
-  { name: 'Full Swing',        position: 1, icon: '🏌️', hint: null },
-  { name: 'Short Game',        position: 2, icon: '🪓', hint: null },
-  { name: 'Putting',           position: 3, icon: '⛳', hint: null },
-  { name: 'Course Management', position: 4, icon: '🗺️', hint: null },
+  { name: 'Holding Bucket',    label: 'Collection Area',  position: 0, icon: '📥', hint: 'New saves start here. Sort into Full Swing, Short Game, Putting, or Course Management.' },
+  { name: 'Full Swing',        label: 'Full Swing',        position: 1, icon: '🏌️', hint: null },
+  { name: 'Short Game',        label: 'Short Game',        position: 2, icon: '🪓', hint: null },
+  { name: 'Putting',           label: 'Putting',           position: 3, icon: '⛳', hint: null },
+  { name: 'Course Management', label: 'Course Management', position: 4, icon: '🗺️', hint: null },
 ]
 const BUCKET_META = Object.fromEntries(FIXED_BUCKETS.map(b => [b.name, b]))
+const labelFor = (name) => BUCKET_META[name]?.label || name
 
 async function ensureFixedBuckets(userId) {
   const { data: existing } = await supabase
@@ -87,7 +90,7 @@ export default function BagPage() {
       supabase.from('focus_leaves').select('*').eq('user_id', userId).order('position', { ascending: true }),
       supabase.from('leaf_items').select('*').eq('user_id', userId).order('position', { ascending: true }),
       supabase.from('saved_videos')
-        .select('video_id, created_at, skill_level, videos(id, title, url, thumbnail_url, youtube_video_id, channel_name)')
+        .select('video_id, created_at, skill_level, videos(id, title, url, thumbnail_url, youtube_video_id, channel_name, description)')
         .eq('user_id', userId),
       supabase.from('saved_articles')
         .select('article_id, created_at, skill_level, articles(id, title, summary, topic, read_time_minutes, content)')
@@ -323,7 +326,7 @@ export default function BagPage() {
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-gray-900">🏌️ Your Golf Bag</h2>
           <p className="text-gray-500 mt-1">
-            {totalSaved} saved item{totalSaved !== 1 ? 's' : ''} across 5 buckets · Everything new lands in your Holding Bucket.
+            {totalSaved} saved item{totalSaved !== 1 ? 's' : ''} across 5 skills · Everything new lands in your Collection Area.
           </p>
         </div>
 
@@ -369,7 +372,7 @@ export default function BagPage() {
         )}
 
         <p className="text-xs text-gray-400 text-center mt-8">
-          Tip: tap <span className="font-semibold">Move ▾</span> on any item to send it to another bucket. Drag the ⋮⋮ handle to reorder items within a bucket.
+          Tip: tap <span className="font-semibold">Move ▾</span> on any item to send it to another skill. Drag the ⋮⋮ handle to reorder items within a skill.
         </p>
       </main>
     </div>
@@ -405,7 +408,7 @@ function Bucket(props) {
           {collapsed ? '▶' : '▼'}
         </button>
         <span className="text-xl">{meta.icon}</span>
-        <h3 className={`flex-1 font-bold text-base ${isHolding ? 'text-yellow-900' : 'text-gray-900'}`}>{leaf.name}</h3>
+        <h3 className={`flex-1 font-bold text-base ${isHolding ? 'text-yellow-900' : 'text-gray-900'}`}>{labelFor(leaf.name)}</h3>
         <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${isHolding ? 'bg-yellow-200 text-yellow-800' : 'bg-gray-200 text-gray-600'}`}>
           {items.length} item{items.length !== 1 ? 's' : ''}
         </span>
@@ -419,8 +422,8 @@ function Bucket(props) {
           {items.length === 0 ? (
             <p className="text-xs text-gray-400 text-center py-6">
               {isHolding
-                ? 'Your Holding Bucket is empty. New saves from Golf TV, Guides, and Club Pro land here first.'
-                : `Nothing in ${leaf.name} yet. Use the "Move ▾" button on any item in your Holding Bucket to send it here.`}
+                ? 'Your Collection Area is empty. New saves from Golf TV, Guides, and Club Pro land here first.'
+                : `Nothing in ${labelFor(leaf.name)} yet. Use the "Move ▾" button on any item in your Collection Area to send it here.`}
             </p>
           ) : (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onItemsDragEnd}>
@@ -577,7 +580,7 @@ function SortableItem(props) {
                 onClick={() => moveItemToLeaf(leafItem.id, l.id)}
                 className="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-green-50 hover:text-green-800"
               >
-                → {l.name}
+                → {labelFor(l.name)}
               </button>
             ))}
             <div className="border-t border-gray-100 my-1" />
@@ -585,7 +588,7 @@ function SortableItem(props) {
               onClick={() => { removeLeafItem(leafItem.id); setMoveMenuItemId(null) }}
               className="w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:bg-red-50 hover:text-red-700"
             >
-              Remove from this leaf
+              Remove from this skill
             </button>
           </div>
         )}
@@ -614,18 +617,26 @@ function VideoRow({ saved, playing, play, stop, removeSaved, isInCart, addToCart
             />
             <button onClick={stop} className="absolute top-2 right-2 bg-black/60 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm">✕</button>
           </div>
-          <div className="p-3 flex items-center justify-between gap-2">
-            <p className="font-semibold text-gray-900 text-sm flex-1 line-clamp-1">{video.title}</p>
-            <CartButton itemId={saved.video_id} itemType="video" itemTitle={video.title} isInCart={isInCart} addToCart={addToCart} removeFromCart={removeFromCart} />
-            <button onClick={removeSaved} className="text-xs text-red-400 hover:text-red-600">Remove</button>
+          <div className="p-3">
+            <div className="flex items-start justify-between gap-2">
+              <p className="font-semibold text-gray-900 text-sm flex-1">{video.title}</p>
+              <div className="flex items-center gap-2 shrink-0">
+                <CartButton itemId={saved.video_id} itemType="video" itemTitle={video.title} isInCart={isInCart} addToCart={addToCart} removeFromCart={removeFromCart} />
+                <button onClick={removeSaved} className="text-xs text-red-400 hover:text-red-600">Remove</button>
+              </div>
+            </div>
+            {video.channel_name && <p className="text-xs text-gray-400 mt-1">{video.channel_name}</p>}
+            {video.description && (
+              <p className="text-xs text-gray-600 mt-2 leading-relaxed whitespace-pre-line line-clamp-6">{video.description}</p>
+            )}
           </div>
         </div>
       ) : (
-        <div className="flex items-center gap-3 p-3">
+        <div className="flex items-start gap-3 p-3">
           <button onClick={play} className="relative shrink-0">
             {ytId && (
               <div className="relative">
-                <img src={video.thumbnail_url || `https://img.youtube.com/vi/${ytId}/mqdefault.jpg`} alt={video.title} className="w-24 h-16 object-cover rounded-lg" />
+                <img src={video.thumbnail_url || `https://img.youtube.com/vi/${ytId}/mqdefault.jpg`} alt={video.title} className="w-28 h-20 object-cover rounded-lg" />
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="w-8 h-8 bg-white/90 rounded-full flex items-center justify-center shadow">
                     <svg viewBox="0 0 24 24" className="w-4 h-4 text-green-800 ml-0.5" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
@@ -644,6 +655,9 @@ function VideoRow({ saved, playing, play, stop, removeSaved, isInCart, addToCart
               <p className="font-semibold text-gray-900 text-sm leading-snug mt-1 line-clamp-2">{video.title}</p>
             )}
             {video.channel_name && <p className="text-xs text-gray-400 mt-0.5">{video.channel_name}</p>}
+            {video.description && (
+              <p className="text-xs text-gray-500 mt-1 leading-snug line-clamp-3">{video.description}</p>
+            )}
           </div>
           <div className="flex flex-col items-end gap-1.5 shrink-0">
             <CartButton itemId={saved.video_id} itemType="video" itemTitle={video.title} isInCart={isInCart} addToCart={addToCart} removeFromCart={removeFromCart} />

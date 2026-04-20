@@ -31,11 +31,8 @@ const STATS = [
 
 export default function HomePage() {
   const [user, setUser] = useState(null)
-  const [skillLevel, setSkillLevel] = useState(null)
 
   useEffect(() => {
-    const level = localStorage.getItem('golf_skill_level')
-    if (level) setSkillLevel(level)
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) setUser(session.user)
     })

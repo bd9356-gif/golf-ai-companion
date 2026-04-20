@@ -8,21 +8,11 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
-const TIER_LABELS = {
-  beginner: 'Beginner',
-  building_game: 'Building Your Game',
-  building_consistency: 'Building Consistency',
-  improving_player: 'Improving Player',
-  advanced_player: 'Advanced Player',
-  senior_player: 'Senior Player',
-}
-
 export default function ProfilePage() {
   const [user, setUser] = useState(null)
   const [savedVideos, setSavedVideos] = useState([])
   const [savedArticles, setSavedArticles] = useState([])
   const [loading, setLoading] = useState(true)
-  const [skillLevel, setSkillLevel] = useState('')
   const [playingId, setPlayingId] = useState(null)
   const [activeTab, setActiveTab] = useState('videos')
   const [savedAnswers, setSavedAnswers] = useState([])
@@ -34,7 +24,6 @@ export default function ProfilePage() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { router.push('/login'); return }
       setUser(session.user)
-      setSkillLevel(localStorage.getItem('golf_skill_level') || '')
 
       const [videosRes, answersRes, articlesRes] = await Promise.all([
         supabase.from('saved_videos')
@@ -95,11 +84,6 @@ export default function ProfilePage() {
           <div className="flex-1">
             <h1 className="text-2xl font-bold text-gray-900">{userName}</h1>
             <p className="text-gray-500 text-sm">{userEmail}</p>
-            {skillLevel && (
-              <span className="inline-block mt-2 text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full font-medium">
-                🎯 {TIER_LABELS[skillLevel] || skillLevel}
-              </span>
-            )}
           </div>
           <a href="/clubhouse" className="text-sm font-semibold text-green-700 border-2 border-green-700 rounded-xl px-4 py-2 hover:bg-green-50 transition-colors">
             MyClubhouse

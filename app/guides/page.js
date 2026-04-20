@@ -1,6 +1,5 @@
 'use client'
 import { useState, useEffect } from 'react'
-import SkillBanner from '@/components/SkillBanner'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -46,7 +45,6 @@ function renderMarkdown(text) {
 export default function ArticlesPage() {
   const [articles, setArticles] = useState([])
   const [loading, setLoading] = useState(true)
-  const [skillLevel, setSkillLevel] = useState(null)
   const [selectedTopic, setSelectedTopic] = useState('all')
   const [openArticle, setOpenArticle] = useState(null)
   const [playingVideoId, setPlayingVideoId] = useState(null)
@@ -55,8 +53,6 @@ export default function ArticlesPage() {
   const [user, setUser] = useState(null)
 
   useEffect(() => {
-    const level = localStorage.getItem('golf_skill_level')
-    if (level) setSkillLevel(level)
     fetchArticles()
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session) {
@@ -144,7 +140,7 @@ export default function ArticlesPage() {
       setSavedIds(prev => { const next = new Set(prev); next.delete(articleId); return next })
     } else {
       await supabase.from('saved_articles').insert({
-        user_id: user.id, article_id: articleId, skill_level: skillLevel
+        user_id: user.id, article_id: articleId
       })
       await addToHoldingBucket(user.id, 'article', articleId)
       setSavedIds(prev => new Set([...prev, articleId]))
@@ -159,7 +155,7 @@ export default function ArticlesPage() {
   }
 
   const topicFiltered = selectedTopic === 'all' ? articles : articles.filter(a => a.topic === selectedTopic)
-  const sorted = skillLevel ? topicFiltered.filter(a => a.skill_tiers?.includes(skillLevel)) : topicFiltered
+  const sorted = topicFiltered
   const topics = ['all', ...Object.keys(TOPIC_LABELS)]
 
   return (
@@ -175,16 +171,7 @@ export default function ArticlesPage() {
             <a href="/bag" className="px-3 py-2 text-sm font-semibold text-gray-500 border-b-2 border-transparent hover:text-gray-700 transition-colors">Videos</a>
             <span className="px-3 py-2 text-sm font-semibold text-green-800 border-b-2 border-green-700">Guides</span>
             <a href="/club-pro" className="px-3 py-2 text-sm font-semibold text-gray-500 border-b-2 border-transparent hover:text-gray-700 transition-colors">Club Pro</a>
-            <div className="ml-auto">
-              {/* Fixed: was pointing to /plan, now correctly points to /onboarding */}
-              <a href="/onboarding" className="text-sm font-semibold text-green-700 border-2 border-green-700 rounded-xl px-4 py-2 hover:bg-green-50 transition-colors whitespace-nowrap">MyLevel</a>
-            </div>
           </div>
-          {skillLevel && (
-            <div className="pb-2">
-              <SkillBanner skillLevel={skillLevel} context="guides" count={savedIds.size} />
-            </div>
-          )}
         </div>
       </header>
 
@@ -224,7 +211,7 @@ export default function ArticlesPage() {
               return (
                 <div
                   key={article.id}
-                  className={`border rounded-xl p-5 transition-all ${skillLevel ? 'border-green-200 bg-green-50/40' : 'border-gray-200'}`}
+                  className="border rounded-xl p-5 transition-all border-gray-200"
                 >
                   <div
                     className="cursor-pointer"
@@ -241,11 +228,6 @@ export default function ArticlesPage() {
                           <span className="text-xs bg-gray-100 text-gray-500 px-2.5 py-1 rounded-full">
                             {TOPIC_ICONS[article.topic]} {TOPIC_LABELS[article.topic] ?? article.topic}
                           </span>
-                          {skillLevel && (
-                            <span className="text-xs bg-green-600 text-white px-2.5 py-1 rounded-full font-semibold">
-                              🎯 In Your Plan
-                            </span>
-                          )}
                           <span className="text-xs text-gray-400">{article.read_time_minutes} min read</span>
                         </div>
                         <h3 className="font-bold text-gray-900 text-base leading-snug">{article.title}</h3>

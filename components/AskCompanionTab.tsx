@@ -13,7 +13,6 @@ type Message = {
 }
 
 type Props = {
-  skillLevel?: string
   onBack?: () => void
   onClearChat?: () => void
 }
@@ -27,22 +26,20 @@ const SUGGESTED_QUESTIONS = [
   'What should I work on to break 90?',
 ]
 
-const TIER_LABEL: Record<string, string> = {
-  beginner: 'Beginner',
-  building_game: 'Building Your Game',
-  building_consistency: 'Building Consistency',
-  improving_player: 'Improving Player',
-  advanced_player: 'Advanced Player',
-  senior_player: 'Senior Player',
-  all: 'All Levels',
-}
+const SKILL_OPTIONS: { value: string; label: string }[] = [
+  { value: 'all',          label: 'Skill: not specified' },
+  { value: 'beginner',     label: 'Beginner' },
+  { value: 'intermediate', label: 'Intermediate' },
+  { value: 'advanced',     label: 'Advanced' },
+]
 
-export default function AskCompanionTab({ skillLevel = 'all', onBack }: Props) {
+export default function AskCompanionTab({ onBack }: Props) {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [savedIndexes, setSavedIndexes] = useState<Set<number>>(new Set())
   const [user, setUser] = useState<any>(null)
+  const [skillLevel, setSkillLevel] = useState<string>('all')
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
@@ -128,8 +125,20 @@ export default function AskCompanionTab({ skillLevel = 'all', onBack }: Props) {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Clear chat button — top right, no duplicate banner */}
-      <div className="flex justify-end mb-3">
+      {/* Skill picker (left) + Clear chat (right) */}
+      <div className="flex items-center justify-between mb-3 gap-2">
+        <label className="flex items-center gap-2 text-xs text-gray-500">
+          <span>Your skill level:</span>
+          <select
+            value={skillLevel}
+            onChange={(e) => setSkillLevel(e.target.value)}
+            className="border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-green-300"
+          >
+            {SKILL_OPTIONS.map(opt => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+        </label>
         <button
           onClick={() => setMessages([])}
           className="text-xs text-gray-400 hover:text-gray-600 border border-gray-200 rounded-lg px-3 py-1"

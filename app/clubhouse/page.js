@@ -1,6 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
 const CLUBHOUSE_IMAGES = [
@@ -22,15 +21,6 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
-
-const TIER_LABELS = {
-  beginner: 'Beginner',
-  building_game: 'Building Your Game',
-  building_consistency: 'Building Consistency',
-  improving_player: 'Improving Player',
-  advanced_player: 'Advanced Player',
-  senior_player: 'Senior Player',
-}
 
 const JOURNEY_SECTIONS = [
   {
@@ -74,9 +64,6 @@ const PROSHOP_SECTIONS = [
 ]
 
 export default function ClubhousePage() {
-  const [skillLevel, setSkillLevel] = useState('')
-  const router = useRouter()
-
   useEffect(() => {
     async function init() {
       // If there's a hash token (OAuth implicit flow), let Supabase process it
@@ -84,15 +71,9 @@ export default function ClubhousePage() {
         await supabase.auth.getSession()
         window.history.replaceState({}, document.title, window.location.pathname)
       }
-
-      const level = localStorage.getItem('golf_skill_level')
-      if (!level) { router.push('/onboarding'); return }
-      setSkillLevel(level)
     }
     init()
   }, [])
-
-  if (!skillLevel) return null
 
   return (
     <div className="min-h-screen bg-white">
@@ -116,14 +97,9 @@ export default function ClubhousePage() {
             <h2 className="text-3xl font-bold text-white mb-1 drop-shadow">
               MyClubhouse
             </h2>
-            <p className="text-green-200 text-sm mb-3">
+            <p className="text-green-200 text-sm">
               Your AI-powered starting point for everything in your game.
             </p>
-            <div className="inline-flex items-center gap-2 bg-green-700/90 text-white px-4 py-2 rounded-full">
-              <span className="text-sm font-bold">⛳ {TIER_LABELS[skillLevel]}</span>
-              <span className="text-green-300">·</span>
-              <a href="/onboarding" className="text-green-200 hover:text-white underline text-xs font-medium">Change level</a>
-            </div>
           </div>
           {/* Course name watermark */}
           <div className="absolute bottom-2 right-3">
