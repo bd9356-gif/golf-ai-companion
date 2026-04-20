@@ -92,30 +92,28 @@ export default function CoursesPage() {
   return (
     <div className="min-h-screen bg-white">
       <header className="border-b border-gray-100 bg-white sticky top-0 z-40">
-        <div className="max-w-4xl mx-auto px-4 pt-5 pb-3">
-          <div className="mb-3">
-            <h1 className="text-3xl font-bold text-gray-900">⛳ MyGolf Companion</h1>
-            <p className="text-base text-gray-500 mt-1">Your AI guide to better golf · <a href="/bag" className="text-green-700 font-semibold hover:underline"><img src="/bag-icon.svg" width="64" height="64" style={{display:"inline",verticalAlign:"middle",marginRight:"3px"}} alt="Your Golf Bag" /></a></p>
-          </div>
-          <div className="flex items-center gap-1">
-            <button onClick={() => window.location.href='/clubhouse'} className="text-sm font-medium text-gray-500 hover:text-gray-700 px-2 py-2">← Back</button>
-            <span className="px-3 py-2 text-sm font-semibold text-green-800 border-b-2 border-green-700">Your Home Courses</span>
-            <div className="ml-auto">
-              <button
-                onClick={() => { setShowForm(true); setEditingId(null); setForm({ name: '', notes: '', tee_time_url: '', phone: '' }) }}
-                className="text-sm font-semibold text-green-700 border-2 border-green-700 rounded-xl px-4 py-2 hover:bg-green-50 transition-colors"
-              >
-                + Add Course
-              </button>
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+          <a href="/clubhouse" className="text-gray-500 hover:text-gray-800 text-sm font-medium shrink-0" aria-label="Back to Clubhouse">← Clubhouse</a>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-2xl shrink-0">🏠</span>
+            <div className="min-w-0">
+              <h1 className="text-lg font-bold text-gray-900 truncate leading-tight">Your Home Courses</h1>
+              <p className="text-xs text-green-700 font-semibold leading-tight">Notes, tips &amp; tee times</p>
             </div>
           </div>
+          <a href="/bag" className="text-sm text-gray-500 hover:text-gray-800 shrink-0" aria-label="Your Golf Bag">🏌️</a>
         </div>
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-6">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">🏌️ MyCourses</h2>
-          <p className="text-gray-500 mt-1">Save your favorite courses — notes, tips, and tee time links all in one place.</p>
+        <div className="mb-6 flex items-start justify-between gap-3">
+          <p className="text-gray-500 flex-1">Save your favorite courses — notes, tips, and tee time links all in one place.</p>
+          <button
+            onClick={() => { setShowForm(true); setEditingId(null); setForm({ name: '', notes: '', tee_time_url: '', phone: '' }) }}
+            className="shrink-0 text-sm font-semibold text-green-700 border-2 border-green-700 rounded-xl px-4 py-2 hover:bg-green-50 transition-colors"
+          >
+            + Add Course
+          </button>
         </div>
 
         {showForm && (

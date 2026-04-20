@@ -190,21 +190,22 @@ export default function ArticlesPage() {
   return (
     <div className="min-h-screen bg-white">
       <header className="border-b border-gray-100 bg-white sticky top-0 z-40">
-        <div className="max-w-4xl mx-auto px-4 pt-5 pb-3">
-          <div className="mb-3">
-            <h1 className="text-3xl font-bold text-gray-900 leading-tight tracking-tight">⛳ MyGolf Companion</h1>
-            <p className="text-base text-gray-500 mt-1">Your AI guide to better golf · <a href="/bag" className="text-green-700 font-semibold hover:underline"><img src="/bag-icon.svg" width="64" height="64" style={{display:"inline",verticalAlign:"middle",marginRight:"3px"}} alt="Your Golf Bag" /></a></p>
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+          <a href="/clubhouse" className="text-gray-500 hover:text-gray-800 text-sm font-medium shrink-0" aria-label="Back to Clubhouse">← Clubhouse</a>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-2xl shrink-0">📖</span>
+            <div className="min-w-0">
+              <h1 className="text-lg font-bold text-gray-900 truncate leading-tight">Guides</h1>
+              <p className="text-xs text-green-700 font-semibold leading-tight">AI-crafted, matched to your game</p>
+            </div>
           </div>
-          <div className="flex items-center gap-1">
-            <button onClick={() => window.location.href='/clubhouse'} className="text-sm font-medium text-gray-500 hover:text-gray-700 px-2 py-2">← Back</button>
-          </div>
+          <a href="/bag" className="text-sm text-gray-500 hover:text-gray-800 shrink-0" aria-label="Your Golf Bag">🏌️</a>
         </div>
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-6">
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">MyGuides</h2>
-          <p className="text-gray-500 mt-1">AI-crafted guides matched to your game — talk it over with your buddies.</p>
+          <p className="text-gray-500">AI-crafted guides matched to your game — talk it over with your buddies.</p>
         </div>
 
         {loading ? (
