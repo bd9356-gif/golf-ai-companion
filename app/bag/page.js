@@ -537,6 +537,42 @@ function Bucket(props) {
 }
 
 // ════════════════════════════════════════════════════════════════════
+// DragHandle — shared, thumb-friendly drag grip used across sortables
+// ════════════════════════════════════════════════════════════════════
+// A 6-dot grip icon (universal "drag me" pattern) with a generous tap
+// target (~44px wide on mobile) and strong contrast. Attach dnd-kit's
+// attributes + listeners directly on the button.
+function DragHandle({ attributes, listeners, variant = 'side' }) {
+  // "side" → full-height left strip (used in leaf rows)
+  // "inline" → self-contained button (used at the top of cart items)
+  const base =
+    'cursor-grab active:cursor-grabbing touch-none select-none flex items-center justify-center ' +
+    'bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-gray-600 hover:text-gray-800 ' +
+    'transition-colors'
+  const shape = variant === 'inline'
+    ? 'w-9 h-9 rounded-lg shrink-0'
+    : 'w-11 self-stretch border-r border-gray-200 rounded-l-xl'
+  return (
+    <button
+      {...attributes}
+      {...listeners}
+      className={`${base} ${shape}`}
+      aria-label="Drag to reorder"
+      title="Drag to reorder"
+    >
+      <svg width="14" height="18" viewBox="0 0 14 18" fill="currentColor" aria-hidden="true">
+        <circle cx="4" cy="3" r="1.5" />
+        <circle cx="4" cy="9" r="1.5" />
+        <circle cx="4" cy="15" r="1.5" />
+        <circle cx="10" cy="3" r="1.5" />
+        <circle cx="10" cy="9" r="1.5" />
+        <circle cx="10" cy="15" r="1.5" />
+      </svg>
+    </button>
+  )
+}
+
+// ════════════════════════════════════════════════════════════════════
 // SortableItem — single row inside a leaf
 // ════════════════════════════════════════════════════════════════════
 function SortableItem(props) {
@@ -622,15 +658,7 @@ function SortableItem(props) {
 
   return (
     <div ref={setNodeRef} style={style} className="flex items-stretch gap-2 border border-gray-100 rounded-xl hover:border-green-200 transition-colors">
-      <button
-        {...attributes}
-        {...listeners}
-        className="cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 px-2 touch-none bg-gray-50 border-r border-gray-100 rounded-l-xl"
-        aria-label="Drag to reorder"
-        title="Drag to reorder"
-      >
-        ⋮⋮
-      </button>
+      <DragHandle attributes={attributes} listeners={listeners} variant="side" />
       <div className="flex-1 min-w-0">{content}</div>
       <div className="flex flex-col items-end justify-between gap-1 px-2 py-2 border-l border-gray-100 bg-gray-50/50 relative rounded-r-xl">
         <button
@@ -858,12 +886,9 @@ function CartPanel({
 // so the Plan stays scannable.
 function CartItem({ item, index, savedVideos, savedArticles, savedAnswers, getYouTubeId, removeFromCart, isDone, toggleDone }) {
   const [playing, setPlaying] = useState(false)
-  // Default expansion: desktop → all expanded; mobile → only first expanded.
-  const [collapsed, setCollapsed] = useState(() => {
-    if (typeof window === 'undefined') return false // SSR safe default
-    const isMobile = window.matchMedia('(max-width: 639px)').matches
-    return isMobile && index !== 0
-  })
+  // Default: every item starts collapsed. The Plan should be a clean ordered
+  // list at first glance — the user taps ▼ to open whatever they're working on.
+  const [collapsed, setCollapsed] = useState(true)
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id })
   const style = {
@@ -880,15 +905,7 @@ function CartItem({ item, index, savedVideos, savedArticles, savedAnswers, getYo
   return (
     <div ref={setNodeRef} style={style} className={`p-4 ${isDone ? 'opacity-60' : ''}`}>
       <div className="flex items-start justify-between gap-3 mb-2">
-        <button
-          {...attributes}
-          {...listeners}
-          className="text-gray-300 hover:text-gray-600 cursor-grab active:cursor-grabbing text-base leading-none select-none touch-none shrink-0 mt-0.5"
-          title="Drag to reorder"
-          aria-label="Drag to reorder"
-        >
-          ⋮⋮
-        </button>
+        <DragHandle attributes={attributes} listeners={listeners} variant="inline" />
         <div className="flex-1 min-w-0">
           <span className={`text-xs px-2 py-0.5 rounded-full ${
             item.item_type === 'video' ? 'bg-blue-100 text-blue-700' :
