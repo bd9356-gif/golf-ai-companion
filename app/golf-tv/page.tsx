@@ -151,59 +151,56 @@ export default function GolfTVPage() {
   return (
     <div className="min-h-screen bg-white">
       <header className="border-b border-gray-100 bg-white sticky top-0 z-40">
-        <div className="max-w-6xl mx-auto px-4 pt-5 pb-3">
-          <div className="mb-3 flex items-start justify-between gap-3">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 leading-tight tracking-tight">📺 Golf TV</h1>
-              <p className="text-sm text-gray-500 mt-1">Your Netflix for golf — browse every instruction video, no level filter.</p>
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+          <a
+            href="/clubhouse"
+            className="text-gray-500 hover:text-gray-800 text-sm font-medium shrink-0"
+            aria-label="Back to MyClubhouse"
+          >
+            ← Clubhouse
+          </a>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-2xl shrink-0">📺</span>
+            <div className="min-w-0">
+              <h1 className="text-lg font-bold text-gray-900 truncate leading-tight">Golf TV</h1>
+              <p className="text-xs text-green-700 font-semibold leading-tight">Instructional video library</p>
             </div>
-            <a href="/bag" className="text-green-700 text-sm font-semibold hover:underline flex items-center gap-1 whitespace-nowrap">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="8" y="7" width="8" height="11" rx="2" stroke="currentColor" strokeWidth="1.5"/><path d="M8 9H16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M9 12L15 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M14 4L17 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M17 7H18.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M8 18H16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-              Your Bag
-            </a>
           </div>
-          <div className="flex items-center gap-1 flex-wrap">
-            <button onClick={() => window.location.href='/clubhouse'} className="text-sm font-medium text-gray-500 hover:text-gray-700 px-2 py-2">← Back</button>
-            <span className="px-3 py-2 text-sm font-semibold border-b-2 text-green-800 border-green-700">
-              Golf TV
-            </span>
-            <a href="/guides" className="px-3 py-2 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors">
-              Guides
-            </a>
-            <a href="/club-pro" className="px-3 py-2 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors">
-              Club Pro
-            </a>
-          </div>
+          <a
+            href="/bag"
+            className="text-sm text-gray-500 hover:text-gray-800 shrink-0"
+            aria-label="Your Golf Bag"
+          >
+            🏌️
+          </a>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 py-6">
-        <div className="mb-4">
-          <h2 className="text-2xl font-bold text-gray-900 mb-1">All Videos</h2>
-          <p className="text-gray-500 text-sm">{filtered.length} videos · No level filter — browse it all</p>
-        </div>
-
+      <main className="max-w-6xl mx-auto px-4 pt-5 pb-8">
         <div className="mb-4">
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search across the full library..."
-            className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-green-300"
+            placeholder="Search the library…"
+            style={{ fontSize: '16px' }}
+            className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-green-400 transition-colors"
           />
         </div>
 
-        <div className="flex flex-wrap gap-2 mb-6">
+        <div className="flex gap-2 mb-5 overflow-x-auto -mx-4 px-4 pb-1 scrollbar-none">
           {CATEGORIES.map((cat) => (
             <button
               key={cat.value}
               onClick={() => setSelectedCategory(cat.value)}
-              className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${selectedCategory === cat.value ? 'bg-green-700 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${selectedCategory === cat.value ? 'bg-green-700 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
             >
               {cat.label}
             </button>
           ))}
         </div>
+
+        <p className="text-xs text-gray-500 mb-4">{filtered.length} {filtered.length === 1 ? 'video' : 'videos'}{selectedCategory && ` in ${CATEGORIES.find(c => c.value === selectedCategory)?.label}`}</p>
 
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -232,7 +229,7 @@ export default function GolfTVPage() {
                   {isPlaying && ytId && (
                     <div className="relative w-full aspect-video bg-black">
                       <iframe
-                        src={`https://www.youtube.com/embed/${ytId}?autoplay=1`}
+                        src={`https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&modestbranding=1&rel=0`}
                         className="w-full h-full"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         allowFullScreen

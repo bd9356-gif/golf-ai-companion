@@ -606,14 +606,13 @@ function SortableItem(props) {
 function VideoRow({ saved, playing, play, stop, removeSaved, isInCart, addToCart, removeFromCart, getYouTubeId }) {
   const video = saved.videos
   const ytId = getYouTubeId(video)
-  const videoUrl = video.url || (ytId ? `https://www.youtube.com/watch?v=${ytId}` : null)
   return (
     <div className="flex flex-col">
       {/* Top: video frame (player or playable thumbnail) — full width */}
       {playing && ytId ? (
         <div className="relative w-full aspect-video bg-black">
           <iframe
-            src={`https://www.youtube.com/embed/${ytId}?autoplay=1`}
+            src={`https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&modestbranding=1&rel=0`}
             className="w-full h-full"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
@@ -638,13 +637,7 @@ function VideoRow({ saved, playing, play, stop, removeSaved, isInCart, addToCart
       {/* Below: title, channel, description, actions — full width */}
       <div className="p-3">
         <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">🎬 Video</span>
-        {videoUrl ? (
-          <a href={videoUrl} target="_blank" rel="noopener noreferrer" className="block font-semibold text-gray-900 text-sm leading-snug mt-1 break-words hover:text-green-700">
-            {video.title}
-          </a>
-        ) : (
-          <p className="font-semibold text-gray-900 text-sm leading-snug mt-1 break-words">{video.title}</p>
-        )}
+        <p className="font-semibold text-gray-900 text-sm leading-snug mt-1 break-words">{video.title}</p>
         {video.channel_name && <p className="text-xs text-gray-400 mt-0.5">{video.channel_name}</p>}
         {video.description && (
           <p className="text-xs text-gray-600 mt-2 leading-relaxed whitespace-pre-line line-clamp-4">{video.description}</p>
