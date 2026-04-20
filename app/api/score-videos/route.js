@@ -6,6 +6,9 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
+const AUTO_APPROVE_THRESHOLD = 7
+const VALID_BUCKETS = new Set(['full_swing', 'short_game', 'putting', 'course_management'])
+
 const PROMPT_TEMPLATE = (title, channel, description) => `You are a golf instruction expert. Analyze this YouTube video and return ONLY a JSON object with no markdown or backticks.
 
 Video title: ${title}
@@ -15,12 +18,35 @@ Description: ${description}
 NOTE: Ignore promotional content, social media links, or channel boilerplate. Focus only on the golf instruction. If description says '(No description available)', base your analysis entirely on the video title.
 
 Return this exact JSON structure:
-{"skill_tiers": ["beginner"], "topics": ["driving"], "ai_summary": "summary here", "quality_score": 7.5}
+{
+  "primary_bucket": "full_swing",
+  "sub_tags": ["driver","tempo"],
+  "skill_tiers": ["beginner"],
+  "topics": ["driving"],
+  "ai_summary": "summary here",
+  "quality_score": 7.5,
+  "quality_reason": "one-line justification"
+}
 
 Rules:
 
+- primary_bucket (REQUIRED, exactly one of):
+    full_swing          -- driving, iron play, tempo, grip, stance, full-swing drills, fundamentals
+    short_game          -- chipping, pitching, bunker play, greenside wedges, ~50y and in
+    putting             -- putting stroke, reading greens, lag putting, distance control
+    course_management   -- strategy, mental game, scoring, pre-shot routine, club selection, on-course decisions
+  Pick the SINGLE best fit. Fitness and mental-game videos both map to course_management (or to the relevant physical bucket if the drill is swing-specific).
+
+- sub_tags: array of 1-5 fine-grained tags. Choose from:
+    driver, iron, wedge, hybrid, 3-wood, fairway-wood, tempo, grip, stance, posture,
+    takeaway, backswing, downswing, impact, follow-through, release, shallowing,
+    chipping, pitching, bunker, flop, lob, chunk-fix, thin-fix,
+    putting-stroke, green-reading, lag-putting, short-putt, speed-control,
+    strategy, mental, pre-shot-routine, course-management, club-selection,
+    fitness, mobility, senior
+
 - skill_tiers: array, choose from ONLY these exact values:
-  beginner, building_game, building_consistency, improving_player, advanced_player
+  beginner, building_game, building_consistency, improving_player, advanced_player, senior_player
 
   - "beginner" = complete newcomers, very basic fundamentals
   - "building_game" = high handicappers scoring 100+, basic consistency
@@ -31,14 +57,15 @@ Rules:
 
   Include ALL tiers the video genuinely applies to.
 
-- topics: array of 1-3. Choose ONLY from:
-  driving, iron play, short game, putting, chipping, pitching, bunker, course management, mental game, fitness, rules, equipment, grip, stance, swing
+- topics: array of 1-3 from the legacy vocabulary (kept for backward compat):
+    driving, iron play, short game, putting, chipping, pitching, bunker,
+    course management, mental game, fitness, rules, equipment, grip, stance, swing
 
 - quality_score: 1-10
-
+- quality_reason: ONE short sentence explaining the score (e.g. "Clear demo, well-shot, but covers ground already in other putting basics videos.")
 - ai_summary: 2-3 specific sentences. Exact problem solved, technique taught, who it is for. No generic summaries.
 
-- Return ONLY the JSON, nothing else`
+Return ONLY the JSON, nothing else`
 
 export async function GET() {
   try {
@@ -110,7 +137,7 @@ export async function GET() {
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 400,
+        max_tokens: 600,
         messages: [{ role: 'user', content: prompt }]
       })
     })
@@ -130,24 +157,44 @@ export async function GET() {
       return NextResponse.json({ success: false, error: 'JSON parse failed', raw: text, remaining })
     }
 
-    const { error: insertError } = await supabase
+    const bucket = VALID_BUCKETS.has(result.primary_bucket) ? result.primary_bucket : null
+    const score = Number(result.quality_score) || 0
+    const shouldApprove = bucket && score >= AUTO_APPROVE_THRESHOLD
+
+    // 1. Write enrichment
+    const { error: metaError } = await supabase
       .from('video_metadata')
       .upsert({
         video_id: unscoredVideo.id,
         skill_tiers: result.skill_tiers,
         topics: result.topics,
+        sub_tags: Array.isArray(result.sub_tags) ? result.sub_tags : [],
         ai_summary: result.ai_summary,
         quality_score: result.quality_score,
+        quality_reason: result.quality_reason || null,
         status: 'approved'
       }, { onConflict: 'video_id' })
 
-    if (insertError) {
-      return NextResponse.json({ success: false, error: insertError.message, remaining })
+    if (metaError) {
+      return NextResponse.json({ success: false, error: metaError.message, remaining })
+    }
+
+    // 2. Stamp bucket + editorial_status on the video
+    const { error: videoError } = await supabase
+      .from('videos')
+      .update({
+        primary_bucket: bucket,
+        editorial_status: shouldApprove ? 'approved' : 'starter'
+      })
+      .eq('id', unscoredVideo.id)
+
+    if (videoError) {
+      return NextResponse.json({ success: false, error: videoError.message, remaining })
     }
 
     return NextResponse.json({
       success: true,
-      message: `Scored: "${unscoredVideo.title}". ${remaining - 1} remaining.`
+      message: `Scored "${unscoredVideo.title}" → ${bucket || 'unbucketed'} · q=${score} · ${shouldApprove ? 'approved' : 'starter'}. ${remaining - 1} remaining.`
     })
 
   } catch (error) {
