@@ -605,68 +605,52 @@ function VideoRow({ saved, playing, play, stop, removeSaved, isInCart, addToCart
   const ytId = getYouTubeId(video)
   const videoUrl = video.url || (ytId ? `https://www.youtube.com/watch?v=${ytId}` : null)
   return (
-    <div>
+    <div className="flex flex-col">
+      {/* Top: video frame (player or playable thumbnail) — full width */}
       {playing && ytId ? (
-        <div>
-          <div className="relative w-full aspect-video bg-black">
-            <iframe
-              src={`https://www.youtube.com/embed/${ytId}?autoplay=1`}
-              className="w-full h-full"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-            <button onClick={stop} className="absolute top-2 right-2 bg-black/60 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm">✕</button>
-          </div>
-          <div className="p-3">
-            <div className="flex items-start justify-between gap-2">
-              <p className="font-semibold text-gray-900 text-sm flex-1">{video.title}</p>
-              <div className="flex items-center gap-2 shrink-0">
-                <CartButton itemId={saved.video_id} itemType="video" itemTitle={video.title} isInCart={isInCart} addToCart={addToCart} removeFromCart={removeFromCart} />
-                <button onClick={removeSaved} className="text-xs text-red-400 hover:text-red-600">Remove</button>
-              </div>
-            </div>
-            {video.channel_name && <p className="text-xs text-gray-400 mt-1">{video.channel_name}</p>}
-            {video.description && (
-              <p className="text-xs text-gray-600 mt-2 leading-relaxed whitespace-pre-line line-clamp-6">{video.description}</p>
-            )}
-          </div>
+        <div className="relative w-full aspect-video bg-black">
+          <iframe
+            src={`https://www.youtube.com/embed/${ytId}?autoplay=1`}
+            className="w-full h-full"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+          <button onClick={stop} className="absolute top-2 right-2 bg-black/60 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm">✕</button>
         </div>
-      ) : (
-        <div className="p-3">
-          <div className="flex items-start gap-3">
-            <button onClick={play} className="relative shrink-0">
-              {ytId && (
-                <div className="relative">
-                  <img src={video.thumbnail_url || `https://img.youtube.com/vi/${ytId}/mqdefault.jpg`} alt={video.title} className="w-24 h-16 sm:w-28 sm:h-20 object-cover rounded-lg" />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-8 h-8 bg-white/90 rounded-full flex items-center justify-center shadow">
-                      <svg viewBox="0 0 24 24" className="w-4 h-4 text-green-800 ml-0.5" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </button>
-            <div className="flex-1 min-w-0">
-              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">🎬 Video</span>
-              {videoUrl ? (
-                <a href={videoUrl} target="_blank" rel="noopener noreferrer" className="block font-semibold text-gray-900 text-sm leading-snug mt-1 break-words hover:text-green-700">
-                  {video.title}
-                </a>
-              ) : (
-                <p className="font-semibold text-gray-900 text-sm leading-snug mt-1 break-words">{video.title}</p>
-              )}
-              {video.channel_name && <p className="text-xs text-gray-400 mt-0.5 truncate">{video.channel_name}</p>}
+      ) : ytId ? (
+        <button onClick={play} className="relative w-full block group" aria-label={`Play ${video.title}`}>
+          <img
+            src={video.thumbnail_url || `https://img.youtube.com/vi/${ytId}/mqdefault.jpg`}
+            alt={video.title}
+            className="w-full aspect-video object-cover"
+          />
+          <div className="absolute inset-0 bg-black/15 group-hover:bg-black/25 transition-colors flex items-center justify-center">
+            <div className="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+              <svg viewBox="0 0 24 24" className="w-5 h-5 text-green-800 ml-0.5" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
             </div>
           </div>
-          {video.description && (
-            <p className="text-xs text-gray-500 mt-2 leading-relaxed line-clamp-3 whitespace-pre-line">{video.description}</p>
-          )}
-          <div className="flex items-center justify-end gap-3 mt-2">
-            <CartButton itemId={saved.video_id} itemType="video" itemTitle={video.title} isInCart={isInCart} addToCart={addToCart} removeFromCart={removeFromCart} />
-            <button onClick={removeSaved} className="text-xs text-red-400 hover:text-red-600 font-semibold">Remove</button>
-          </div>
+        </button>
+      ) : null}
+
+      {/* Below: title, channel, description, actions — full width */}
+      <div className="p-3">
+        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">🎬 Video</span>
+        {videoUrl ? (
+          <a href={videoUrl} target="_blank" rel="noopener noreferrer" className="block font-semibold text-gray-900 text-sm leading-snug mt-1 break-words hover:text-green-700">
+            {video.title}
+          </a>
+        ) : (
+          <p className="font-semibold text-gray-900 text-sm leading-snug mt-1 break-words">{video.title}</p>
+        )}
+        {video.channel_name && <p className="text-xs text-gray-400 mt-0.5">{video.channel_name}</p>}
+        {video.description && (
+          <p className="text-xs text-gray-600 mt-2 leading-relaxed whitespace-pre-line line-clamp-4">{video.description}</p>
+        )}
+        <div className="flex items-center justify-end gap-3 mt-3 pt-3 border-t border-gray-100">
+          <CartButton itemId={saved.video_id} itemType="video" itemTitle={video.title} isInCart={isInCart} addToCart={addToCart} removeFromCart={removeFromCart} />
+          <button onClick={removeSaved} className="text-xs text-red-400 hover:text-red-600 font-semibold">Remove</button>
         </div>
-      )}
+      </div>
     </div>
   )
 }
