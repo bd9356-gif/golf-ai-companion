@@ -123,79 +123,94 @@ export default function AskCompanionTab({ onBack }: Props) {
     setSavedIndexes(prev => new Set([...prev, index]))
   }
 
+  const hasMessages = messages.length > 0
+  const activeSkill = SKILL_OPTIONS.find(o => o.value === skillLevel)
+
   return (
     <div className="flex flex-col h-full">
-      {/* Skill picker (left) + Clear chat (right) */}
-      <div className="flex items-center justify-between mb-3 gap-2">
-        <label className="flex items-center gap-2 text-xs text-gray-500">
-          <span>Your skill level:</span>
+      {/* Skill pill (left) + Clear (right) — only visible once chat has started */}
+      <div className="flex items-center justify-between mb-4 gap-2">
+        <label className="inline-flex items-center gap-2 bg-green-50 border border-green-100 rounded-full px-3 py-1.5 text-xs text-green-800 font-medium cursor-pointer">
+          <span className="text-green-600">Skill</span>
           <select
             value={skillLevel}
             onChange={(e) => setSkillLevel(e.target.value)}
-            className="border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-green-300"
+            className="bg-transparent text-xs font-semibold text-green-800 focus:outline-none cursor-pointer pr-1"
           >
             {SKILL_OPTIONS.map(opt => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
           </select>
         </label>
-        <button
-          onClick={() => setMessages([])}
-          className="text-xs text-gray-400 hover:text-gray-600 border border-gray-200 rounded-lg px-3 py-1"
-        >
-          Clear chat
-        </button>
+        {hasMessages && (
+          <button
+            onClick={() => setMessages([])}
+            className="text-xs text-gray-500 hover:text-gray-800 font-medium"
+          >
+            Clear chat
+          </button>
+        )}
       </div>
 
-      <p className="text-sm text-gray-500 text-center mb-4">Choose a question or ask anything you want — get instant, personalized guidance from your AI Pro.</p>
-
       <div className="flex-1 overflow-y-auto space-y-4 pb-4">
-        {messages.length === 0 && (
-          <div className="space-y-2">
-            <p className="text-sm text-gray-500 text-center mb-3">Try asking one of these:</p>
-            {SUGGESTED_QUESTIONS.map((q) => (
-              <button
-                key={q}
-                onClick={() => sendMessage(q)}
-                className="w-full text-left px-4 py-3 bg-gray-50 hover:bg-green-50 border border-gray-200 hover:border-green-200 rounded-xl text-sm text-gray-700 transition-colors"
-              >
-                {q}
-              </button>
-            ))}
+        {!hasMessages && (
+          <div className="space-y-4">
+            <div className="text-center">
+              <h2 className="text-xl font-bold text-gray-900">What do you want to work on?</h2>
+              <p className="text-sm text-gray-500 mt-1">
+                Pick a question below or ask your own — answers are tuned to{' '}
+                <span className="font-semibold text-green-700">{activeSkill?.label.replace('Skill: ', '')}</span>.
+              </p>
+            </div>
+            <div className="space-y-2">
+              {SUGGESTED_QUESTIONS.map((q) => (
+                <button
+                  key={q}
+                  onClick={() => sendMessage(q)}
+                  className="w-full text-left px-4 py-3 bg-white hover:bg-green-50 border border-gray-200 hover:border-green-300 rounded-xl text-sm text-gray-800 transition-all hover:shadow-sm"
+                >
+                  {q}
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
-        {messages.map((msg, i) => (
-          <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} flex-col`}>
-            <div className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} items-start gap-2`}>
-              {msg.role === 'assistant' && <span className="mr-2 mt-1 text-base shrink-0">⛳</span>}
-              <div>
-                {msg.role === 'assistant' && (
-                  <p className="text-xs text-green-700 font-semibold mb-1">Answered by Your MyGolf Companion AI ⛳</p>
-                )}
-                <div className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
-                  msg.role === 'user'
-                    ? 'bg-green-700 text-white rounded-br-sm'
-                    : 'bg-gray-100 text-gray-800 rounded-bl-sm'
-                }`}>
+        {messages.map((msg, i) => {
+          const isUser = msg.role === 'user'
+          return (
+            <div key={i} className={`flex ${isUser ? 'justify-end' : 'justify-start'} items-start gap-2`}>
+              {!isUser && <span className="text-base mt-2 shrink-0">⛳</span>}
+              <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} max-w-[85%]`}>
+                <div
+                  className={`px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
+                    isUser
+                      ? 'bg-green-700 text-white rounded-br-sm'
+                      : 'bg-gray-100 text-gray-900 rounded-bl-sm'
+                  }`}
+                >
                   {msg.content}
                 </div>
-                {msg.role === 'assistant' && (
+                {!isUser && (
                   <button
                     onClick={() => saveAnswer(i)}
-                    className={`mt-1 text-xs font-semibold transition-colors ${savedIndexes.has(i) ? 'text-green-600' : 'text-gray-400 hover:text-gray-600'}`}
+                    className={`mt-1.5 text-xs font-semibold transition-colors ${
+                      savedIndexes.has(i)
+                        ? 'text-green-700'
+                        : 'text-gray-400 hover:text-green-700'
+                    }`}
                   >
-                    {savedIndexes.has(i) ? '🔖 Saved to MyBag' : '🔖 Save Answer'}
+                    {savedIndexes.has(i) ? '🔖 Saved to MyBag' : '🔖 Save to MyBag'}
                   </button>
                 )}
               </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
 
         {loading && (
           <div className="flex justify-start items-start gap-2">
-            <span className="text-base shrink-0">⛳</span>
+            <span className="text-base mt-2 shrink-0">⛳</span>
             <div className="bg-gray-100 rounded-2xl rounded-bl-sm px-4 py-3">
               <div className="flex gap-1">
                 <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
@@ -209,7 +224,7 @@ export default function AskCompanionTab({ onBack }: Props) {
       </div>
 
       <div className="border-t border-gray-100 pt-4">
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-end">
           <textarea
             ref={inputRef}
             value={input}
@@ -220,14 +235,15 @@ export default function AskCompanionTab({ onBack }: Props) {
                 sendMessage(input)
               }
             }}
-            placeholder="Ask your Golf AI Companion…"
+            placeholder="Ask your Club Pro…"
             rows={1}
-            className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-300 resize-none"
+            style={{ fontSize: '16px' }}
+            className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-400 resize-none transition-colors"
           />
           <button
             onClick={() => sendMessage(input)}
             disabled={!input.trim() || loading}
-            className="h-11 w-11 shrink-0 bg-green-700 text-white rounded-xl flex items-center justify-center hover:bg-green-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="h-12 w-12 shrink-0 bg-green-700 text-white rounded-xl flex items-center justify-center hover:bg-green-800 disabled:bg-gray-200 disabled:cursor-not-allowed transition-colors"
             aria-label="Send"
           >
             <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5}>
@@ -235,7 +251,7 @@ export default function AskCompanionTab({ onBack }: Props) {
             </svg>
           </button>
         </div>
-        <p className="text-xs text-gray-400 mt-2 text-center">
+        <p className="text-[11px] text-gray-400 mt-2 text-center">
           AI responses are general guidance, not professional instruction.
         </p>
       </div>

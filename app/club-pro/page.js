@@ -4,20 +4,33 @@ import AskCompanionTab from '../../components/AskCompanionTab'
 export default function ClubProPage() {
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      <header className="border-b border-gray-100 px-4 py-4">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <a href="/clubhouse" className="text-gray-500 hover:text-gray-700" aria-label="Back to MyClubhouse">←</a>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">🎓 Ask the Club Pro</h1>
-              <p className="text-xs text-gray-500">Personal AI guidance for your game</p>
+      <header className="border-b border-gray-100 bg-white sticky top-0 z-10">
+        <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between gap-3">
+          <a
+            href="/clubhouse"
+            className="text-gray-500 hover:text-gray-800 text-sm font-medium shrink-0"
+            aria-label="Back to MyClubhouse"
+          >
+            ← Clubhouse
+          </a>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-2xl shrink-0">🎓</span>
+            <div className="min-w-0">
+              <h1 className="text-lg font-bold text-gray-900 truncate leading-tight">Ask the Club Pro</h1>
+              <p className="text-xs text-green-700 font-semibold leading-tight">Personal AI guidance</p>
             </div>
           </div>
-          <a href="/bag" className="text-sm text-gray-500 hover:text-gray-700" aria-label="Your Golf Bag">🏌️ Bag</a>
+          <a
+            href="/bag"
+            className="text-sm text-gray-500 hover:text-gray-800 shrink-0"
+            aria-label="Your Golf Bag"
+          >
+            🏌️
+          </a>
         </div>
       </header>
 
-      <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-6 flex flex-col" style={{minHeight: 'calc(100vh - 73px)'}}>
+      <main className="flex-1 max-w-3xl mx-auto w-full px-4 pt-4 pb-6 flex flex-col">
         <AskCompanionTab />
       </main>
     </div>
