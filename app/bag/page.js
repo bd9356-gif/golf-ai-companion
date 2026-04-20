@@ -649,22 +649,22 @@ function VideoRow({ saved, playing, play, stop, removeSaved, isInCart, addToCart
             <div className="flex-1 min-w-0">
               <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">🎬 Video</span>
               {videoUrl ? (
-                <a href={videoUrl} target="_blank" rel="noopener noreferrer" className="block font-semibold text-gray-900 text-sm leading-snug mt-1 line-clamp-2 hover:text-green-700">
+                <a href={videoUrl} target="_blank" rel="noopener noreferrer" className="block font-semibold text-gray-900 text-sm leading-snug mt-1 break-words hover:text-green-700">
                   {video.title}
                 </a>
               ) : (
-                <p className="font-semibold text-gray-900 text-sm leading-snug mt-1 line-clamp-2">{video.title}</p>
+                <p className="font-semibold text-gray-900 text-sm leading-snug mt-1 break-words">{video.title}</p>
               )}
               {video.channel_name && <p className="text-xs text-gray-400 mt-0.5 truncate">{video.channel_name}</p>}
-            </div>
-            <div className="flex flex-col items-end gap-1.5 shrink-0">
-              <CartButton itemId={saved.video_id} itemType="video" itemTitle={video.title} isInCart={isInCart} addToCart={addToCart} removeFromCart={removeFromCart} />
-              <button onClick={removeSaved} className="text-xs text-red-400 hover:text-red-600 font-semibold">Remove</button>
             </div>
           </div>
           {video.description && (
             <p className="text-xs text-gray-500 mt-2 leading-relaxed line-clamp-3 whitespace-pre-line">{video.description}</p>
           )}
+          <div className="flex items-center justify-end gap-3 mt-2">
+            <CartButton itemId={saved.video_id} itemType="video" itemTitle={video.title} isInCart={isInCart} addToCart={addToCart} removeFromCart={removeFromCart} />
+            <button onClick={removeSaved} className="text-xs text-red-400 hover:text-red-600 font-semibold">Remove</button>
+          </div>
         </div>
       )}
     </div>
