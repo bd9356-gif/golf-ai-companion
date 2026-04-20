@@ -1,9 +1,11 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
+// Server-side route: use the service role key so we can write pro_id etc.
+// regardless of RLS. Never expose this key to the browser.
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
 const SEARCH_QUERIES = [
@@ -113,9 +115,29 @@ async function getFullDescriptions(videoIds) {
   return map
 }
 
+// Build a case-insensitive map of youtube_channel_name -> pro_id so every
+// new ingest auto-attributes to a known pro without a manual seed-pros run.
+async function buildProIdMap() {
+  const { data, error } = await supabase
+    .from('pros')
+    .select('id, youtube_channel_name')
+    .not('youtube_channel_name', 'is', null)
+
+  const map = new Map()
+  if (error || !data) return map
+  for (const p of data) {
+    const key = (p.youtube_channel_name || '').trim().toLowerCase()
+    if (key) map.set(key, p.id)
+  }
+  return map
+}
+
 export async function GET() {
   try {
     let totalInserted = 0
+    let totalLinked = 0
+
+    const proIdByChannel = await buildProIdMap()
 
     for (const query of SEARCH_QUERIES) {
       const response = await fetch(
@@ -129,27 +151,38 @@ export async function GET() {
 
       for (const item of data.items) {
         const videoId = item.id.videoId
+        const channelName = item.snippet.channelTitle || ''
+        const proId = proIdByChannel.get(channelName.trim().toLowerCase()) || null
+
         const video = {
           title: item.snippet.title,
           url: `https://www.youtube.com/watch?v=${videoId}`,
           thumbnail_url: item.snippet.thumbnails.high.url,
           youtube_video_id: videoId,
-          channel_name: item.snippet.channelTitle,
+          channel_name: channelName,
           description: fullDescriptions[videoId] || item.snippet.description,
           published_at: item.snippet.publishedAt,
+          pro_id: proId,
+          // Note: editorial_status is intentionally NOT set here. For new
+          // rows it picks up the schema default ('starter'). For existing
+          // rows on re-fetch, Supabase upsert only writes the columns in
+          // this payload, so an already-'approved' video stays approved.
         }
 
         const { error } = await supabase
           .from('videos')
           .upsert(video, { onConflict: 'youtube_video_id' })
 
-        if (!error) totalInserted++
+        if (!error) {
+          totalInserted++
+          if (proId) totalLinked++
+        }
       }
     }
 
     return NextResponse.json({
       success: true,
-      message: `Fetched and saved ${totalInserted} videos`
+      message: `Fetched and saved ${totalInserted} videos (${totalLinked} auto-linked to a pro)`
     })
   } catch (error) {
     return NextResponse.json({
