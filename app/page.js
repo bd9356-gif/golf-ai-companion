@@ -137,6 +137,11 @@ export default function HomePage() {
           About MyGolf Companion →
         </a>
 
+        {/* Deploy check — bump on each push to confirm prod is live */}
+        <p className="mt-3 text-[11px] text-gray-300">
+          Build: Apr 20, 2026 · v1
+        </p>
+
       </main>
     </div>
   )
