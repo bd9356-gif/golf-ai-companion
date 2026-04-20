@@ -9,6 +9,16 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
+type ProRow = {
+  id: string
+  slug: string
+  display_name: string
+  website_url: string | null
+  is_featured: boolean
+  pga_certified: boolean
+  status: string
+}
+
 type VideoRow = {
   id: string
   title: string
@@ -18,17 +28,20 @@ type VideoRow = {
   channel_name: string
   description: string
   published_at: string
+  primary_bucket: string | null
+  is_featured: boolean
+  editorial_status: string
+  pro_id: string | null
   video_metadata: any
+  pros: ProRow | null
 }
 
 const CATEGORIES = [
   { label: 'All', value: '' },
-  { label: 'Swing Tips', value: 'swing' },
+  { label: 'Full Swing', value: 'full_swing' },
+  { label: 'Short Game', value: 'short_game' },
   { label: 'Putting', value: 'putting' },
-  { label: 'Short Game', value: 'short game' },
-  { label: 'Course Management', value: 'course management' },
-  { label: 'Mental Game', value: 'mental game' },
-  { label: 'Fitness', value: 'fitness' },
+  { label: 'Course Management', value: 'course_management' },
 ]
 
 export default function GolfTVPage() {
@@ -63,28 +76,59 @@ export default function GolfTVPage() {
       .from('videos')
       .select(`
         id, title, url, thumbnail_url, youtube_video_id, channel_name, description, published_at,
+        primary_bucket, is_featured, editorial_status, pro_id,
         video_metadata!video_metadata_video_id_fkey (
           skill_tiers, topics, ai_summary, quality_score
+        ),
+        pros!videos_pro_id_fkey (
+          id, slug, display_name, website_url, is_featured, pga_certified, status
         )
       `)
-    if (!error && data) setVideos(data as VideoRow[])
+      .eq('editorial_status', 'approved')
+
+    if (!error && data) {
+      // Sort: featured videos first, then quality score desc, then newest
+      const sorted = (data as VideoRow[]).sort((a, b) => {
+        if (!!a.is_featured !== !!b.is_featured) return a.is_featured ? -1 : 1
+        const qa = getQuality(a)
+        const qb = getQuality(b)
+        if (qa !== qb) return qb - qa
+        return (b.published_at || '').localeCompare(a.published_at || '')
+      })
+      setVideos(sorted)
+    }
     setLoading(false)
+  }
+
+  function getQuality(v: VideoRow): number {
+    const meta = Array.isArray(v.video_metadata) ? v.video_metadata[0] : v.video_metadata
+    return Number(meta?.quality_score) || 0
   }
 
   function applyFilters() {
     let result = [...videos]
     if (search.trim()) {
       const s = search.toLowerCase()
-      result = result.filter((v) => v.title?.toLowerCase().includes(s) || v.channel_name?.toLowerCase().includes(s))
+      result = result.filter((v) =>
+        v.title?.toLowerCase().includes(s) ||
+        v.channel_name?.toLowerCase().includes(s) ||
+        getProName(v)?.toLowerCase().includes(s)
+      )
     }
     if (selectedCategory) {
-      result = result.filter((v) => {
-        const meta = Array.isArray(v.video_metadata) ? v.video_metadata[0] : v.video_metadata
-        const topics = (meta?.topics ?? []).map((t: string) => t.toLowerCase())
-        return topics.some((t: string) => t.includes(selectedCategory))
-      })
+      result = result.filter((v) => v.primary_bucket === selectedCategory)
     }
     setFiltered(result)
+  }
+
+  function getActivePro(v: VideoRow): ProRow | null {
+    const pro = Array.isArray(v.pros) ? (v.pros as any)[0] : v.pros
+    return pro && pro.status === 'active' ? pro : null
+  }
+
+  function getProName(v: VideoRow): string {
+    const pro = getActivePro(v)
+    return pro?.display_name || v.channel_name || ''
   }
 
   async function ensureHoldingBucketId(userId: string): Promise<string | null> {
@@ -224,6 +268,9 @@ export default function GolfTVPage() {
               const isSaved = savedIds.has(video.id)
               const meta = Array.isArray(video.video_metadata) ? video.video_metadata[0] : video.video_metadata
               const summary = meta?.ai_summary ?? ''
+              const pro = getActivePro(video)
+              const proName = pro?.display_name || video.channel_name
+              const badged = !!(pro?.is_featured || pro?.pga_certified)
 
               return (
                 <div key={video.id} className="border border-gray-200 rounded-xl overflow-hidden hover:border-green-200 transition-colors flex flex-col">
@@ -242,12 +289,36 @@ export default function GolfTVPage() {
                           <svg viewBox="0 0 24 24" className="w-6 h-6 text-green-800 ml-0.5" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
                         </div>
                       </div>
+                      {video.is_featured && (
+                        <span className="absolute top-2 left-2 text-[10px] font-bold uppercase tracking-wide text-white bg-green-700/95 rounded-full px-2 py-0.5 shadow">
+                          ★ Featured
+                        </span>
+                      )}
                     </button>
                   )}
                   <div className="p-4 flex-1 flex flex-col">
                     <h3 className="font-semibold text-gray-900 text-sm leading-snug">{video.title}</h3>
-                    {video.channel_name && (
-                      <p className="text-xs text-gray-400 mt-1">{video.channel_name}</p>
+                    {proName && (
+                      <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                        {pro?.website_url ? (
+                          <a
+                            href={pro.website_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-xs text-gray-500 hover:text-green-700 hover:underline transition-colors"
+                          >
+                            {proName} ↗
+                          </a>
+                        ) : (
+                          <p className="text-xs text-gray-400">{proName}</p>
+                        )}
+                        {badged && (
+                          <span className="text-[10px] font-semibold text-green-700 bg-green-50 border border-green-200 rounded-full px-1.5 py-0.5 leading-none" title={pro?.pga_certified ? 'PGA-certified instructor' : 'Featured pro'}>
+                            Pro
+                          </span>
+                        )}
+                      </div>
                     )}
                     <div className="flex items-center gap-3 mt-auto pt-3">
                       <button
