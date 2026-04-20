@@ -26,9 +26,9 @@ const supabase = createClient(
 
 // Fixed, locked 5-skill structure. Order is enforced.
 // Note: 'Holding Bucket' is the DB name (kept for back-compat); the user-facing
-// label is 'Collection Area'.
+// label is 'The Starter'.
 const FIXED_BUCKETS = [
-  { name: 'Holding Bucket',    label: 'Collection Area',  position: 0, icon: '📥', hint: 'New saves start here. Sort into Full Swing, Short Game, Putting, or Course Management.' },
+  { name: 'Holding Bucket',    label: 'The Starter',      position: 0, icon: '📥', hint: 'New saves start here. Sort into Full Swing, Short Game, Putting, or Course Management.' },
   { name: 'Full Swing',        label: 'Full Swing',        position: 1, icon: '🏌️', hint: null },
   { name: 'Short Game',        label: 'Short Game',        position: 2, icon: '🪓', hint: null },
   { name: 'Putting',           label: 'Putting',           position: 3, icon: '⛳', hint: null },
@@ -329,7 +329,7 @@ export default function BagPage() {
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-gray-900">🏌️ Your Golf Bag</h2>
           <p className="text-gray-500 mt-1">
-            {totalSaved} saved item{totalSaved !== 1 ? 's' : ''} across 5 skills · Everything new lands in your Collection Area.
+            {totalSaved} saved item{totalSaved !== 1 ? 's' : ''} across 5 skills · Everything new lands in The Starter.
           </p>
         </div>
 
@@ -425,8 +425,8 @@ function Bucket(props) {
           {items.length === 0 ? (
             <p className="text-xs text-gray-400 text-center py-6">
               {isHolding
-                ? 'Your Collection Area is empty. New saves from Golf TV, Guides, and Club Pro land here first.'
-                : `Nothing in ${labelFor(leaf.name)} yet. Use the "Move ▾" button on any item in your Collection Area to send it here.`}
+                ? 'The Starter is empty. New saves from Golf TV, Guides, and Club Pro land here first.'
+                : `Nothing in ${labelFor(leaf.name)} yet. Use the "Move ▾" button on any item in The Starter to send it here.`}
             </p>
           ) : (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onItemsDragEnd}>

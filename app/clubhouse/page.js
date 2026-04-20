@@ -42,7 +42,7 @@ const JOURNEY_SECTIONS = [
     title: 'Your Golf Bag',
     subtitle: 'MyBag',
     href: '/bag',
-    description: 'Drop your saves here and move each one into the skills it belongs to.',
+    description: 'Sort your saves into skills and add key items to your golf cart for your plan.',
   },
   {
     icon: '🏌️',
