@@ -67,33 +67,44 @@ Rules:
 
 Return ONLY the JSON, nothing else`
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   try {
     // Find ONE video that hasn't been scored under the NEW prompt yet
-    // (signal: videos.primary_bucket is null). This covers both brand-new
-    // ingests AND legacy rows that were scored under the old prompt but
-    // don't have a bucket assigned.
-    const { data: candidates, error: selErr } = await supabase
-      .from('videos')
-      .select('id, title, description, channel_name')
-      .is('primary_bucket', null)
-      .limit(1)
+    // (signal: videos.primary_bucket is null). Scan in pages and filter
+    // client-side — this avoids RLS/filter edge cases with .is(null) on
+    // newly-added columns.
+    const pageSize = 1000
+    let page = 0
+    let unscoredVideo = null
+    let nullBucketCount = 0
 
-    if (selErr) throw selErr
+    outer: while (true) {
+      const { data, error } = await supabase
+        .from('videos')
+        .select('id, title, description, channel_name, primary_bucket')
+        .range(page * pageSize, (page + 1) * pageSize - 1)
 
-    const unscoredVideo = candidates && candidates[0]
+      if (error) throw error
+      if (!data || data.length === 0) break
+
+      for (const video of data) {
+        if (video.primary_bucket == null) {
+          nullBucketCount++
+          if (!unscoredVideo) unscoredVideo = video
+        }
+      }
+
+      if (data.length < pageSize) break
+      page++
+    }
 
     if (!unscoredVideo) {
       return NextResponse.json({ success: true, message: 'All videos are scored under the new prompt!' })
     }
 
-    // Count remaining for progress reporting
-    const { count: remainingCount } = await supabase
-      .from('videos')
-      .select('id', { count: 'exact', head: true })
-      .is('primary_bucket', null)
-
-    const remaining = remainingCount ?? 0
+    const remaining = nullBucketCount
 
     // Step 3: Score the single video
     // Clean description — if empty or too short, use title as fallback
