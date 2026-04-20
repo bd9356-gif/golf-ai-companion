@@ -213,7 +213,12 @@ export default function BagPage() {
       item_type: itemType,
       item_title: itemTitle,
     }).select().single()
-    if (!error && data) setCartItems(prev => [data, ...prev])
+    if (!error && data) {
+      setCartItems(prev => [data, ...prev])
+      // Auto-open the Plan panel so the user sees the item they just added,
+      // already expanded and ready to watch/read.
+      setShowCart(true)
+    }
   }
 
   async function removeFromCart(itemId, itemType) {
@@ -319,10 +324,10 @@ export default function BagPage() {
               cartCount={cartCount}
               clearCart={clearCart}
               removeFromCart={removeFromCart}
-              setShowCart={setShowCart}
-              setPlayingVideoKey={setPlayingVideoKey}
-              setOpenArticleKey={setOpenArticleKey}
-              setOpenAnswerKey={setOpenAnswerKey}
+              savedVideos={savedVideos}
+              savedArticles={savedArticles}
+              savedAnswers={savedAnswers}
+              getYouTubeId={getYouTubeId}
             />
           </div>
         )}
@@ -330,7 +335,7 @@ export default function BagPage() {
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-gray-900">🏌️ Your Golf Bag</h2>
           <p className="text-gray-500 mt-1">
-            {totalSaved} saved item{totalSaved !== 1 ? 's' : ''} across 5 skills · Everything new lands in The Starter.
+            {totalSaved} saved item{totalSaved !== 1 ? 's' : ''} across 5 skills · New items wait at The Starter until you move them.
           </p>
         </div>
 
@@ -723,7 +728,7 @@ function CartButton({ itemId, itemType, itemTitle, isInCart, addToCart, removeFr
   )
 }
 
-function CartPanel({ cartItems, cartCount, clearCart, removeFromCart, setShowCart, setPlayingVideoKey, setOpenArticleKey, setOpenAnswerKey }) {
+function CartPanel({ cartItems, cartCount, clearCart, removeFromCart, savedVideos, savedArticles, savedAnswers, getYouTubeId }) {
   if (cartCount === 0) {
     return (
       <div className="text-center py-8 border border-dashed border-yellow-200 rounded-xl bg-yellow-50">
@@ -738,35 +743,123 @@ function CartPanel({ cartItems, cartCount, clearCart, removeFromCart, setShowCar
       <div className="flex items-center justify-between px-4 py-3 border-b border-yellow-200">
         <div>
           <p className="text-sm font-bold text-yellow-900">🛺 My Plan — {cartCount} item{cartCount !== 1 ? 's' : ''} loaded</p>
-          <p className="text-xs text-yellow-600 mt-0.5">You're prioritizing items from your bag — nothing leaves your bag.</p>
+          <p className="text-xs text-yellow-600 mt-0.5">Your focus list, ready to watch and read right here.</p>
         </div>
         <button onClick={clearCart} className="text-xs text-red-400 hover:text-red-600 font-semibold whitespace-nowrap ml-3">Clear All</button>
       </div>
-      <div className="divide-y divide-yellow-100">
+      <div className="divide-y divide-yellow-200 bg-white">
         {cartItems.map(item => (
-          <div key={item.id} className="flex items-center gap-3 px-4 py-3">
-            <span className="text-lg">
-              {item.item_type === 'video' ? '🎬' : item.item_type === 'article' ? '📖' : '🤖'}
-            </span>
-            <button
-              onClick={() => {
-                setShowCart(false)
-                const key = `${item.item_type}:${item.item_id}`
-                if (item.item_type === 'video') setPlayingVideoKey(key)
-                else if (item.item_type === 'article') setOpenArticleKey(key)
-                else if (item.item_type === 'answer') setOpenAnswerKey(key)
-                setTimeout(() => {
-                  document.querySelector(`[data-leaf-item-key="${key}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-                }, 150)
-              }}
-              className="flex-1 text-sm font-medium text-green-700 hover:underline text-left line-clamp-1"
-            >
-              {item.item_title}
-            </button>
-            <button onClick={() => removeFromCart(item.item_id, item.item_type)} className="text-xs text-gray-400 hover:text-red-500 shrink-0 font-semibold">✕</button>
-          </div>
+          <CartItem
+            key={item.id}
+            item={item}
+            savedVideos={savedVideos}
+            savedArticles={savedArticles}
+            savedAnswers={savedAnswers}
+            getYouTubeId={getYouTubeId}
+            removeFromCart={removeFromCart}
+          />
         ))}
       </div>
+    </div>
+  )
+}
+
+// One row inside My Plan — renders the item fully expanded (video playable,
+// article/answer body visible) so added items open immediately.
+function CartItem({ item, savedVideos, savedArticles, savedAnswers, getYouTubeId, removeFromCart }) {
+  const [playing, setPlaying] = useState(false)
+  const [collapsed, setCollapsed] = useState(false)
+
+  const typeLabel =
+    item.item_type === 'video' ? '🎬 Video' :
+    item.item_type === 'article' ? '📖 Guide' :
+    '🤖 Club Pro Answer'
+
+  return (
+    <div className="p-4">
+      <div className="flex items-start justify-between gap-3 mb-2">
+        <div className="flex-1 min-w-0">
+          <span className={`text-xs px-2 py-0.5 rounded-full ${
+            item.item_type === 'video' ? 'bg-blue-100 text-blue-700' :
+            item.item_type === 'article' ? 'bg-purple-100 text-purple-700' :
+            'bg-green-100 text-green-700'
+          }`}>{typeLabel}</span>
+          <h3 className="font-semibold text-gray-900 text-sm mt-1.5 break-words">{item.item_title}</h3>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={() => setCollapsed(c => !c)}
+            className="text-xs text-gray-400 hover:text-gray-700 font-semibold"
+            title={collapsed ? 'Expand' : 'Collapse'}
+          >
+            {collapsed ? '▼' : '▲'}
+          </button>
+          <button
+            onClick={() => removeFromCart(item.item_id, item.item_type)}
+            className="text-xs text-red-400 hover:text-red-600 font-semibold"
+            title="Remove from plan"
+          >
+            ✕
+          </button>
+        </div>
+      </div>
+
+      {!collapsed && (() => {
+        if (item.item_type === 'video') {
+          const saved = savedVideos[item.item_id]
+          const video = saved?.videos
+          if (!video) return <p className="text-xs text-gray-400 italic">This video is no longer in your bag.</p>
+          const ytId = getYouTubeId(video)
+          return (
+            <div className="rounded-lg overflow-hidden border border-gray-100">
+              {playing && ytId ? (
+                <SafeYouTube videoId={ytId} onClose={() => setPlaying(false)} />
+              ) : ytId ? (
+                <button onClick={() => setPlaying(true)} className="relative w-full block group" aria-label={`Play ${video.title}`}>
+                  <img
+                    src={video.thumbnail_url || `https://img.youtube.com/vi/${ytId}/mqdefault.jpg`}
+                    alt={video.title}
+                    className="w-full aspect-video object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/15 group-hover:bg-black/25 transition-colors flex items-center justify-center">
+                    <div className="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+                      <svg viewBox="0 0 24 24" className="w-5 h-5 text-green-800 ml-0.5" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+                    </div>
+                  </div>
+                </button>
+              ) : (
+                <p className="text-xs text-gray-500 p-3">Video unavailable.</p>
+              )}
+              {video.channel_name && <p className="text-xs text-gray-500 px-2 pt-2">{video.channel_name}</p>}
+            </div>
+          )
+        }
+        if (item.item_type === 'article') {
+          const saved = savedArticles[item.item_id]
+          const article = saved?.articles
+          if (!article) return <p className="text-xs text-gray-400 italic">This guide is no longer in your bag.</p>
+          return (
+            <div>
+              {article.summary && <p className="text-xs text-gray-500 mb-2">{article.summary}</p>}
+              {article.content && (
+                <div
+                  className="text-sm text-gray-700 leading-relaxed prose prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{ __html: '<p class="mb-3">' + (article.content || '').split('\n\n').join('</p><p class="mb-3">').split('\n').join('<br/>') + '</p>' }}
+                />
+              )}
+            </div>
+          )
+        }
+        // answer
+        const saved = savedAnswers[item.item_id]
+        if (!saved) return <p className="text-xs text-gray-400 italic">This answer is no longer in your bag.</p>
+        return (
+          <div>
+            <p className="text-xs text-gray-500 mb-2"><span className="font-semibold">You asked:</span> {saved.question}</p>
+            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{saved.answer}</p>
+          </div>
+        )
+      })()}
     </div>
   )
 }
