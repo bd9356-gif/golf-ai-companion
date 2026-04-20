@@ -51,6 +51,7 @@ export default function ArticlesPage() {
   const [relatedVideos, setRelatedVideos] = useState([])
   const [savedIds, setSavedIds] = useState(new Set())
   const [user, setUser] = useState(null)
+  const [collapsedTopics, setCollapsedTopics] = useState(new Set())
 
   useEffect(() => {
     fetchArticles()
@@ -72,8 +73,22 @@ export default function ArticlesPage() {
       .from('articles')
       .select('*')
       .order('created_at', { ascending: false })
-    if (!error && data) setArticles(data)
+    if (!error && data) {
+      setArticles(data)
+      // Default all topic sections to collapsed on open.
+      const topicsInData = new Set(data.map(a => a.topic))
+      setCollapsedTopics(topicsInData)
+    }
     setLoading(false)
+  }
+
+  function toggleTopic(topic) {
+    setCollapsedTopics(prev => {
+      const next = new Set(prev)
+      if (next.has(topic)) next.delete(topic)
+      else next.add(topic)
+      return next
+    })
   }
 
   async function fetchRelatedVideos(article) {
@@ -158,6 +173,19 @@ export default function ArticlesPage() {
   const sorted = topicFiltered
   const topics = ['all', ...Object.keys(TOPIC_LABELS)]
 
+  // Group sorted articles by topic, preserving topic order from TOPIC_LABELS.
+  const grouped = (() => {
+    const order = Object.keys(TOPIC_LABELS)
+    const map = new Map()
+    for (const a of sorted) {
+      if (!map.has(a.topic)) map.set(a.topic, [])
+      map.get(a.topic).push(a)
+    }
+    const knownGroups = order.filter(t => map.has(t)).map(t => [t, map.get(t)])
+    const unknownGroups = [...map.entries()].filter(([t]) => !order.includes(t))
+    return [...knownGroups, ...unknownGroups]
+  })()
+
   return (
     <div className="min-h-screen bg-white">
       <header className="border-b border-gray-100 bg-white sticky top-0 z-40">
@@ -205,8 +233,25 @@ export default function ArticlesPage() {
             <p className="text-gray-600 font-semibold text-lg">No articles yet</p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {sorted.map(article => {
+          <div className="space-y-6">
+            {grouped.map(([topic, items]) => {
+              const isCollapsed = collapsedTopics.has(topic)
+              return (
+                <section key={topic} className="border border-gray-200 rounded-2xl">
+                  <button
+                    onClick={() => toggleTopic(topic)}
+                    className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50 rounded-t-2xl"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">{TOPIC_ICONS[topic] ?? '📖'}</span>
+                      <span className="font-semibold text-gray-900">{TOPIC_LABELS[topic] ?? topic}</span>
+                      <span className="text-xs text-gray-400">({items.length})</span>
+                    </div>
+                    <span className="text-gray-400 text-lg">{isCollapsed ? '▼' : '▲'}</span>
+                  </button>
+                  {!isCollapsed && (
+                    <div className="px-4 pb-4 space-y-4">
+                      {items.map(article => {
               const isSaved = savedIds.has(article.id)
               return (
                 <div
@@ -304,6 +349,11 @@ export default function ArticlesPage() {
                     </div>
                   )}
                 </div>
+              )
+            })}
+                    </div>
+                  )}
+                </section>
               )
             })}
           </div>
