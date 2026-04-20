@@ -206,18 +206,6 @@ export default function ArticlesPage() {
           <p className="text-gray-500 mt-1">AI-crafted guides matched to your game — talk it over with your buddies.</p>
         </div>
 
-        <div className="flex flex-wrap gap-2 mb-6">
-          {topics.map(topic => (
-            <button
-              key={topic}
-              onClick={() => setSelectedTopic(topic)}
-              className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${selectedTopic === topic ? 'bg-green-700 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-            >
-              {topic === 'all' ? 'All Topics' : `${TOPIC_ICONS[topic]} ${TOPIC_LABELS[topic]}`}
-            </button>
-          ))}
-        </div>
-
         {loading ? (
           <div className="space-y-4">
             {Array.from({ length: 4 }).map((_, i) => (
