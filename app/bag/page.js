@@ -412,7 +412,7 @@ export default function BagPage() {
                 {cartCount}
               </span>
             )}
-            <span className="text-xs font-semibold hidden sm:inline">My Plan</span>
+            <span className="text-xs font-semibold">My Plan</span>
           </button>
         </div>
       </header>
