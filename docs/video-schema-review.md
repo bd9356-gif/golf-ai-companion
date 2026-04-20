@@ -15,6 +15,8 @@ This document:
 
 Nothing has been changed yet. This is for your sign-off.
 
+> **Status: shipped.** Phases A–G are live as of April 2026. See the "Shipped log" at the bottom of this file for what was actually built vs. what was planned.
+
 ---
 
 ## 1 · What the database looks like right now
@@ -198,3 +200,45 @@ Phases A–D are backend-only; the app keeps working throughout. The user sees n
 4. **Do you want me to start with phase A (migration SQL) now so you have it ready to run, or wait for your decisions on the questions above?**
 
 Once you answer those, I can produce the phase-A migration file + the updated Claude prompt and have a reviewable PR within the hour.
+
+---
+
+## 9 · Shipped log (April 2026)
+
+Answers to the four open questions:
+
+1. **Four chips only** — the legacy "Fitness" and "Mental game" chips were retired. Fitness/mental content surfaces via sub_tags and (where relevant) the `course_management` bucket.
+2. **Auto-approve at `quality_score ≥ 7`**. Everything else lands in `editorial_status = 'starter'` for human review via `/admin/starter`.
+3. **Claude drafts pro bios/headshots** — `/api/seed-pros` asks Claude Haiku to fill `display_name`, `bio`, `website_url`, `booking_url`, `pga_certified`. Prompt explicitly says "return null, do not invent" when Claude is unsure.
+4. **Shipped phase A as soon as you signed off**, then the rest rolled out one phase at a time.
+
+### What actually shipped
+
+| Phase | What shipped | Notes |
+|---|---|---|
+| **A** | `supabase/005_video_schema.sql` — created `pros` table, added `pro_id`/`primary_bucket`/`is_featured`/`editorial_status` on videos, added `sub_tags`/`quality_reason` on video_metadata, added `video_with_pro` view. | ✅ |
+| **B** | `/api/seed-pros` processes one un-seeded channel per call, drafts a pro record with Claude Haiku, inserts `status='pending'`, backfills `videos.pro_id`. | 29 pros seeded; ~58% of videos attributed (448 / 767). |
+| **C** | `/api/score-videos` prompt now outputs `primary_bucket` (one of 4), `sub_tags` (1–5), `quality_reason`, plus the legacy `skill_tiers`/`topics`. Auto-approves at `quality_score ≥ 7`. | All 767 videos re-scored. Distribution: full_swing 566 / short_game 151 / putting 27 / course_management 23. Avg score 7.38. |
+| **D** | `/api/fetch-videos` now calls `buildProIdMap()` and stamps `pro_id` on ingest so every new video auto-attributes. `editorial_status` intentionally omitted from the upsert payload to avoid downgrading approved videos on re-fetch. | ✅ |
+| **E** | `/golf-tv/page.tsx` rebuilt: 5 chips (All + 4 buckets), strict `primary_bucket` equality (no more fuzzy `topics.includes`), filter on `editorial_status = 'approved'`, sort by `is_featured desc, quality_score desc, published_at desc`. | User-visible. 708 videos now showing. |
+| **F** | Pro attribution on video cards: channel name becomes a link to the pro's `website_url`, "★ Featured" pill on featured videos, "Pro" badge on PGA-certified or featured pros. | ✅ |
+| **G** | `/admin/starter` — admin-only queue of below-threshold videos with Approve / Hide / Feature / Rebucket actions. Backed by `/api/admin/starter-queue` + `/api/admin/video-action`. | 59 starter videos currently in the queue. |
+| **G+** | `/admin/featured` — admin-only curator for all approved videos. Filter by bucket, search by title, toggle ★ feature, hide, rebucket. Backed by `/api/admin/approved-list`. | Easier than SQL for ongoing curation. |
+
+### Extras built on top of the plan
+
+- **Admin email gate.** Both admin pages check `session.user.email === ADMIN_EMAIL` client-side; the API routes re-validate the JWT server-side before any DB write. Everyone else gets bounced to `/clubhouse`.
+- **Service role key on all server routes that touch videos/video_metadata.** RLS on `videos` blocks the anon key from selects, so every route reads/writes via `SUPABASE_SERVICE_ROLE_KEY`. That env var lives in Vercel and never ships to the browser.
+- **`supabase/featured_pins.sql`** — a paste-in template for bulk-featuring by `youtube_video_id` when clicking through the curator feels slow.
+- **`supabase/006_editorial_status_check.sql`** — adds a CHECK constraint on `editorial_status` so only `approved`/`starter`/`hidden` can be stored. Not yet run; pre-flight query included.
+- **`supabase/cleanup_false_positive_buckets.sql`** — diagnostics + UPDATE templates for the ~4 rows the scorer mis-bucketed (mostly "fundaMENTALs" → course_management).
+
+### Known follow-ups (low urgency)
+
+- Run `supabase/006_editorial_status_check.sql` after confirming the pre-flight query only returns the three allowed values.
+- Sweep `supabase/cleanup_false_positive_buckets.sql` to fix any remaining mis-bucketings.
+- Fill in missing `bio` / `headshot_url` on the 16 pros where Claude returned nulls.
+- Decide whether to add a CHECK constraint on `primary_bucket` at the DB level (migration 005 already has one; worth verifying it made it into production).
+- Consider a soft-delete pattern for `editorial_status = 'hidden'` so accidentally-hidden videos are recoverable from the curator UI.
+
+
