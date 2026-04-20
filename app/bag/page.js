@@ -63,6 +63,8 @@ export default function BagPage() {
   const [savedArticles, setSavedArticles] = useState({})  // id -> saved_article row
   const [savedAnswers, setSavedAnswers] = useState({})    // id -> saved_answer row
   const [cartItems, setCartItems] = useState([])
+  const [doneCartIds, setDoneCartIds] = useState(new Set()) // session-only ✓ checkmarks
+  const [practiceIdx, setPracticeIdx] = useState(null)       // null = off; number = active item index
   const [loading, setLoading] = useState(true)
   const [showCart, setShowCart] = useState(false)
   const [collapsed, setCollapsed] = useState(new Set())   // leaf ids that are collapsed
@@ -99,7 +101,7 @@ export default function BagPage() {
       supabase.from('saved_answers')
         .select('id, question, answer, created_at, skill_level')
         .eq('user_id', userId),
-      supabase.from('cart_items').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
+      supabase.from('cart_items').select('*').eq('user_id', userId).order('position', { ascending: true }).order('created_at', { ascending: false }),
     ])
 
     const loadedLeaves = leavesRes.data || []
@@ -207,30 +209,69 @@ export default function BagPage() {
 
   async function addToCart(itemId, itemType, itemTitle) {
     if (!user || isInCart(itemId, itemType)) return
+    // Prepend new items — they get the smallest position so they sort first.
+    // The drag-reorder handler normalizes to 0..n-1 on any drag.
+    const minPos = cartItems.length > 0 ? Math.min(...cartItems.map(c => c.position ?? 0)) : 0
     const { data, error } = await supabase.from('cart_items').insert({
       user_id: user.id,
       item_id: String(itemId),
       item_type: itemType,
       item_title: itemTitle,
+      position: minPos - 1,
     }).select().single()
     if (!error && data) {
       setCartItems(prev => [data, ...prev])
       // Auto-open the Plan panel so the user sees the item they just added,
-      // already expanded and ready to watch/read.
+      // already expanded at the top, ready to watch/read.
       setShowCart(true)
     }
   }
 
   async function removeFromCart(itemId, itemType) {
     if (!user) return
+    // Find the cart row so we can also clear its done flag (session-only).
+    const row = cartItems.find(c => c.item_id === String(itemId) && c.item_type === itemType)
     await supabase.from('cart_items').delete().eq('user_id', user.id).eq('item_id', String(itemId)).eq('item_type', itemType)
     setCartItems(prev => prev.filter(c => !(c.item_id === String(itemId) && c.item_type === itemType)))
+    if (row) {
+      setDoneCartIds(prev => {
+        const next = new Set(prev); next.delete(row.id); return next
+      })
+    }
   }
 
   async function clearCart() {
     if (!user) return
     await supabase.from('cart_items').delete().eq('user_id', user.id)
     setCartItems([])
+    setDoneCartIds(new Set())
+  }
+
+  function toggleCartDone(cartItemId) {
+    setDoneCartIds(prev => {
+      const next = new Set(prev)
+      next.has(cartItemId) ? next.delete(cartItemId) : next.add(cartItemId)
+      return next
+    })
+  }
+
+  async function onCartDragEnd(e) {
+    const { active, over } = e
+    if (!over || active.id === over.id) return
+    const oldIdx = cartItems.findIndex(c => c.id === active.id)
+    const newIdx = cartItems.findIndex(c => c.id === over.id)
+    if (oldIdx < 0 || newIdx < 0) return
+    const next = arrayMove(cartItems, oldIdx, newIdx).map((c, i) => ({ ...c, position: i }))
+    setCartItems(next)
+    const rows = next.map(c => ({
+      id: c.id,
+      user_id: c.user_id,
+      item_id: c.item_id,
+      item_type: c.item_type,
+      item_title: c.item_title,
+      position: c.position,
+    }))
+    await supabase.from('cart_items').upsert(rows)
   }
 
   // ── DnD ──────────────────────────────────────────────────────────
@@ -328,6 +369,11 @@ export default function BagPage() {
               savedArticles={savedArticles}
               savedAnswers={savedAnswers}
               getYouTubeId={getYouTubeId}
+              doneCartIds={doneCartIds}
+              toggleCartDone={toggleCartDone}
+              sensors={sensors}
+              onCartDragEnd={onCartDragEnd}
+              startPractice={() => setPracticeIdx(0)}
             />
           </div>
         )}
@@ -384,6 +430,21 @@ export default function BagPage() {
           Tip: tap <span className="font-semibold">Move ▾</span> on any item to send it to another skill. Drag the ⋮⋮ handle to reorder items within a skill.
         </p>
       </main>
+
+      {practiceIdx !== null && cartItems[practiceIdx] && (
+        <PracticeOverlay
+          items={cartItems}
+          idx={practiceIdx}
+          setIdx={setPracticeIdx}
+          close={() => setPracticeIdx(null)}
+          savedVideos={savedVideos}
+          savedArticles={savedArticles}
+          savedAnswers={savedAnswers}
+          getYouTubeId={getYouTubeId}
+          doneCartIds={doneCartIds}
+          toggleCartDone={toggleCartDone}
+        />
+      )}
     </div>
   )
 }
@@ -728,47 +789,88 @@ function CartButton({ itemId, itemType, itemTitle, isInCart, addToCart, removeFr
   )
 }
 
-function CartPanel({ cartItems, cartCount, clearCart, removeFromCart, savedVideos, savedArticles, savedAnswers, getYouTubeId }) {
+function CartPanel({
+  cartItems, cartCount, clearCart, removeFromCart,
+  savedVideos, savedArticles, savedAnswers, getYouTubeId,
+  doneCartIds, toggleCartDone,
+  sensors, onCartDragEnd,
+  startPractice,
+}) {
   if (cartCount === 0) {
     return (
       <div className="text-center py-8 border border-dashed border-yellow-200 rounded-xl bg-yellow-50">
         <p className="text-3xl mb-2">🛺</p>
         <p className="text-sm font-semibold text-yellow-800">Your plan is empty</p>
-        <p className="text-xs text-yellow-600 mt-1">Tap "🛺 Add" on any item in your bag to load today's focus.</p>
+        <p className="text-xs text-yellow-600 mt-1">Tap &ldquo;🛺 Add&rdquo; on any item in your bag to load today&rsquo;s focus.</p>
       </div>
     )
   }
+  const doneCount = cartItems.filter(c => doneCartIds.has(c.id)).length
+  const itemIds = cartItems.map(c => c.id)
+
   return (
     <div className="border border-yellow-300 rounded-xl bg-yellow-50 overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-yellow-200">
-        <div>
-          <p className="text-sm font-bold text-yellow-900">🛺 My Plan — {cartCount} item{cartCount !== 1 ? 's' : ''} loaded</p>
-          <p className="text-xs text-yellow-600 mt-0.5">Your focus list, ready to watch and read right here.</p>
+      <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-yellow-200">
+        <div className="min-w-0">
+          <p className="text-sm font-bold text-yellow-900">
+            🛺 My Plan — {doneCount} of {cartCount} done
+          </p>
+          <p className="text-xs text-yellow-600 mt-0.5">Drag ⋮⋮ to reorder · ✓ to mark done · ▶ for focus mode</p>
         </div>
-        <button onClick={clearCart} className="text-xs text-red-400 hover:text-red-600 font-semibold whitespace-nowrap ml-3">Clear All</button>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={startPractice}
+            className="text-xs font-semibold bg-green-700 text-white hover:bg-green-800 rounded-lg px-3 py-1.5 whitespace-nowrap"
+            title="Go through your plan one item at a time, full-screen"
+          >
+            ▶ Start practice
+          </button>
+          <button onClick={clearCart} className="text-xs text-red-400 hover:text-red-600 font-semibold whitespace-nowrap">Clear All</button>
+        </div>
       </div>
-      <div className="divide-y divide-yellow-200 bg-white">
-        {cartItems.map(item => (
-          <CartItem
-            key={item.id}
-            item={item}
-            savedVideos={savedVideos}
-            savedArticles={savedArticles}
-            savedAnswers={savedAnswers}
-            getYouTubeId={getYouTubeId}
-            removeFromCart={removeFromCart}
-          />
-        ))}
-      </div>
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onCartDragEnd}>
+        <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
+          <div className="divide-y divide-yellow-200 bg-white">
+            {cartItems.map((item, idx) => (
+              <CartItem
+                key={item.id}
+                item={item}
+                index={idx}
+                savedVideos={savedVideos}
+                savedArticles={savedArticles}
+                savedAnswers={savedAnswers}
+                getYouTubeId={getYouTubeId}
+                removeFromCart={removeFromCart}
+                isDone={doneCartIds.has(item.id)}
+                toggleDone={() => toggleCartDone(item.id)}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
     </div>
   )
 }
 
 // One row inside My Plan — renders the item fully expanded (video playable,
 // article/answer body visible) so added items open immediately.
-function CartItem({ item, savedVideos, savedArticles, savedAnswers, getYouTubeId, removeFromCart }) {
+// On narrow screens only the first item auto-expands; others start collapsed
+// so the Plan stays scannable.
+function CartItem({ item, index, savedVideos, savedArticles, savedAnswers, getYouTubeId, removeFromCart, isDone, toggleDone }) {
   const [playing, setPlaying] = useState(false)
-  const [collapsed, setCollapsed] = useState(false)
+  // Default expansion: desktop → all expanded; mobile → only first expanded.
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window === 'undefined') return false // SSR safe default
+    const isMobile = window.matchMedia('(max-width: 639px)').matches
+    return isMobile && index !== 0
+  })
+
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id })
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+  }
 
   const typeLabel =
     item.item_type === 'video' ? '🎬 Video' :
@@ -776,17 +878,40 @@ function CartItem({ item, savedVideos, savedArticles, savedAnswers, getYouTubeId
     '🤖 Club Pro Answer'
 
   return (
-    <div className="p-4">
+    <div ref={setNodeRef} style={style} className={`p-4 ${isDone ? 'opacity-60' : ''}`}>
       <div className="flex items-start justify-between gap-3 mb-2">
+        <button
+          {...attributes}
+          {...listeners}
+          className="text-gray-300 hover:text-gray-600 cursor-grab active:cursor-grabbing text-base leading-none select-none touch-none shrink-0 mt-0.5"
+          title="Drag to reorder"
+          aria-label="Drag to reorder"
+        >
+          ⋮⋮
+        </button>
         <div className="flex-1 min-w-0">
           <span className={`text-xs px-2 py-0.5 rounded-full ${
             item.item_type === 'video' ? 'bg-blue-100 text-blue-700' :
             item.item_type === 'article' ? 'bg-purple-100 text-purple-700' :
             'bg-green-100 text-green-700'
           }`}>{typeLabel}</span>
-          <h3 className="font-semibold text-gray-900 text-sm mt-1.5 break-words">{item.item_title}</h3>
+          <h3 className={`font-semibold text-gray-900 text-sm mt-1.5 break-words ${isDone ? 'line-through text-gray-500' : ''}`}>
+            {item.item_title}
+          </h3>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={toggleDone}
+            className={`text-sm font-semibold transition-colors rounded-full w-7 h-7 flex items-center justify-center ${
+              isDone
+                ? 'bg-green-600 text-white hover:bg-green-700'
+                : 'bg-gray-100 text-gray-400 hover:bg-green-50 hover:text-green-600'
+            }`}
+            title={isDone ? 'Mark not done' : 'Mark done'}
+            aria-label={isDone ? 'Mark not done' : 'Mark done'}
+          >
+            ✓
+          </button>
           <button
             onClick={() => setCollapsed(c => !c)}
             className="text-xs text-gray-400 hover:text-gray-700 font-semibold"
@@ -804,62 +929,185 @@ function CartItem({ item, savedVideos, savedArticles, savedAnswers, getYouTubeId
         </div>
       </div>
 
-      {!collapsed && (() => {
-        if (item.item_type === 'video') {
-          const saved = savedVideos[item.item_id]
-          const video = saved?.videos
-          if (!video) return <p className="text-xs text-gray-400 italic">This video is no longer in your bag.</p>
-          const ytId = getYouTubeId(video)
-          return (
-            <div className="rounded-lg overflow-hidden border border-gray-100">
-              {playing && ytId ? (
-                <SafeYouTube videoId={ytId} onClose={() => setPlaying(false)} />
-              ) : ytId ? (
-                <button onClick={() => setPlaying(true)} className="relative w-full block group" aria-label={`Play ${video.title}`}>
-                  <img
-                    src={video.thumbnail_url || `https://img.youtube.com/vi/${ytId}/mqdefault.jpg`}
-                    alt={video.title}
-                    className="w-full aspect-video object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black/15 group-hover:bg-black/25 transition-colors flex items-center justify-center">
-                    <div className="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-                      <svg viewBox="0 0 24 24" className="w-5 h-5 text-green-800 ml-0.5" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
-                    </div>
-                  </div>
-                </button>
-              ) : (
-                <p className="text-xs text-gray-500 p-3">Video unavailable.</p>
-              )}
-              {video.channel_name && <p className="text-xs text-gray-500 px-2 pt-2">{video.channel_name}</p>}
+      {!collapsed && (
+        <CartItemBody
+          item={item}
+          playing={playing}
+          setPlaying={setPlaying}
+          savedVideos={savedVideos}
+          savedArticles={savedArticles}
+          savedAnswers={savedAnswers}
+          getYouTubeId={getYouTubeId}
+        />
+      )}
+    </div>
+  )
+}
+
+// Renders the actual video / article / answer content for one plan item.
+// Shared between CartItem (inline in the Plan) and PracticeOverlay (focus mode).
+function CartItemBody({ item, playing, setPlaying, savedVideos, savedArticles, savedAnswers, getYouTubeId, autoPlayVideo = false }) {
+  if (item.item_type === 'video') {
+    const saved = savedVideos[item.item_id]
+    const video = saved?.videos
+    if (!video) return <p className="text-xs text-gray-400 italic">This video is no longer in your bag.</p>
+    const ytId = getYouTubeId(video)
+    const shouldPlay = playing || autoPlayVideo
+    return (
+      <div className="rounded-lg overflow-hidden border border-gray-100">
+        {shouldPlay && ytId ? (
+          <SafeYouTube videoId={ytId} onClose={setPlaying ? () => setPlaying(false) : undefined} />
+        ) : ytId ? (
+          <button onClick={() => setPlaying && setPlaying(true)} className="relative w-full block group" aria-label={`Play ${video.title}`}>
+            <img
+              src={video.thumbnail_url || `https://img.youtube.com/vi/${ytId}/mqdefault.jpg`}
+              alt={video.title}
+              className="w-full aspect-video object-cover"
+            />
+            <div className="absolute inset-0 bg-black/15 group-hover:bg-black/25 transition-colors flex items-center justify-center">
+              <div className="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+                <svg viewBox="0 0 24 24" className="w-5 h-5 text-green-800 ml-0.5" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+              </div>
             </div>
-          )
-        }
-        if (item.item_type === 'article') {
-          const saved = savedArticles[item.item_id]
-          const article = saved?.articles
-          if (!article) return <p className="text-xs text-gray-400 italic">This guide is no longer in your bag.</p>
-          return (
-            <div>
-              {article.summary && <p className="text-xs text-gray-500 mb-2">{article.summary}</p>}
-              {article.content && (
-                <div
-                  className="text-sm text-gray-700 leading-relaxed prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: '<p class="mb-3">' + (article.content || '').split('\n\n').join('</p><p class="mb-3">').split('\n').join('<br/>') + '</p>' }}
-                />
-              )}
+          </button>
+        ) : (
+          <p className="text-xs text-gray-500 p-3">Video unavailable.</p>
+        )}
+        {video.channel_name && <p className="text-xs text-gray-500 px-2 pt-2">{video.channel_name}</p>}
+      </div>
+    )
+  }
+  if (item.item_type === 'article') {
+    const saved = savedArticles[item.item_id]
+    const article = saved?.articles
+    if (!article) return <p className="text-xs text-gray-400 italic">This guide is no longer in your bag.</p>
+    return (
+      <div>
+        {article.summary && <p className="text-xs text-gray-500 mb-2">{article.summary}</p>}
+        {article.content && (
+          <div
+            className="text-sm text-gray-700 leading-relaxed prose prose-sm max-w-none"
+            dangerouslySetInnerHTML={{ __html: '<p class="mb-3">' + (article.content || '').split('\n\n').join('</p><p class="mb-3">').split('\n').join('<br/>') + '</p>' }}
+          />
+        )}
+      </div>
+    )
+  }
+  // answer
+  const saved = savedAnswers[item.item_id]
+  if (!saved) return <p className="text-xs text-gray-400 italic">This answer is no longer in your bag.</p>
+  return (
+    <div>
+      <p className="text-xs text-gray-500 mb-2"><span className="font-semibold">You asked:</span> {saved.question}</p>
+      <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{saved.answer}</p>
+    </div>
+  )
+}
+
+// Full-screen distraction-free mode — one plan item at a time with Next/Prev.
+function PracticeOverlay({ items, idx, setIdx, close, savedVideos, savedArticles, savedAnswers, getYouTubeId, doneCartIds, toggleCartDone }) {
+  const item = items[idx]
+  const total = items.length
+  const isFirst = idx === 0
+  const isLast = idx === total - 1
+  const isDone = doneCartIds.has(item.id)
+
+  const typeLabel =
+    item.item_type === 'video' ? '🎬 Video' :
+    item.item_type === 'article' ? '📖 Guide' :
+    '🤖 Club Pro Answer'
+
+  // Keyboard shortcuts: ← prev, → next, Esc close
+  useEffect(() => {
+    function onKey(e) {
+      if (e.key === 'Escape') close()
+      else if (e.key === 'ArrowLeft' && !isFirst) setIdx(idx - 1)
+      else if (e.key === 'ArrowRight' && !isLast) setIdx(idx + 1)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [idx, isFirst, isLast, close, setIdx])
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/95 flex flex-col">
+      {/* Top bar */}
+      <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-gray-800 text-gray-200">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-sm font-semibold text-yellow-400">🛺 Practice</span>
+          <span className="text-xs text-gray-400 whitespace-nowrap">{idx + 1} of {total}</span>
+        </div>
+        <button
+          onClick={close}
+          className="text-gray-300 hover:text-white text-sm font-semibold bg-gray-800 hover:bg-gray-700 rounded-lg px-3 py-1.5 whitespace-nowrap"
+          aria-label="Close practice"
+        >
+          ✕ Close
+        </button>
+      </div>
+
+      {/* Body */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-3xl mx-auto px-4 py-6">
+          <div className="flex items-start justify-between gap-3 mb-4">
+            <div className="min-w-0">
+              <span className={`text-xs px-2 py-0.5 rounded-full ${
+                item.item_type === 'video' ? 'bg-blue-900 text-blue-200' :
+                item.item_type === 'article' ? 'bg-purple-900 text-purple-200' :
+                'bg-green-900 text-green-200'
+              }`}>{typeLabel}</span>
+              <h2 className={`text-lg sm:text-xl font-bold text-white mt-2 break-words ${isDone ? 'line-through text-gray-400' : ''}`}>
+                {item.item_title}
+              </h2>
             </div>
-          )
-        }
-        // answer
-        const saved = savedAnswers[item.item_id]
-        if (!saved) return <p className="text-xs text-gray-400 italic">This answer is no longer in your bag.</p>
-        return (
-          <div>
-            <p className="text-xs text-gray-500 mb-2"><span className="font-semibold">You asked:</span> {saved.question}</p>
-            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{saved.answer}</p>
           </div>
-        )
-      })()}
+
+          <div className="bg-white rounded-xl p-4">
+            <CartItemBody
+              item={item}
+              playing={true}
+              setPlaying={null}
+              autoPlayVideo={item.item_type === 'video'}
+              savedVideos={savedVideos}
+              savedArticles={savedArticles}
+              savedAnswers={savedAnswers}
+              getYouTubeId={getYouTubeId}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom nav */}
+      <div className="border-t border-gray-800 bg-black/80 px-4 py-3">
+        <div className="max-w-3xl mx-auto flex items-center justify-between gap-3">
+          <button
+            onClick={() => setIdx(idx - 1)}
+            disabled={isFirst}
+            className="text-sm font-semibold text-gray-200 bg-gray-800 hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed rounded-lg px-4 py-2"
+          >
+            ← Prev
+          </button>
+          <button
+            onClick={() => {
+              toggleCartDone(item.id)
+              if (!isDone && !isLast) setIdx(idx + 1)
+            }}
+            className={`text-sm font-semibold rounded-lg px-4 py-2 ${
+              isDone
+                ? 'bg-green-900 text-green-200 hover:bg-green-800'
+                : 'bg-green-600 text-white hover:bg-green-700'
+            }`}
+          >
+            {isDone ? '✓ Done (tap to undo)' : '✓ Mark done & next'}
+          </button>
+          <button
+            onClick={() => setIdx(idx + 1)}
+            disabled={isLast}
+            className="text-sm font-semibold text-gray-200 bg-gray-800 hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed rounded-lg px-4 py-2"
+          >
+            Next →
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
