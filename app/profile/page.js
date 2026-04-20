@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
+import SafeYouTube from '@/components/SafeYouTube'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -146,10 +147,7 @@ export default function ProfilePage() {
                     <div key={saved.video_id} className="border border-gray-100 rounded-xl overflow-hidden hover:border-green-200 transition-colors">
                       {isPlaying && ytId ? (
                         <div>
-                          <div className="relative w-full aspect-video bg-black">
-                            <iframe src={`https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&modestbranding=1&rel=0`} className="w-full h-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
-                            <button onClick={() => setPlayingId(null)} className="absolute top-2 right-2 bg-black/60 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm hover:bg-black/80">✕</button>
-                          </div>
+                          <SafeYouTube videoId={ytId} onClose={() => setPlayingId(null)} />
                           <div className="p-3">
                             <p className="font-semibold text-gray-900 text-sm">{video.title}</p>
                             {video.channel_name && <p className="text-xs text-gray-400 mt-0.5">{video.channel_name}</p>}

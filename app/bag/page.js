@@ -18,6 +18,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import SafeYouTube from '@/components/SafeYouTube'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -610,15 +611,7 @@ function VideoRow({ saved, playing, play, stop, removeSaved, isInCart, addToCart
     <div className="flex flex-col">
       {/* Top: video frame (player or playable thumbnail) — full width */}
       {playing && ytId ? (
-        <div className="relative w-full aspect-video bg-black">
-          <iframe
-            src={`https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&modestbranding=1&rel=0`}
-            className="w-full h-full"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
-          <button onClick={stop} className="absolute top-2 right-2 bg-black/60 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm">✕</button>
-        </div>
+        <SafeYouTube videoId={ytId} onClose={stop} />
       ) : ytId ? (
         <button onClick={play} className="relative w-full block group" aria-label={`Play ${video.title}`}>
           <img

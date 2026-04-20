@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
+import SafeYouTube from '@/components/SafeYouTube'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -292,15 +293,7 @@ export default function ArticlesPage() {
                               <div key={v.id} className="rounded-lg overflow-hidden bg-gray-50">
                                 {playingVideoId === v.id ? (
                                   <div>
-                                    <div className="relative w-full aspect-video bg-black">
-                                      <iframe
-                                        src={`https://www.youtube-nocookie.com/embed/${v.youtube_video_id}?autoplay=1&modestbranding=1&rel=0`}
-                                        className="w-full h-full"
-                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                        allowFullScreen
-                                      />
-                                      <button onClick={() => setPlayingVideoId(null)} className="absolute top-2 right-2 bg-black/60 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs">✕</button>
-                                    </div>
+                                    <SafeYouTube videoId={v.youtube_video_id} onClose={() => setPlayingVideoId(null)} />
                                     <div className="p-2 flex items-center justify-between">
                                       <p className="text-xs text-gray-600 font-medium line-clamp-1">{v.title}</p>
                                       <button onClick={() => saveVideoToLibrary(v.id)} className="text-xs text-green-700 font-semibold ml-2 shrink-0">🔖 MyBag</button>

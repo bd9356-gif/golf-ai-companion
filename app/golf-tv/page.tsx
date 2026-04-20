@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import PreviewMode from '@/components/PreviewMode'
+import SafeYouTube from '@/components/SafeYouTube'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -227,15 +228,7 @@ export default function GolfTVPage() {
               return (
                 <div key={video.id} className="border border-gray-200 rounded-xl overflow-hidden hover:border-green-200 transition-colors flex flex-col">
                   {isPlaying && ytId && (
-                    <div className="relative w-full aspect-video bg-black">
-                      <iframe
-                        src={`https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&modestbranding=1&rel=0`}
-                        className="w-full h-full"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                      />
-                      <button onClick={() => setPlayingId(null)} className="absolute top-2 right-2 bg-black/60 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm hover:bg-black/80">✕</button>
-                    </div>
+                    <SafeYouTube videoId={ytId} onClose={() => setPlayingId(null)} />
                   )}
                   {!isPlaying && ytId && (
                     <button onClick={() => setPlayingId(video.id)} className="w-full relative block group" aria-label={`Play ${video.title}`}>
