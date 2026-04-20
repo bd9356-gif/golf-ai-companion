@@ -101,8 +101,11 @@ export default function BagPage() {
       supabase.from('cart_items').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
     ])
 
-    setLeaves(leavesRes.data || [])
+    const loadedLeaves = leavesRes.data || []
+    setLeaves(loadedLeaves)
     setLeafItems(leafItemsRes.data || [])
+    // Default all skills collapsed on page open — user expands what they want.
+    setCollapsed(new Set(loadedLeaves.map(l => l.id)))
 
     const videosMap = {}
     ;(videosRes.data || []).forEach(s => { if (s.videos) videosMap[s.video_id] = s })
