@@ -26,20 +26,12 @@ const SUGGESTED_QUESTIONS = [
   'What should I work on to break 90?',
 ]
 
-const SKILL_OPTIONS: { value: string; label: string }[] = [
-  { value: 'all',          label: 'Skill: not specified' },
-  { value: 'beginner',     label: 'Beginner' },
-  { value: 'intermediate', label: 'Intermediate' },
-  { value: 'advanced',     label: 'Advanced' },
-]
-
 export default function AskCompanionTab({ onBack }: Props) {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [savedIndexes, setSavedIndexes] = useState<Set<number>>(new Set())
   const [user, setUser] = useState<any>(null)
-  const [skillLevel, setSkillLevel] = useState<string>('all')
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
@@ -64,7 +56,7 @@ export default function AskCompanionTab({ onBack }: Props) {
       const res = await fetch('/api/ask-companion', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: newMessages, skillLevel }),
+        body: JSON.stringify({ messages: newMessages }),
       })
       if (!res.ok) throw new Error('API error')
       const data = await res.json()
@@ -98,7 +90,7 @@ export default function AskCompanionTab({ onBack }: Props) {
     const answer = messages[index].content
     const { data: inserted, error } = await supabase
       .from('saved_answers')
-      .insert({ user_id: user.id, question, answer, skill_level: skillLevel })
+      .insert({ user_id: user.id, question, answer, skill_level: 'all' })
       .select('id')
       .single()
     if (error) return
@@ -124,33 +116,20 @@ export default function AskCompanionTab({ onBack }: Props) {
   }
 
   const hasMessages = messages.length > 0
-  const activeSkill = SKILL_OPTIONS.find(o => o.value === skillLevel)
 
   return (
     <div className="flex flex-col h-full">
-      {/* Skill pill (left) + Clear (right) — only visible once chat has started */}
-      <div className="flex items-center justify-between mb-4 gap-2">
-        <label className="inline-flex items-center gap-2 bg-green-50 border border-green-100 rounded-full px-3 py-1.5 text-xs text-green-800 font-medium cursor-pointer">
-          <span className="text-green-600">Skill</span>
-          <select
-            value={skillLevel}
-            onChange={(e) => setSkillLevel(e.target.value)}
-            className="bg-transparent text-xs font-semibold text-green-800 focus:outline-none cursor-pointer pr-1"
-          >
-            {SKILL_OPTIONS.map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-        </label>
-        {hasMessages && (
+      {/* Clear chat — only visible once there's something to clear */}
+      {hasMessages && (
+        <div className="flex items-center justify-end mb-4">
           <button
             onClick={() => setMessages([])}
             className="text-xs text-gray-500 hover:text-gray-800 font-medium"
           >
             Clear chat
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto space-y-4 pb-4">
         {!hasMessages && (
@@ -158,8 +137,7 @@ export default function AskCompanionTab({ onBack }: Props) {
             <div className="text-center">
               <h2 className="text-xl font-bold text-gray-900">What do you want to work on?</h2>
               <p className="text-sm text-gray-500 mt-1">
-                Pick a question below or ask your own — answers are tuned to{' '}
-                <span className="font-semibold text-green-700">{activeSkill?.label.replace('Skill: ', '')}</span>.
+                Pick a question below or ask your own — personal AI guidance, right from your Club Pro.
               </p>
             </div>
             <div className="space-y-2">
