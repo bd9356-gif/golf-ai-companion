@@ -69,53 +69,31 @@ Return ONLY the JSON, nothing else`
 
 export async function GET() {
   try {
-    // Step 1: Get scored video IDs in batches
-    const scoredIds = new Set()
-    let page = 0
-    const pageSize = 1000
+    // Find ONE video that hasn't been scored under the NEW prompt yet
+    // (signal: videos.primary_bucket is null). This covers both brand-new
+    // ingests AND legacy rows that were scored under the old prompt but
+    // don't have a bucket assigned.
+    const { data: candidates, error: selErr } = await supabase
+      .from('videos')
+      .select('id, title, description, channel_name')
+      .is('primary_bucket', null)
+      .limit(1)
 
-    while (true) {
-      const { data, error } = await supabase
-        .from('video_metadata')
-        .select('video_id')
-        .range(page * pageSize, (page + 1) * pageSize - 1)
+    if (selErr) throw selErr
 
-      if (error) throw error
-      if (!data || data.length === 0) break
-      data.forEach(r => scoredIds.add(r.video_id))
-      if (data.length < pageSize) break
-      page++
-    }
-
-    // Step 2: Find ONE unscored video
-    page = 0
-    let unscoredVideo = null
-
-    outer: while (true) {
-      const { data, error } = await supabase
-        .from('videos')
-        .select('id, title, description, channel_name')
-        .range(page * pageSize, (page + 1) * pageSize - 1)
-
-      if (error) throw error
-      if (!data || data.length === 0) break
-
-      for (const video of data) {
-        if (!scoredIds.has(video.id)) {
-          unscoredVideo = video
-          break outer
-        }
-      }
-
-      if (data.length < pageSize) break
-      page++
-    }
+    const unscoredVideo = candidates && candidates[0]
 
     if (!unscoredVideo) {
-      return NextResponse.json({ success: true, message: 'All videos are scored!' })
+      return NextResponse.json({ success: true, message: 'All videos are scored under the new prompt!' })
     }
 
-    const remaining = 715 - scoredIds.size
+    // Count remaining for progress reporting
+    const { count: remainingCount } = await supabase
+      .from('videos')
+      .select('id', { count: 'exact', head: true })
+      .is('primary_bucket', null)
+
+    const remaining = remainingCount ?? 0
 
     // Step 3: Score the single video
     // Clean description — if empty or too short, use title as fallback
