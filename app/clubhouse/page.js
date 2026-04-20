@@ -28,21 +28,21 @@ const JOURNEY_SECTIONS = [
     title: 'Golf TV',
     subtitle: 'Build your plan',
     href: '/golf-tv',
-    description: 'Browse every instruction video — save any to your bag to build your own plan.',
+    description: 'Your central hub for golf instruction — explore every lesson and shape your journey.',
   },
   {
     icon: '📖',
     title: 'Guides',
-    subtitle: 'The Buddies',
+    subtitle: 'The Playbook',
     href: '/guides',
-    description: 'AI-crafted golf articles matched to your game — talk it over with your buddies.',
+    description: 'AI-crafted golf articles that help you understand, improve, and play smarter.',
   },
   {
     icon: '🏌️',
     title: 'Your Golf Bag',
     subtitle: 'MyBag',
     href: '/bag',
-    description: 'Your saved videos, guides, and AI answers — organized into your leaves of focus.',
+    description: 'Drop your saves here and move each one into the skills it belongs to.',
   },
   {
     icon: '🏌️',
@@ -98,7 +98,7 @@ export default function ClubhousePage() {
               MyClubhouse
             </h2>
             <p className="text-green-200 text-sm">
-              Your AI-powered starting point for everything in your game.
+              Your home club — where your golf journey begins.
             </p>
           </div>
           {/* Course name watermark */}
