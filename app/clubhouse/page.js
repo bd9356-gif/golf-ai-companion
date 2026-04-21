@@ -122,16 +122,15 @@ export default function ClubhousePage() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-3 sm:py-5">
-        {/* Daily rotating course image — compact on phone (h-24 = 96px) so
-            the five tiles below fit a single iPhone viewport. Grows on
-            wider screens where vertical space isn't the bottleneck. */}
-        <div className="relative w-full rounded-2xl overflow-hidden mb-3 sm:mb-5 h-24 sm:h-40 md:h-52">
+      <main className="max-w-4xl mx-auto px-4 py-4 sm:py-5">
+        {/* Daily rotating course image — a little taller now that there's
+            room (h-28 mobile → h-40 sm → h-52 md). */}
+        <div className="relative w-full rounded-2xl overflow-hidden mb-4 sm:mb-5 h-28 sm:h-40 md:h-52">
           <img src={daily.url} alt={daily.name} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-black/45 rounded-2xl" />
           <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
-            <p className="text-green-100 text-[10px] sm:text-sm font-semibold tracking-wide uppercase leading-tight">{greeting}, golfer</p>
-            <h2 className="text-xl sm:text-3xl font-bold text-white drop-shadow leading-tight">
+            <p className="text-green-100 text-[11px] sm:text-sm font-semibold tracking-wide uppercase leading-tight">{greeting}, golfer</p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-white drop-shadow leading-tight mt-0.5">
               MyClubhouse
             </h2>
             <p className="hidden sm:block text-green-200 text-xs sm:text-sm mt-1">
@@ -144,48 +143,48 @@ export default function ClubhousePage() {
         </div>
 
         {/* Your Golf Journey */}
-        <h3 className="text-[10px] sm:text-xs font-bold tracking-wider text-gray-500 uppercase px-1 mb-2">Your Golf Journey</h3>
-        <div className="space-y-2">
+        <h3 className="text-xs font-bold tracking-wider text-gray-600 uppercase px-1 mb-2.5">Your Golf Journey</h3>
+        <div className="space-y-2.5">
           {JOURNEY_SECTIONS.map((section) => (
             <a
               key={section.title}
               href={section.href}
-              className={`block p-3 sm:p-4 rounded-2xl border border-gray-200 border-l-8 ${section.stripe} ${section.hoverBorder} hover:shadow-sm transition-all bg-white`}
+              className={`block p-4 rounded-2xl border-2 border-gray-200 border-l-8 ${section.stripe} ${section.hoverBorder} hover:shadow-sm transition-all bg-white`}
             >
               <div className="flex items-center gap-3">
-                <span className="text-xl sm:text-2xl shrink-0">{section.icon}</span>
+                <span className="text-2xl shrink-0">{section.icon}</span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-baseline gap-2 flex-wrap">
-                    <h3 className="font-bold text-sm sm:text-base text-gray-900">{section.title}</h3>
-                    <span className="text-[11px] sm:text-xs text-green-700 font-semibold">— {section.subtitle}</span>
+                    <h3 className="font-bold text-base sm:text-lg text-gray-900 leading-tight">{section.title}</h3>
+                    <span className="text-xs text-green-700 font-semibold">— {section.subtitle}</span>
                   </div>
-                  <p className="text-xs sm:text-sm mt-0.5 leading-snug text-gray-500 truncate">{section.description}</p>
+                  <p className="text-sm mt-1 leading-snug text-gray-600 truncate">{section.description}</p>
                 </div>
-                <span className="text-gray-400 shrink-0">→</span>
+                <span className="text-gray-400 shrink-0 text-lg">→</span>
               </div>
             </a>
           ))}
         </div>
 
         {/* AI ProShop */}
-        <h3 className="text-[10px] sm:text-xs font-bold tracking-wider text-gray-500 uppercase px-1 mt-4 sm:mt-7 mb-2">🤖 AI ProShop</h3>
-        <div className="space-y-2">
+        <h3 className="text-xs font-bold tracking-wider text-gray-600 uppercase px-1 mt-5 sm:mt-7 mb-2.5">🤖 AI ProShop</h3>
+        <div className="space-y-2.5">
           {PROSHOP_SECTIONS.map((section) => (
             <a
               key={section.title}
               href={section.href}
-              className={`block p-3 sm:p-4 rounded-2xl border border-gray-200 border-l-8 ${section.stripe} ${section.hoverBorder} hover:shadow-sm transition-all bg-white`}
+              className={`block p-4 rounded-2xl border-2 border-gray-200 border-l-8 ${section.stripe} ${section.hoverBorder} hover:shadow-sm transition-all bg-white`}
             >
               <div className="flex items-center gap-3">
-                <span className="text-xl sm:text-2xl shrink-0">{section.icon}</span>
+                <span className="text-2xl shrink-0">{section.icon}</span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-baseline gap-2 flex-wrap">
-                    <h3 className="font-bold text-sm sm:text-base text-gray-900">{section.title}</h3>
-                    <span className="text-[11px] sm:text-xs text-green-700 font-semibold">— {section.subtitle}</span>
+                    <h3 className="font-bold text-base sm:text-lg text-gray-900 leading-tight">{section.title}</h3>
+                    <span className="text-xs text-green-700 font-semibold">— {section.subtitle}</span>
                   </div>
-                  <p className="text-xs sm:text-sm mt-0.5 leading-snug text-gray-500 truncate">{section.description}</p>
+                  <p className="text-sm mt-1 leading-snug text-gray-600 truncate">{section.description}</p>
                 </div>
-                <span className="text-gray-400 shrink-0">→</span>
+                <span className="text-gray-400 shrink-0 text-lg">→</span>
               </div>
             </a>
           ))}
