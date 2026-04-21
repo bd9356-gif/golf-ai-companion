@@ -8,6 +8,16 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
+// Auto-format phone numbers to the (555) 555-5555 US pattern as the user types.
+// Strips all non-digits, caps at 10 digits, then reflows into parens + dash.
+function formatPhone(value) {
+  const d = (value || '').replace(/\D/g, '').slice(0, 10)
+  if (d.length === 0) return ''
+  if (d.length < 4) return `(${d}`
+  if (d.length < 7) return `(${d.slice(0, 3)}) ${d.slice(3)}`
+  return `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`
+}
+
 export default function CoursesPage() {
   const [user, setUser] = useState(null)
   const [courses, setCourses] = useState([])
@@ -97,7 +107,7 @@ export default function CoursesPage() {
           <div className="flex items-center gap-2 min-w-0">
             <span className="text-2xl shrink-0">🏠</span>
             <div className="min-w-0">
-              <h1 className="text-lg font-bold text-gray-900 truncate leading-tight">Your Home Courses</h1>
+              <h1 className="text-lg font-bold text-gray-900 truncate leading-tight">Home Courses</h1>
               <p className="text-xs text-green-700 font-semibold leading-tight">Notes, tips &amp; tee times</p>
             </div>
           </div>
@@ -105,12 +115,11 @@ export default function CoursesPage() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-6">
-        <div className="mb-6 flex items-start justify-between gap-3">
-          <p className="text-gray-500 flex-1">Save your favorite courses — notes, tips, and tee time links all in one place.</p>
+      <main className="max-w-4xl mx-auto px-4 py-5">
+        <div className="mb-5 flex justify-end">
           <button
             onClick={() => { setShowForm(true); setEditingId(null); setForm({ name: '', notes: '', tee_time_url: '', phone: '' }) }}
-            className="shrink-0 text-sm font-semibold text-green-700 border-2 border-green-700 rounded-xl px-4 py-2 hover:bg-green-50 transition-colors"
+            className="text-sm font-semibold text-green-700 border-2 border-green-700 rounded-xl px-4 py-2 hover:bg-green-50 transition-colors"
           >
             + Add Course
           </button>
@@ -153,8 +162,10 @@ export default function CoursesPage() {
                 <input
                   type="tel"
                   value={form.phone || ''}
-                  onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
-                  placeholder="e.g. (239) 555-1234"
+                  onChange={e => setForm(f => ({ ...f, phone: formatPhone(e.target.value) }))}
+                  placeholder="(555) 555-5555"
+                  inputMode="tel"
+                  autoComplete="tel-national"
                   className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-green-300"
                 />
               </div>
@@ -227,7 +238,7 @@ export default function CoursesPage() {
                         href={course.tee_time_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 mt-5 text-sm text-green-700 font-semibold hover:text-green-900"
+                        className="inline-flex items-center gap-1 mt-6 text-sm text-green-700 font-semibold hover:text-green-900"
                       >
                         🕐 Book Tee Time →
                       </a>
