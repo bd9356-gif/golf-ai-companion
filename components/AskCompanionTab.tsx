@@ -145,7 +145,7 @@ export default function AskCompanionTab({ onBack }: Props) {
                 <button
                   key={q}
                   onClick={() => sendMessage(q)}
-                  className="w-full text-left px-4 py-2.5 bg-white hover:bg-emerald-50 border-2 border-emerald-500 hover:border-emerald-600 rounded-xl text-sm text-gray-800 transition-all hover:shadow-sm"
+                  className="w-full text-left px-4 py-2.5 bg-white hover:bg-green-50 border-2 border-gray-200 border-l-8 border-l-green-600 hover:border-green-300 rounded-xl text-sm text-gray-800 transition-all hover:shadow-sm"
                 >
                   {q}
                 </button>
@@ -164,7 +164,7 @@ export default function AskCompanionTab({ onBack }: Props) {
                   className={`px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
                     isUser
                       ? 'bg-green-700 text-white rounded-br-sm'
-                      : 'bg-white text-gray-900 border-2 border-emerald-500 rounded-bl-sm'
+                      : 'bg-white text-gray-900 border-2 border-gray-200 border-l-8 border-l-green-600 rounded-bl-sm'
                   }`}
                 >
                   {msg.content}
@@ -189,7 +189,7 @@ export default function AskCompanionTab({ onBack }: Props) {
         {loading && (
           <div className="flex justify-start items-start gap-2">
             <span className="text-base mt-2 shrink-0">⛳</span>
-            <div className="bg-white border-2 border-emerald-500 rounded-2xl rounded-bl-sm px-4 py-3">
+            <div className="bg-white border-2 border-gray-200 border-l-8 border-l-green-600 rounded-2xl rounded-bl-sm px-4 py-3">
               <div className="flex gap-1">
                 <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                 <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />

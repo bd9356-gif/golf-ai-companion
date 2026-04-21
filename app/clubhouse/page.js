@@ -22,11 +22,9 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
-// Per-section accent. The left border stripe on each tile picks up this
-// color so the Clubhouse reads as a color-coded map into the rest of the
-// app. Colors mirror the feature pages: Golf TV = green, Guides = purple,
-// MyBag = amber (matches The Starter), Home Courses = orange, Club Pro =
-// emerald.
+// Unified tile design: a thin gray ring with a thick green left stripe.
+// Every destination reads as "part of the same app" instead of a rainbow
+// of per-section colors. Green is the brand color throughout.
 const JOURNEY_SECTIONS = [
   {
     icon: '📺',
@@ -34,8 +32,6 @@ const JOURNEY_SECTIONS = [
     subtitle: 'Watch & learn',
     href: '/golf-tv',
     description: 'Every lesson, one tap away.',
-    stripe: 'border-l-green-500',
-    hoverBorder: 'hover:border-green-300',
   },
   {
     icon: '📖',
@@ -43,8 +39,6 @@ const JOURNEY_SECTIONS = [
     subtitle: 'The Playbook',
     href: '/guides',
     description: 'Read smart. Play smarter.',
-    stripe: 'border-l-purple-500',
-    hoverBorder: 'hover:border-purple-300',
   },
   {
     icon: '🏌️',
@@ -52,8 +46,6 @@ const JOURNEY_SECTIONS = [
     subtitle: 'MyBag',
     href: '/bag',
     description: 'Your saves, sorted and ready.',
-    stripe: 'border-l-yellow-500',
-    hoverBorder: 'hover:border-yellow-300',
   },
   {
     icon: '🏠',
@@ -61,8 +53,6 @@ const JOURNEY_SECTIONS = [
     subtitle: 'MyCourses',
     href: '/home-courses',
     description: 'Notes, tips, tee times.',
-    stripe: 'border-l-orange-500',
-    hoverBorder: 'hover:border-orange-300',
   },
 ]
 
@@ -73,10 +63,12 @@ const PROSHOP_SECTIONS = [
     subtitle: 'Your AI coach',
     href: '/club-pro',
     description: 'Ask anything. Get clear answers.',
-    stripe: 'border-l-emerald-500',
-    hoverBorder: 'hover:border-emerald-300',
   },
 ]
+
+// Shared tile styling — green left edge, subtle gray ring, green hover.
+const TILE_CLASSES =
+  'block p-4 rounded-2xl border-2 border-gray-200 border-l-8 border-l-green-600 hover:border-green-300 hover:shadow-sm transition-all bg-white'
 
 function getGreeting() {
   const h = new Date().getHours()
@@ -146,11 +138,7 @@ export default function ClubhousePage() {
         <h3 className="text-xs font-bold tracking-wider text-gray-600 uppercase px-1 mb-2.5">Your Golf Journey</h3>
         <div className="space-y-2.5">
           {JOURNEY_SECTIONS.map((section) => (
-            <a
-              key={section.title}
-              href={section.href}
-              className={`block p-4 rounded-2xl border-2 border-gray-200 border-l-8 ${section.stripe} ${section.hoverBorder} hover:shadow-sm transition-all bg-white`}
-            >
+            <a key={section.title} href={section.href} className={TILE_CLASSES}>
               <div className="flex items-center gap-3">
                 <span className="text-2xl shrink-0">{section.icon}</span>
                 <div className="flex-1 min-w-0">
@@ -170,11 +158,7 @@ export default function ClubhousePage() {
         <h3 className="text-xs font-bold tracking-wider text-gray-600 uppercase px-1 mt-5 sm:mt-7 mb-2.5">🤖 AI ProShop</h3>
         <div className="space-y-2.5">
           {PROSHOP_SECTIONS.map((section) => (
-            <a
-              key={section.title}
-              href={section.href}
-              className={`block p-4 rounded-2xl border-2 border-gray-200 border-l-8 ${section.stripe} ${section.hoverBorder} hover:shadow-sm transition-all bg-white`}
-            >
+            <a key={section.title} href={section.href} className={TILE_CLASSES}>
               <div className="flex items-center gap-3">
                 <span className="text-2xl shrink-0">{section.icon}</span>
                 <div className="flex-1 min-w-0">
