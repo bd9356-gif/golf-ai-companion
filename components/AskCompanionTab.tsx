@@ -131,13 +131,13 @@ export default function AskCompanionTab({ onBack }: Props) {
         </div>
       )}
 
-      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain space-y-4 pb-4">
+      <div className={`${hasMessages ? 'flex-1 min-h-0 overflow-y-auto overscroll-contain' : ''} space-y-3 pb-3`}>
         {!hasMessages && (
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div className="text-center">
-              <h2 className="text-xl font-bold text-gray-900">What do you want to work on?</h2>
-              <p className="text-sm text-gray-500 mt-1">
-                Pick a question below or ask your own — personal AI guidance, right from your Club Pro.
+              <h2 className="text-lg font-bold text-gray-900">What do you want to work on?</h2>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Pick one below or ask your own.
               </p>
             </div>
             <div className="space-y-2">
@@ -145,7 +145,7 @@ export default function AskCompanionTab({ onBack }: Props) {
                 <button
                   key={q}
                   onClick={() => sendMessage(q)}
-                  className="w-full text-left px-4 py-3 bg-white hover:bg-green-50 border border-gray-200 hover:border-green-300 rounded-xl text-sm text-gray-800 transition-all hover:shadow-sm"
+                  className="w-full text-left px-4 py-2.5 bg-white hover:bg-emerald-50 border-2 border-emerald-500 hover:border-emerald-600 rounded-xl text-sm text-gray-800 transition-all hover:shadow-sm"
                 >
                   {q}
                 </button>

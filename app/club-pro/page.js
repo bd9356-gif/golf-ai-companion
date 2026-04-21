@@ -31,7 +31,7 @@ export default function ClubProPage() {
         </div>
       </header>
 
-      <main className="flex-1 min-h-0 max-w-3xl mx-auto w-full px-4 pt-4 pb-6 flex flex-col">
+      <main className="flex-1 min-h-0 max-w-3xl mx-auto w-full px-4 pt-3 pb-4 flex flex-col">
         <AskCompanionTab />
       </main>
     </div>
