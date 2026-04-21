@@ -40,7 +40,7 @@ Canonical names — use them exactly:
 | Home Courses      | `/home-courses`  | Saved courses (notes, phone, tee-time link).                   |
 | Ask the Club Pro  | `/club-pro`      | AI chat for personal guidance.                                 |
 
-Other routes: `/login`, `/signup`, `/profile`, `/about`, `/auth/callback`, `/auth/confirm`, `/admin/starter`, `/admin/featured`.
+Other routes: `/login`, `/profile`, `/about`, `/auth/callback`, `/auth/confirm`, `/admin/starter`, `/admin/featured`.
 
 The brand line in the header is **MyGolf Companion** with tagline "Your AI guide to better golf".
 
@@ -152,20 +152,18 @@ Legacy manual-run scripts live in the repo root / historical paths. Current pref
 
 ## Authentication
 
-Two ways to sign in, both on `/login`:
+Two ways to sign in, both on `/login` (mirrors the Recipe site — no password, no separate signup page):
 
-- **Email + password** — `supabase.auth.signInWithPassword({ email, password })`.
+- **Email magic-link** — `supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: '<origin>/auth/callback' } })`. Primary button ("Email me a sign-in link"). After submit the form swaps to a "📬 Check your email" confirmation panel with a "Use a different email" escape hatch.
 - **Continue with Google** — `supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: '<origin>/auth/callback' } })`.
 
-Signup on `/signup` uses `supabase.auth.signUp({ email, password, options: { emailRedirectTo: '<origin>/clubhouse' } })`, which sends a confirmation email the user must click to finish.
+Both flows land on `app/auth/callback/` → `app/auth/confirm/` → `/clubhouse`. First-time magic-link sign-in creates the account automatically, so there's no `/signup` route and no password field anywhere.
 
-Both flows land on `app/auth/callback/` → `app/auth/confirm/` → `/clubhouse`. No magic-link (OTP) flow is wired in — if/when that's added, it'll also use the same SMTP.
+### SMTP for magic-link deliverability (Resend)
 
-### SMTP for signup/password-reset deliverability (Resend)
+Supabase's default SMTP is rate-limited and gets spam-flagged by Hotmail/Outlook. This project uses the same Resend setup already wired up on the Recipe site — same Resend account, same verified domain `mycompanionapps.com`, just pointed at this Supabase project.
 
-Supabase's default SMTP is rate-limited and gets spam-flagged by Hotmail/Outlook. This project should use the same Resend setup already wired up on the Recipe site — same Resend account, same verified domain `mycompanionapps.com`, just pointed at this Supabase project.
-
-Only two Supabase emails currently go through this SMTP: **signup confirmation** and **password reset**. There's no magic-link flow today.
+The magic-link email (and any future password-reset / admin invite emails) goes through this SMTP.
 
 - **Provider:** Resend — domain `mycompanionapps.com` already verified (SPF/DKIM/DMARC live on the domain DNS).
 - **Supabase → this project → Authentication → SMTP Settings:** host `smtp.resend.com`, port `465`, username `resend`, password = Resend API key. Sender `noreply@mycompanionapps.com`, display name **MyGolf Companion** (so recipients can tell it apart from the Recipe site).
