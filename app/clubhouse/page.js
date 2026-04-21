@@ -122,75 +122,70 @@ export default function ClubhousePage() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-5">
-        {/* Daily rotating course image — shorter on phone, grows on wider
-            screens. h-36 (144px) on mobile, h-48 (192px) on sm, h-56
-            (224px) on md. Keeps the hero visible without pushing tiles
-            below the fold. */}
-        <div className="relative w-full rounded-2xl overflow-hidden mb-5 h-36 sm:h-48 md:h-56">
+      <main className="max-w-4xl mx-auto px-4 py-3 sm:py-5">
+        {/* Daily rotating course image — compact on phone (h-24 = 96px) so
+            the five tiles below fit a single iPhone viewport. Grows on
+            wider screens where vertical space isn't the bottleneck. */}
+        <div className="relative w-full rounded-2xl overflow-hidden mb-3 sm:mb-5 h-24 sm:h-40 md:h-52">
           <img src={daily.url} alt={daily.name} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-black/45 rounded-2xl" />
           <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
-            <p className="text-green-100 text-xs sm:text-sm font-semibold tracking-wide uppercase">{greeting}, golfer</p>
-            <h2 className="text-2xl sm:text-3xl font-bold text-white mt-1 drop-shadow">
+            <p className="text-green-100 text-[10px] sm:text-sm font-semibold tracking-wide uppercase leading-tight">{greeting}, golfer</p>
+            <h2 className="text-xl sm:text-3xl font-bold text-white drop-shadow leading-tight">
               MyClubhouse
             </h2>
-            <p className="text-green-200 text-xs sm:text-sm mt-1">
+            <p className="hidden sm:block text-green-200 text-xs sm:text-sm mt-1">
               Your home club — where your golf journey begins.
             </p>
           </div>
-          <div className="absolute bottom-2 right-3">
+          <div className="absolute bottom-1 right-2 sm:bottom-2 sm:right-3">
             <span className="text-white/50 text-[10px] sm:text-xs">{daily.name}</span>
           </div>
         </div>
 
         {/* Your Golf Journey */}
-        <div className="mb-3">
-          <h3 className="text-xs font-bold tracking-wider text-gray-500 uppercase px-1">Your Golf Journey</h3>
-        </div>
-        <div className="space-y-2.5">
+        <h3 className="text-[10px] sm:text-xs font-bold tracking-wider text-gray-500 uppercase px-1 mb-2">Your Golf Journey</h3>
+        <div className="space-y-2">
           {JOURNEY_SECTIONS.map((section) => (
             <a
               key={section.title}
               href={section.href}
-              className={`block p-4 rounded-2xl border border-gray-200 border-l-8 ${section.stripe} ${section.hoverBorder} hover:shadow-sm transition-all bg-white`}
+              className={`block p-3 sm:p-4 rounded-2xl border border-gray-200 border-l-8 ${section.stripe} ${section.hoverBorder} hover:shadow-sm transition-all bg-white`}
             >
-              <div className="flex items-start gap-3">
-                <span className="text-2xl">{section.icon}</span>
+              <div className="flex items-center gap-3">
+                <span className="text-xl sm:text-2xl shrink-0">{section.icon}</span>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="font-bold text-base text-gray-900">{section.title}</h3>
-                    <span className="text-xs text-green-700 font-semibold">— {section.subtitle}</span>
+                  <div className="flex items-baseline gap-2 flex-wrap">
+                    <h3 className="font-bold text-sm sm:text-base text-gray-900">{section.title}</h3>
+                    <span className="text-[11px] sm:text-xs text-green-700 font-semibold">— {section.subtitle}</span>
                   </div>
-                  <p className="text-sm mt-0.5 leading-relaxed text-gray-500">{section.description}</p>
+                  <p className="hidden sm:block text-sm mt-0.5 leading-relaxed text-gray-500">{section.description}</p>
                 </div>
-                <span className="text-gray-400 shrink-0 mt-1">→</span>
+                <span className="text-gray-400 shrink-0">→</span>
               </div>
             </a>
           ))}
         </div>
 
         {/* AI ProShop */}
-        <div className="mb-3 mt-7">
-          <h3 className="text-xs font-bold tracking-wider text-gray-500 uppercase px-1">🤖 AI ProShop</h3>
-        </div>
-        <div className="space-y-2.5">
+        <h3 className="text-[10px] sm:text-xs font-bold tracking-wider text-gray-500 uppercase px-1 mt-4 sm:mt-7 mb-2">🤖 AI ProShop</h3>
+        <div className="space-y-2">
           {PROSHOP_SECTIONS.map((section) => (
             <a
               key={section.title}
               href={section.href}
-              className={`block p-4 rounded-2xl border border-gray-200 border-l-8 ${section.stripe} ${section.hoverBorder} hover:shadow-sm transition-all bg-white`}
+              className={`block p-3 sm:p-4 rounded-2xl border border-gray-200 border-l-8 ${section.stripe} ${section.hoverBorder} hover:shadow-sm transition-all bg-white`}
             >
-              <div className="flex items-start gap-3">
-                <span className="text-2xl">{section.icon}</span>
+              <div className="flex items-center gap-3">
+                <span className="text-xl sm:text-2xl shrink-0">{section.icon}</span>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="font-bold text-base text-gray-900">{section.title}</h3>
-                    <span className="text-xs text-green-700 font-semibold">— {section.subtitle}</span>
+                  <div className="flex items-baseline gap-2 flex-wrap">
+                    <h3 className="font-bold text-sm sm:text-base text-gray-900">{section.title}</h3>
+                    <span className="text-[11px] sm:text-xs text-green-700 font-semibold">— {section.subtitle}</span>
                   </div>
-                  <p className="text-sm mt-0.5 leading-relaxed text-gray-500">{section.description}</p>
+                  <p className="hidden sm:block text-sm mt-0.5 leading-relaxed text-gray-500">{section.description}</p>
                 </div>
-                <span className="text-gray-400 shrink-0 mt-1">→</span>
+                <span className="text-gray-400 shrink-0">→</span>
               </div>
             </a>
           ))}
