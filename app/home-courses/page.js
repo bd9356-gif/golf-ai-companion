@@ -241,20 +241,20 @@ export default function CoursesPage() {
                     {course.notes && (
                       <p className="text-sm text-gray-600 mt-3 leading-relaxed whitespace-pre-wrap">{course.notes}</p>
                     )}
-                  </div>
 
-                  <div className="flex flex-col gap-3 items-end shrink-0">
                     {course.tee_time_url && (
                       <a
                         href={course.tee_time_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-sm text-green-700 font-semibold hover:text-green-900"
-                        title="Book a tee time"
+                        className="inline-flex items-center gap-1 ml-4 mt-3 text-sm text-green-700 font-semibold hover:text-green-900"
                       >
                         🕐 Book Tee Time →
                       </a>
                     )}
+                  </div>
+
+                  <div className="flex flex-col gap-3 items-end shrink-0">
                     <button onClick={() => startEdit(course)} className="text-sm font-medium text-gray-500 hover:text-gray-700">Edit</button>
                     <button onClick={() => deleteCourse(course.id)} className="text-sm font-medium text-red-400 hover:text-red-600">Delete</button>
                   </div>
