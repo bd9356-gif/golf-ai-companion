@@ -116,19 +116,16 @@ export default function CoursesPage() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-5">
-        <div className="text-center px-2 mb-5">
+        <div className="text-center px-2 mb-4">
           <p className="text-sm font-semibold text-gray-700 leading-snug">
             Your home courses, always within reach.
           </p>
           <p className="text-xs text-gray-500 leading-snug mt-0.5">
             Save favorite courses with notes, phone numbers, and tee time links — ready the next time you play.
           </p>
-        </div>
-
-        <div className="mb-5 flex justify-end">
           <button
             onClick={() => { setShowForm(true); setEditingId(null); setForm({ name: '', notes: '', tee_time_url: '', phone: '' }) }}
-            className="text-sm font-semibold text-green-700 border-2 border-green-700 rounded-xl px-4 py-2 hover:bg-green-50 transition-colors"
+            className="mt-2 text-xs font-semibold text-green-700 hover:text-green-900 hover:underline"
           >
             + Add Course
           </button>
