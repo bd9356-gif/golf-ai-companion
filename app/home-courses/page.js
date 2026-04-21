@@ -206,7 +206,7 @@ export default function CoursesPage() {
             {Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-28 bg-gray-100 rounded-xl animate-pulse" />)}
           </div>
         ) : courses.length === 0 ? (
-          <div className="text-center py-16 border border-dashed border-gray-200 rounded-xl">
+          <div className="text-center py-12 px-4 rounded-2xl border-2 border-gray-200 border-l-8 border-l-green-600 bg-white hover:border-green-300 hover:shadow-sm transition-all">
             <p className="text-3xl mb-2">🏌️</p>
             <p className="text-gray-500 font-medium">No courses saved yet</p>
             <p className="text-sm text-gray-400 mt-1">Add your favorite courses to keep notes and tee time links handy</p>
@@ -215,7 +215,7 @@ export default function CoursesPage() {
         ) : (
           <div className="space-y-4">
             {courses.map(course => (
-              <div key={course.id} className="border-2 border-gray-200 border-l-8 border-l-green-600 rounded-2xl p-5 hover:border-green-300 hover:shadow-sm transition-all bg-white">
+              <div key={course.id} className="p-5 rounded-2xl border-2 border-gray-200 border-l-8 border-l-green-600 bg-white hover:border-green-300 hover:bg-green-50 hover:shadow-sm transition-all">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1">
                     <h3
