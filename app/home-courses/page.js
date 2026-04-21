@@ -116,6 +116,15 @@ export default function CoursesPage() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-5">
+        <div className="text-center px-2 mb-5">
+          <p className="text-sm font-semibold text-gray-700 leading-snug">
+            Your home courses, always within reach.
+          </p>
+          <p className="text-xs text-gray-500 leading-snug mt-0.5">
+            Save favorite courses with notes, phone numbers, and tee time links — ready the next time you play.
+          </p>
+        </div>
+
         <div className="mb-5 flex justify-end">
           <button
             onClick={() => { setShowForm(true); setEditingId(null); setForm({ name: '', notes: '', tee_time_url: '', phone: '' }) }}
@@ -232,20 +241,20 @@ export default function CoursesPage() {
                     {course.notes && (
                       <p className="text-sm text-gray-600 mt-3 leading-relaxed whitespace-pre-wrap">{course.notes}</p>
                     )}
+                  </div>
 
+                  <div className="flex flex-col gap-3 items-end shrink-0">
                     {course.tee_time_url && (
                       <a
                         href={course.tee_time_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 mt-6 text-sm text-green-700 font-semibold hover:text-green-900"
+                        className="inline-flex items-center gap-1 text-sm text-green-700 font-semibold hover:text-green-900"
+                        title="Book a tee time"
                       >
                         🕐 Book Tee Time →
                       </a>
                     )}
-                  </div>
-
-                  <div className="flex flex-col gap-3 items-end shrink-0">
                     <button onClick={() => startEdit(course)} className="text-sm font-medium text-gray-500 hover:text-gray-700">Edit</button>
                     <button onClick={() => deleteCourse(course.id)} className="text-sm font-medium text-red-400 hover:text-red-600">Delete</button>
                   </div>
