@@ -31,9 +31,9 @@ const JOURNEY_SECTIONS = [
   {
     icon: '📺',
     title: 'Golf TV',
-    subtitle: 'Build your plan',
+    subtitle: 'Watch & learn',
     href: '/golf-tv',
-    description: 'Your central hub for golf instruction — explore every lesson and shape your journey.',
+    description: 'Every lesson, one tap away.',
     stripe: 'border-l-green-500',
     hoverBorder: 'hover:border-green-300',
   },
@@ -42,7 +42,7 @@ const JOURNEY_SECTIONS = [
     title: 'Guides',
     subtitle: 'The Playbook',
     href: '/guides',
-    description: 'AI-crafted golf articles that help you understand, improve, and play smarter.',
+    description: 'Read smart. Play smarter.',
     stripe: 'border-l-purple-500',
     hoverBorder: 'hover:border-purple-300',
   },
@@ -51,16 +51,16 @@ const JOURNEY_SECTIONS = [
     title: 'Your Golf Bag',
     subtitle: 'MyBag',
     href: '/bag',
-    description: 'Sort your saves into skills and add key items to your golf cart for your plan.',
+    description: 'Your saves, sorted and ready.',
     stripe: 'border-l-yellow-500',
     hoverBorder: 'hover:border-yellow-300',
   },
   {
     icon: '🏠',
-    title: 'Your Home Courses',
+    title: 'Home Courses',
     subtitle: 'MyCourses',
     href: '/home-courses',
-    description: 'Save your favorite courses — notes, tips, and tee time links all in one place.',
+    description: 'Notes, tips, tee times.',
     stripe: 'border-l-orange-500',
     hoverBorder: 'hover:border-orange-300',
   },
@@ -70,9 +70,9 @@ const PROSHOP_SECTIONS = [
   {
     icon: '🎓',
     title: 'Ask the Club Pro',
-    subtitle: 'Personal AI guidance',
+    subtitle: 'Your AI coach',
     href: '/club-pro',
-    description: 'Personal AI guidance for your game — step inside and talk with your club pro.',
+    description: 'Ask anything. Get clear answers.',
     stripe: 'border-l-emerald-500',
     hoverBorder: 'hover:border-emerald-300',
   },
@@ -159,7 +159,7 @@ export default function ClubhousePage() {
                     <h3 className="font-bold text-sm sm:text-base text-gray-900">{section.title}</h3>
                     <span className="text-[11px] sm:text-xs text-green-700 font-semibold">— {section.subtitle}</span>
                   </div>
-                  <p className="hidden sm:block text-sm mt-0.5 leading-relaxed text-gray-500">{section.description}</p>
+                  <p className="text-xs sm:text-sm mt-0.5 leading-snug text-gray-500 truncate">{section.description}</p>
                 </div>
                 <span className="text-gray-400 shrink-0">→</span>
               </div>
@@ -183,7 +183,7 @@ export default function ClubhousePage() {
                     <h3 className="font-bold text-sm sm:text-base text-gray-900">{section.title}</h3>
                     <span className="text-[11px] sm:text-xs text-green-700 font-semibold">— {section.subtitle}</span>
                   </div>
-                  <p className="hidden sm:block text-sm mt-0.5 leading-relaxed text-gray-500">{section.description}</p>
+                  <p className="text-xs sm:text-sm mt-0.5 leading-snug text-gray-500 truncate">{section.description}</p>
                 </div>
                 <span className="text-gray-400 shrink-0">→</span>
               </div>
