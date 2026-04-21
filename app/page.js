@@ -1,6 +1,52 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+)
+
+/* ─────────────────────────────────────────────────────────────
+   TESTER BANNER — edit message/link here, redeploy.
+   Bump BANNER.version to force-redisplay to users who dismissed.
+   Set BANNER.enabled to false to hide entirely.
+   ─────────────────────────────────────────────────────────── */
+const BANNER = {
+  enabled: false,
+  version: 'v1',
+  message: "Welcome, testers — here's what's new and what to try.",
+  linkHref: '/notes',
+  linkLabel: 'Tester notes →',
+}
+
+const FEATURES = [
+  {
+    emoji: '📺',
+    title: 'Golf TV',
+    blurb: 'Instructional videos, filtered and ready when you are.',
+  },
+  {
+    emoji: '📖',
+    title: 'Guides',
+    blurb: 'AI-crafted articles to read smart and play smarter.',
+  },
+  {
+    emoji: '🏌️',
+    title: 'Your Golf Bag',
+    blurb: 'Your saves, sorted into five skill buckets.',
+  },
+  {
+    emoji: '🏠',
+    title: 'Home Courses',
+    blurb: 'Notes, phone numbers, and tee-time links for your favorite courses.',
+  },
+  {
+    emoji: '🎓',
+    title: 'Ask the Club Pro',
+    blurb: "An AI coach who's always ready with a clear answer.",
+  },
+]
 
 const COURSE_IMAGES = [
   { url: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=800&q=80&fit=crop', name: 'Morning Round' },
@@ -17,130 +63,158 @@ function getDailyImage() {
   return COURSE_IMAGES[dayOfYear % COURSE_IMAGES.length]
 }
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
-
-const STATS = [
-  { stat: '767', label: 'Instruction Videos' },
-  { stat: '6', label: 'Skill Levels' },
-  { stat: '40+', label: 'Expert Guides' },
-  { stat: 'AI', label: 'Personalized Plans' },
-]
+function firstNameFromUser(user) {
+  if (!user) return null
+  const full = user.user_metadata?.full_name || user.user_metadata?.name
+  if (full) return String(full).split(' ')[0]
+  if (user.email) return user.email.split('@')[0]
+  return null
+}
 
 export default function HomePage() {
   const [user, setUser] = useState(null)
+  const [bannerVisible, setBannerVisible] = useState(false)
 
   useEffect(() => {
+    if (window.location.hash && window.location.hash.includes('access_token')) {
+      supabase.auth.getSession()
+      window.history.replaceState({}, document.title, window.location.pathname)
+    }
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) setUser(session.user)
     })
+
+    if (BANNER.enabled && typeof window !== 'undefined') {
+      const flagKey = `golf_ai_banner_dismissed_${BANNER.version}`
+      if (!localStorage.getItem(flagKey)) {
+        // Reading persisted dismissal from localStorage must happen after
+        // mount (SSR has no window), so setState-in-effect is intentional.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setBannerVisible(true)
+      }
+    }
   }, [])
 
-  const userName = user?.user_metadata?.full_name?.split(' ')[0] || null
+  function dismissBanner() {
+    setBannerVisible(false)
+    try {
+      localStorage.setItem(`golf_ai_banner_dismissed_${BANNER.version}`, '1')
+    } catch {}
+  }
+
+  const userName = firstNameFromUser(user)
+  const image = getDailyImage()
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen bg-amber-50 flex flex-col">
 
       {/* Header */}
-      <header className="bg-green-800 px-4 py-4">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
+      <header className="bg-white border-b border-stone-200">
+        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-2xl">⛳</span>
-            <span className="text-green-100 text-lg font-semibold">MyGolf Companion</span>
+            <span className="text-stone-900 text-lg font-bold tracking-tight">MyGolf Companion</span>
           </div>
           {user ? (
-            <a href="/clubhouse" className="text-green-200 text-sm border border-green-600 rounded-xl px-4 py-1.5 hover:bg-green-700 transition-colors">
+            <a href="/clubhouse" className="text-stone-800 text-sm font-medium border border-stone-300 bg-white rounded-full px-3 py-1 hover:bg-stone-100 transition-colors">
               MyClubhouse →
             </a>
           ) : (
-            <a href="/login" className="text-green-200 text-sm border border-green-600 rounded-xl px-4 py-1.5 hover:bg-green-700 transition-colors">
-              Sign In
+            <a href="/login" className="text-stone-700 text-sm font-medium border border-stone-300 rounded-full px-3 py-1 hover:bg-stone-100 transition-colors">
+              Sign in
             </a>
           )}
         </div>
       </header>
 
-      {/* Hero */}
-      <main className="flex-1 max-w-lg mx-auto w-full px-6 pt-2 pb-12 flex flex-col items-center text-center">
+      {/* Main */}
+      <main className="flex-1 max-w-2xl mx-auto w-full px-5 pt-2 pb-6 flex flex-col">
 
-        {/* Hero image with text overlay */}
-        <div className="w-full rounded-2xl overflow-hidden mb-6 relative" style={{height: '240px'}}>
-          <img
-            src="https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=800&q=80&fit=crop"
-            alt="Golf course"
-            className="w-full h-full object-cover"
-          />
-          {/* Dark overlay for text readability */}
-          <div className="absolute inset-0 bg-black/40 rounded-2xl" />
-          {/* Text on top of image */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
-            {userName ? (
-              <>
-                <h1 className="text-2xl font-bold text-white mb-1 leading-tight drop-shadow">
-                  Welcome back, {userName}!
-                </h1>
-                <p className="text-green-200 text-sm leading-relaxed drop-shadow">
-                  Your ClubHouse is ready — let's play.
-                </p>
-              </>
-            ) : (
-              <>
-                <h1 className="text-2xl font-bold text-white mb-1 leading-tight drop-shadow">
-                  Welcome to MyGolf Companion
-                </h1>
-                <p className="text-green-200 text-sm leading-relaxed drop-shadow">
-                  Your ClubHouse is waiting. 767 videos matched to your game.
-                </p>
-              </>
-            )}
+        {/* Tester banner (dismissible) */}
+        {BANNER.enabled && bannerVisible && (
+          <div className="mb-3 bg-stone-900 text-white rounded-xl px-3 py-2 flex items-center gap-2 shadow-sm">
+            <span className="text-sm leading-snug flex-1 min-w-0">
+              {BANNER.message}{' '}
+              <a
+                href={BANNER.linkHref}
+                className="underline font-semibold whitespace-nowrap"
+              >
+                {BANNER.linkLabel}
+              </a>
+            </span>
+            <button
+              type="button"
+              onClick={dismissBanner}
+              aria-label="Dismiss"
+              className="text-stone-400 hover:text-white text-lg leading-none px-1 shrink-0"
+            >
+              ×
+            </button>
           </div>
-        </div>
-
-        {/* Primary CTA */}
-        <a
-          href={user ? '/clubhouse' : '/login'}
-          className="w-full py-4 bg-green-700 text-white rounded-2xl text-lg font-semibold hover:bg-green-800 transition-colors text-center block mb-3"
-        >
-          ⛳ Drive to MyClubhouse
-        </a>
-
-        {!user && (
-          <p className="text-sm text-gray-400">
-            Sign in or create a free account to get started
-          </p>
         )}
 
-        {/* Stats — scorecard style */}
-        <div className="w-full mt-8 border border-gray-200 rounded-2xl overflow-hidden">
-          <div className="bg-green-800 px-4 py-2">
-            <p className="text-green-200 text-xs font-semibold tracking-wider text-center uppercase">Course Card</p>
+        {/* Entry box: hero image + CTA wrapped as one unit */}
+        <div className="bg-white border border-stone-200 rounded-3xl overflow-hidden shadow-sm mb-5">
+          <div className="w-full relative" style={{ height: '150px' }}>
+            <img src={image.url} alt={image.name} className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-stone-900/85 via-stone-900/35 to-stone-900/10" />
+            <div className="absolute inset-0 flex flex-col items-center justify-center px-5 text-center">
+              {userName ? (
+                <>
+                  <h1 className="text-xl font-bold text-white drop-shadow leading-tight">
+                    Welcome back, {userName}.
+                  </h1>
+                  <p className="text-stone-100 text-xs drop-shadow mt-0.5">
+                    Your clubhouse is right where you left it.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h1 className="text-xl font-bold text-white drop-shadow leading-tight">
+                    Play smarter golf.
+                  </h1>
+                  <p className="text-stone-100 text-xs drop-shadow mt-0.5">
+                    Lessons, guides, and an AI coach — all in one clubhouse.
+                  </p>
+                </>
+              )}
+            </div>
           </div>
-          <div className="grid grid-cols-2">
-            {STATS.map(({ stat, label }, i) => (
+          <a
+            href={user ? '/clubhouse' : '/login'}
+            className="block w-full py-3.5 bg-stone-800 text-white text-center text-base font-semibold hover:bg-stone-900 transition-colors"
+          >
+            {user ? 'Enter your clubhouse →' : 'Get started →'}
+          </a>
+        </div>
+
+        {/* Feature tiles */}
+        <section>
+          <p className="text-[11px] text-stone-500 uppercase tracking-[0.15em] font-semibold text-center mb-2.5">
+            What's inside
+          </p>
+          <div className="grid gap-2">
+            {FEATURES.map(({ emoji, title, blurb }) => (
               <div
-                key={label}
-                className={`p-5 text-center ${
-                  i % 2 === 0 ? 'border-r border-gray-200' : ''
-                } ${i >= 2 ? 'border-t border-gray-200' : ''}`}
+                key={title}
+                className="bg-white border border-stone-200 rounded-xl px-3.5 py-2.5 flex items-start gap-3"
               >
-                <p className="text-2xl font-bold text-green-700">{stat}</p>
-                <p className="text-xs text-gray-500 mt-1">{label}</p>
+                <span className="text-lg leading-none shrink-0 mt-0.5">{emoji}</span>
+                <div className="text-left min-w-0 flex-1">
+                  <p className="text-stone-800 font-semibold text-sm leading-tight">{title}</p>
+                  <p className="text-stone-600 text-xs leading-snug mt-0.5">{blurb}</p>
+                </div>
               </div>
             ))}
           </div>
-        </div>
+        </section>
 
-        {/* About link */}
-        <a href="/about" className="mt-8 text-sm text-gray-400 hover:text-gray-600">
-          About MyGolf Companion →
-        </a>
-
-        {/* Deploy check — bump on each push to confirm prod is live */}
-        <p className="mt-3 text-[11px] text-gray-300">
-          Build: Apr 20, 2026 · v1
-        </p>
+        {/* Footer */}
+        <footer className="mt-5 text-center">
+          <a href="/about" className="text-[11px] text-stone-500 hover:text-stone-800 transition-colors">
+            About MyGolf Companion
+          </a>
+        </footer>
 
       </main>
     </div>
