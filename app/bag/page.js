@@ -278,10 +278,23 @@ export default function BagPage() {
     }).select().single()
     if (!error && data) {
       setCartItems(prev => [data, ...prev])
-      // Auto-open the Plan panel so the user sees the item they just added,
-      // already expanded at the top, ready to watch/read.
-      setShowCart(true)
+      // Note: we intentionally do NOT auto-open the Plan panel on add.
+      // Auto-opening caused a visible scroll jump mid-page. The count
+      // badge on the 🛺 My Plan button in the header is the feedback.
     }
+  }
+
+  // Clicking the 🛺 My Plan button: open/close the plan panel AND
+  // smooth-scroll to top so the panel is in view (not hidden behind
+  // the skill you were in). When closing, no scroll.
+  function toggleCartPanel() {
+    setShowCart(prev => {
+      const next = !prev
+      if (next && typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }
+      return next
+    })
   }
 
   async function removeFromCart(itemId, itemType) {
@@ -400,7 +413,7 @@ export default function BagPage() {
             </div>
           </div>
           <button
-            onClick={() => setShowCart(s => !s)}
+            onClick={toggleCartPanel}
             className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-xl border-2 transition-colors shrink-0 ${
               showCart ? 'border-yellow-400 bg-yellow-50 text-yellow-800' : 'border-gray-200 text-gray-600 hover:border-yellow-300'
             }`}
@@ -439,9 +452,10 @@ export default function BagPage() {
           </div>
         )}
 
-        <div className="mb-5">
-          <p className="text-sm text-gray-500">
-            New saves wait at The Starter until you move them into a skill.
+        <div className="mb-5 rounded-xl border-2 border-yellow-300 bg-yellow-50 px-4 py-3 flex items-start gap-3">
+          <span className="text-xl shrink-0">📥</span>
+          <p className="text-sm sm:text-base font-semibold text-yellow-900 leading-snug">
+            New saves wait at <span className="underline decoration-yellow-500 decoration-2 underline-offset-2">The Starter</span> until you move them into a skill.
           </p>
         </div>
 
@@ -486,9 +500,12 @@ export default function BagPage() {
           </div>
         )}
 
-        <p className="text-xs text-gray-400 text-center mt-8">
-          Tip: tap <span className="font-semibold">Move ▾</span> on any item to send it to another skill. Drag the ⋮⋮ handle to reorder items within a skill.
-        </p>
+        <div className="mt-8 rounded-xl border-2 border-green-200 bg-green-50 px-4 py-3 flex items-start gap-3">
+          <span className="text-xl shrink-0">💡</span>
+          <p className="text-sm sm:text-base font-semibold text-green-900 leading-snug">
+            Tip: tap <span className="underline decoration-green-500 decoration-2 underline-offset-2">Move ▾</span> on any item to send it to another skill. Drag the <span className="underline decoration-green-500 decoration-2 underline-offset-2">⋮⋮</span> handle to reorder items within a skill.
+          </p>
+        </div>
       </main>
 
       {practiceIdx !== null && cartItems[practiceIdx] && (
@@ -534,16 +551,21 @@ function Bucket(props) {
 
   return (
     <div className={`border-2 rounded-2xl bg-white transition-all ${color.outer} ${!collapsed ? `ring-2 ${color.ring}` : ''}`}>
-      <div className={`flex items-center gap-2 px-4 py-3 rounded-t-2xl ${color.headerBg} ${!collapsed ? `border-b ${color.headerBorder}` : 'rounded-b-2xl'}`}>
-        <button onClick={toggleCollapsed} className={`text-sm ${color.title} opacity-70 hover:opacity-100`}>
-          {collapsed ? '▶' : '▼'}
-        </button>
+      <button
+        type="button"
+        onClick={toggleCollapsed}
+        className={`w-full flex items-center gap-2 px-4 py-3 rounded-t-2xl text-left ${color.headerBg} ${!collapsed ? `border-b ${color.headerBorder}` : 'rounded-b-2xl'}`}
+        aria-expanded={!collapsed}
+      >
         <span className="text-xl">{meta.icon}</span>
         <h3 className={`flex-1 font-bold text-base ${color.title}`}>{labelFor(leaf.name)}</h3>
         <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${color.pill}`}>
           {items.length} item{items.length !== 1 ? 's' : ''}
         </span>
-      </div>
+        <span className={`text-base font-semibold ml-1 ${color.title} opacity-70`} aria-hidden="true">
+          {collapsed ? '▶' : '▼'}
+        </span>
+      </button>
 
       {!collapsed && (
         <div className={`p-3 rounded-b-2xl ${color.bodyBg}`}>

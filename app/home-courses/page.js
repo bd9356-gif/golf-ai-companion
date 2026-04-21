@@ -101,7 +101,7 @@ export default function CoursesPage() {
               <p className="text-xs text-green-700 font-semibold leading-tight">Notes, tips &amp; tee times</p>
             </div>
           </div>
-          <a href="/bag" className="text-sm text-gray-500 hover:text-gray-800 shrink-0" aria-label="Your Golf Bag">🏌️</a>
+          <a href="/bag" className="text-3xl shrink-0 hover:scale-110 transition-transform leading-none" aria-label="Your Golf Bag" title="Your Golf Bag">🏌️</a>
         </div>
       </header>
 

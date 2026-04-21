@@ -22,6 +22,11 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
+// Per-section accent. The left border stripe on each tile picks up this
+// color so the Clubhouse reads as a color-coded map into the rest of the
+// app. Colors mirror the feature pages: Golf TV = green, Guides = purple,
+// MyBag = amber (matches The Starter), Home Courses = orange, Club Pro =
+// emerald.
 const JOURNEY_SECTIONS = [
   {
     icon: '📺',
@@ -29,6 +34,8 @@ const JOURNEY_SECTIONS = [
     subtitle: 'Build your plan',
     href: '/golf-tv',
     description: 'Your central hub for golf instruction — explore every lesson and shape your journey.',
+    stripe: 'border-l-green-500',
+    hoverBorder: 'hover:border-green-300',
   },
   {
     icon: '📖',
@@ -36,6 +43,8 @@ const JOURNEY_SECTIONS = [
     subtitle: 'The Playbook',
     href: '/guides',
     description: 'AI-crafted golf articles that help you understand, improve, and play smarter.',
+    stripe: 'border-l-purple-500',
+    hoverBorder: 'hover:border-purple-300',
   },
   {
     icon: '🏌️',
@@ -43,13 +52,17 @@ const JOURNEY_SECTIONS = [
     subtitle: 'MyBag',
     href: '/bag',
     description: 'Sort your saves into skills and add key items to your golf cart for your plan.',
+    stripe: 'border-l-yellow-500',
+    hoverBorder: 'hover:border-yellow-300',
   },
   {
-    icon: '🏌️',
+    icon: '🏠',
     title: 'Your Home Courses',
     subtitle: 'MyCourses',
     href: '/home-courses',
     description: 'Save your favorite courses — notes, tips, and tee time links all in one place.',
+    stripe: 'border-l-orange-500',
+    hoverBorder: 'hover:border-orange-300',
   },
 ]
 
@@ -60,8 +73,17 @@ const PROSHOP_SECTIONS = [
     subtitle: 'Personal AI guidance',
     href: '/club-pro',
     description: 'Personal AI guidance for your game — step inside and talk with your club pro.',
+    stripe: 'border-l-emerald-500',
+    hoverBorder: 'hover:border-emerald-300',
   },
 ]
+
+function getGreeting() {
+  const h = new Date().getHours()
+  if (h < 12) return 'Good morning'
+  if (h < 17) return 'Good afternoon'
+  return 'Good evening'
+}
 
 export default function ClubhousePage() {
   useEffect(() => {
@@ -75,53 +97,68 @@ export default function ClubhousePage() {
     init()
   }, [])
 
+  const daily = getDailyImage()
+  const greeting = getGreeting()
+
   return (
     <div className="min-h-screen bg-white">
-      <header className="border-b border-gray-100 px-4 py-4">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">⛳ MyGolf Companion</h1>
-            <p className="text-sm text-gray-500">Your AI guide to better golf</p>
+      {/* Compact header — matches the Golf TV / MyBag pattern so the top bar
+          is the same height everywhere in the app. */}
+      <header className="border-b border-gray-100 bg-white sticky top-0 z-40">
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+          <span className="text-2xl shrink-0" aria-hidden="true">⛳</span>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-lg font-bold text-gray-900 truncate leading-tight">MyGolf Companion</h1>
+            <p className="text-xs text-green-700 font-semibold leading-tight">Your AI guide to better golf</p>
           </div>
-          <a href="/profile" className="text-sm text-gray-500 hover:text-gray-700">👤 Profile</a>
+          <a
+            href="/profile"
+            className="text-2xl shrink-0 hover:scale-110 transition-transform leading-none"
+            aria-label="Profile"
+            title="Profile"
+          >
+            👤
+          </a>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        {/* Daily rotating course image with text overlay */}
-        <div className="relative w-full rounded-2xl overflow-hidden mb-6" style={{height: '220px'}}>
-          <img src={getDailyImage().url} alt={getDailyImage().name} className="w-full h-full object-cover" />
+      <main className="max-w-4xl mx-auto px-4 py-5">
+        {/* Daily rotating course image — shorter on phone, grows on wider
+            screens. h-36 (144px) on mobile, h-48 (192px) on sm, h-56
+            (224px) on md. Keeps the hero visible without pushing tiles
+            below the fold. */}
+        <div className="relative w-full rounded-2xl overflow-hidden mb-5 h-36 sm:h-48 md:h-56">
+          <img src={daily.url} alt={daily.name} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-black/45 rounded-2xl" />
-          {/* Text overlaid on image */}
           <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
-            <h2 className="text-3xl font-bold text-white mb-1 drop-shadow">
+            <p className="text-green-100 text-xs sm:text-sm font-semibold tracking-wide uppercase">{greeting}, golfer</p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mt-1 drop-shadow">
               MyClubhouse
             </h2>
-            <p className="text-green-200 text-sm">
+            <p className="text-green-200 text-xs sm:text-sm mt-1">
               Your home club — where your golf journey begins.
             </p>
           </div>
-          {/* Course name watermark */}
           <div className="absolute bottom-2 right-3">
-            <span className="text-white/50 text-xs">{getDailyImage().name}</span>
+            <span className="text-white/50 text-[10px] sm:text-xs">{daily.name}</span>
           </div>
         </div>
 
         {/* Your Golf Journey */}
-        <div className="mb-4">
+        <div className="mb-3">
           <h3 className="text-xs font-bold tracking-wider text-gray-500 uppercase px-1">Your Golf Journey</h3>
         </div>
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           {JOURNEY_SECTIONS.map((section) => (
             <a
               key={section.title}
               href={section.href}
-              className="block p-5 rounded-2xl border border-gray-200 hover:border-green-300 hover:shadow-sm transition-all bg-white"
+              className={`block p-4 rounded-2xl border border-gray-200 border-l-8 ${section.stripe} ${section.hoverBorder} hover:shadow-sm transition-all bg-white`}
             >
               <div className="flex items-start gap-3">
                 <span className="text-2xl">{section.icon}</span>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="font-bold text-base text-gray-900">{section.title}</h3>
                     <span className="text-xs text-green-700 font-semibold">— {section.subtitle}</span>
                   </div>
@@ -134,20 +171,20 @@ export default function ClubhousePage() {
         </div>
 
         {/* AI ProShop */}
-        <div className="mb-4 mt-8">
+        <div className="mb-3 mt-7">
           <h3 className="text-xs font-bold tracking-wider text-gray-500 uppercase px-1">🤖 AI ProShop</h3>
         </div>
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           {PROSHOP_SECTIONS.map((section) => (
             <a
               key={section.title}
               href={section.href}
-              className="block p-5 rounded-2xl border border-gray-200 hover:border-green-300 hover:shadow-sm transition-all bg-white"
+              className={`block p-4 rounded-2xl border border-gray-200 border-l-8 ${section.stripe} ${section.hoverBorder} hover:shadow-sm transition-all bg-white`}
             >
               <div className="flex items-start gap-3">
                 <span className="text-2xl">{section.icon}</span>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="font-bold text-base text-gray-900">{section.title}</h3>
                     <span className="text-xs text-green-700 font-semibold">— {section.subtitle}</span>
                   </div>

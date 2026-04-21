@@ -22,8 +22,9 @@ export default function ClubProPage() {
           </div>
           <a
             href="/bag"
-            className="text-sm text-gray-500 hover:text-gray-800 shrink-0"
+            className="text-3xl shrink-0 hover:scale-110 transition-transform leading-none"
             aria-label="Your Golf Bag"
+            title="Your Golf Bag"
           >
             🏌️
           </a>

@@ -35,6 +35,21 @@ const TOPIC_ICONS = {
   'short game': '🎯',
 }
 
+// Per-topic color scheme. Each topic group gets its own left-edge stripe +
+// header background so the page reads at a glance. Matches the MyBag
+// per-skill palette where the topics line up (swing → green, short game →
+// orange, putting → sky, course management → purple). Mental game and
+// fitness pick up their own hues to stay distinct.
+const TOPIC_COLORS = {
+  swing:              { outer: 'border-green-300',  headerBg: 'bg-green-50',  title: 'text-green-900',  count: 'text-green-700',  bodyBg: 'bg-green-50/40'  },
+  'course management':{ outer: 'border-purple-300', headerBg: 'bg-purple-50', title: 'text-purple-900', count: 'text-purple-700', bodyBg: 'bg-purple-50/40' },
+  'mental game':      { outer: 'border-indigo-300', headerBg: 'bg-indigo-50', title: 'text-indigo-900', count: 'text-indigo-700', bodyBg: 'bg-indigo-50/40' },
+  fitness:            { outer: 'border-rose-300',   headerBg: 'bg-rose-50',   title: 'text-rose-900',   count: 'text-rose-700',   bodyBg: 'bg-rose-50/40'   },
+  putting:            { outer: 'border-sky-300',    headerBg: 'bg-sky-50',    title: 'text-sky-900',    count: 'text-sky-700',    bodyBg: 'bg-sky-50/40'    },
+  'short game':       { outer: 'border-orange-300', headerBg: 'bg-orange-50', title: 'text-orange-900', count: 'text-orange-700', bodyBg: 'bg-orange-50/40' },
+}
+const topicColor = (t) => TOPIC_COLORS[t] || { outer: 'border-gray-200', headerBg: 'bg-gray-50', title: 'text-gray-900', count: 'text-gray-500', bodyBg: 'bg-white' }
+
 function renderMarkdown(text) {
   return text
     .replace(/## (.+)/g, '<h2 class="text-xl font-bold text-gray-900 mt-6 mb-2">$1</h2>')
@@ -199,7 +214,7 @@ export default function ArticlesPage() {
               <p className="text-xs text-green-700 font-semibold leading-tight">AI-crafted, matched to your game</p>
             </div>
           </div>
-          <a href="/bag" className="text-sm text-gray-500 hover:text-gray-800 shrink-0" aria-label="Your Golf Bag">🏌️</a>
+          <a href="/bag" className="text-3xl shrink-0 hover:scale-110 transition-transform leading-none" aria-label="Your Golf Bag" title="Your Golf Bag">🏌️</a>
         </div>
       </header>
 
@@ -223,21 +238,23 @@ export default function ArticlesPage() {
           <div className="space-y-6">
             {grouped.map(([topic, items]) => {
               const isCollapsed = collapsedTopics.has(topic)
+              const c = topicColor(topic)
               return (
-                <section key={topic} className="border border-gray-200 rounded-2xl">
+                <section key={topic} className={`border-2 rounded-2xl ${c.outer}`}>
                   <button
                     onClick={() => toggleTopic(topic)}
-                    className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50 rounded-t-2xl"
+                    className={`w-full flex items-center justify-between px-4 py-3 text-left rounded-t-2xl ${c.headerBg} ${isCollapsed ? 'rounded-b-2xl' : ''}`}
+                    aria-expanded={!isCollapsed}
                   >
                     <div className="flex items-center gap-2">
                       <span className="text-lg">{TOPIC_ICONS[topic] ?? '📖'}</span>
-                      <span className="font-semibold text-gray-900">{TOPIC_LABELS[topic] ?? topic}</span>
-                      <span className="text-xs text-gray-400">({items.length})</span>
+                      <span className={`font-semibold ${c.title}`}>{TOPIC_LABELS[topic] ?? topic}</span>
+                      <span className={`text-xs font-semibold ${c.count}`}>({items.length})</span>
                     </div>
-                    <span className="text-gray-400 text-lg">{isCollapsed ? '▼' : '▲'}</span>
+                    <span className={`text-lg ${c.title} opacity-70`}>{isCollapsed ? '▼' : '▲'}</span>
                   </button>
                   {!isCollapsed && (
-                    <div className="px-4 pb-4 space-y-4">
+                    <div className={`px-4 pb-4 pt-3 space-y-4 rounded-b-2xl ${c.bodyBg}`}>
                       {items.map(article => {
               const isSaved = savedIds.has(article.id)
               return (

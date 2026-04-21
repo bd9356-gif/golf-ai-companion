@@ -37,11 +37,11 @@ type VideoRow = {
 }
 
 const CATEGORIES = [
-  { label: 'All', value: '' },
-  { label: 'Full Swing', value: 'full_swing' },
-  { label: 'Short Game', value: 'short_game' },
-  { label: 'Putting', value: 'putting' },
-  { label: 'Course Management', value: 'course_management' },
+  { label: 'All',        value: '',                   icon: '🎯' },
+  { label: 'Full Swing', value: 'full_swing',         icon: '🏌️' },
+  { label: 'Short Game', value: 'short_game',         icon: '🪓' },
+  { label: 'Putting',    value: 'putting',            icon: '⛳' },
+  { label: 'Course Mgmt', value: 'course_management', icon: '🗺️' },
 ]
 
 export default function GolfTVPage() {
@@ -213,38 +213,43 @@ export default function GolfTVPage() {
           </div>
           <a
             href="/bag"
-            className="text-sm text-gray-500 hover:text-gray-800 shrink-0"
+            className="text-3xl shrink-0 hover:scale-110 transition-transform leading-none"
             aria-label="Your Golf Bag"
+            title="Your Golf Bag"
           >
             🏌️
           </a>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 pt-5 pb-8">
-        <div className="mb-4">
+      {/* Sticky filter bar — stays locked below the page header when scrolling.
+          top-[57px] matches the header's py-3 + ~1px border. */}
+      <div className="sticky top-[57px] z-30 bg-white border-b border-gray-100">
+        <div className="max-w-6xl mx-auto px-4 pt-3 pb-2">
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search the library…"
             style={{ fontSize: '16px' }}
-            className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-green-400 transition-colors"
+            className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-green-400 transition-colors"
           />
+          <div className="flex gap-1.5 mt-2 overflow-x-auto -mx-4 px-4 pb-1 scrollbar-none">
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat.value}
+                onClick={() => setSelectedCategory(cat.value)}
+                className={`shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${selectedCategory === cat.value ? 'bg-green-700 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+              >
+                <span aria-hidden="true">{cat.icon}</span>
+                {cat.label}
+              </button>
+            ))}
+          </div>
         </div>
+      </div>
 
-        <div className="flex gap-2 mb-5 overflow-x-auto -mx-4 px-4 pb-1 scrollbar-none">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat.value}
-              onClick={() => setSelectedCategory(cat.value)}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${selectedCategory === cat.value ? 'bg-green-700 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-            >
-              {cat.label}
-            </button>
-          ))}
-        </div>
-
+      <main className="max-w-6xl mx-auto px-4 pt-4 pb-8">
         <p className="text-xs text-gray-500 mb-4">{filtered.length} {filtered.length === 1 ? 'video' : 'videos'}{selectedCategory && ` in ${CATEGORIES.find(c => c.value === selectedCategory)?.label}`}</p>
 
         {loading ? (
