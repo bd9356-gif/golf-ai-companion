@@ -250,6 +250,20 @@ export default function GolfTVPage() {
       </div>
 
       <main className="max-w-6xl mx-auto px-4 pt-4 pb-8">
+        {/* Journey hint — orients first-timers on what 'Add to Bag' does.
+            Kept intentionally visible every visit; users who know the flow
+            just scroll past. Copy uses "The Starter" to match the
+            user-facing label in /bag (DB name is still Holding Bucket). */}
+        <div className="mb-4 flex items-start gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+          <span className="text-xl shrink-0 leading-none mt-0.5" aria-hidden="true">🔖</span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-bold text-green-900 leading-tight">Where your journey begins</p>
+            <p className="text-xs text-green-800 leading-snug mt-0.5">
+              Tap <span className="font-semibold">Add to Bag</span> on any video and it lands in <span className="font-semibold">The Starter</span> — the launch pad in <a href="/bag" className="underline font-semibold hover:text-green-900">Your Golf Bag</a> where you sort lessons into skills.
+            </p>
+          </div>
+        </div>
+
         <p className="text-xs text-gray-500 mb-4">{filtered.length} {filtered.length === 1 ? 'video' : 'videos'}{selectedCategory && ` in ${CATEGORIES.find(c => c.value === selectedCategory)?.label}`}</p>
 
         {loading ? (
