@@ -215,7 +215,7 @@ export default function CoursesPage() {
         ) : (
           <div className="space-y-4">
             {courses.map(course => (
-              <div key={course.id} className="border border-gray-200 rounded-xl p-5 hover:border-green-200 transition-colors">
+              <div key={course.id} className="border-2 border-gray-200 border-l-8 border-l-green-600 rounded-2xl p-5 hover:border-green-300 hover:shadow-sm transition-all bg-white">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1">
                     <h3
