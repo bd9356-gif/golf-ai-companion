@@ -3,7 +3,7 @@ import AskCompanionTab from '../../components/AskCompanionTab'
 
 export default function ClubProPage() {
   return (
-    <div className="h-screen bg-white flex flex-col overflow-hidden">
+    <div className="fixed inset-0 bg-white flex flex-col overflow-hidden overscroll-none">
       <header className="border-b border-gray-100 bg-white sticky top-0 z-40 shrink-0">
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between gap-3">
           <a

@@ -131,7 +131,7 @@ export default function AskCompanionTab({ onBack }: Props) {
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto space-y-4 pb-4">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain space-y-4 pb-4">
         {!hasMessages && (
           <div className="space-y-4">
             <div className="text-center">
@@ -164,7 +164,7 @@ export default function AskCompanionTab({ onBack }: Props) {
                   className={`px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
                     isUser
                       ? 'bg-green-700 text-white rounded-br-sm'
-                      : 'bg-white text-gray-900 border-2 border-green-700 rounded-bl-sm'
+                      : 'bg-white text-gray-900 border-2 border-emerald-500 rounded-bl-sm'
                   }`}
                 >
                   {msg.content}
@@ -189,7 +189,7 @@ export default function AskCompanionTab({ onBack }: Props) {
         {loading && (
           <div className="flex justify-start items-start gap-2">
             <span className="text-base mt-2 shrink-0">⛳</span>
-            <div className="bg-white border-2 border-green-700 rounded-2xl rounded-bl-sm px-4 py-3">
+            <div className="bg-white border-2 border-emerald-500 rounded-2xl rounded-bl-sm px-4 py-3">
               <div className="flex gap-1">
                 <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                 <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
