@@ -172,7 +172,11 @@ Only two Supabase emails currently go through this SMTP: **signup confirmation**
 - **Supabase → Authentication → URL Configuration:** Site URL = the Vercel production URL. Redirect allow-list includes `<prod>/auth/callback` and `http://localhost:3000/auth/callback` for local dev.
 - **Supabase → Authentication → Providers → Email:** enabled. Google OAuth is configured under Providers separately.
 
+**Finding the SMTP setting in the Supabase dashboard.** Supabase keeps moving this around and it's annoying every time. If it's not where you expect, try (in order): **Authentication → Emails** (SMTP often lives below the template editor), **Authentication → Settings** (scroll for "SMTP Settings" / "Custom SMTP"), or **Project Settings → Authentication** (the old home). Fastest: hit `Cmd/Ctrl+K` in the dashboard and search **"SMTP"** — the command palette jumps straight to it. The toggle is "Enable Custom SMTP"; fields appear below once it's on.
+
 Rotating / revoking the Resend API key is a Supabase SMTP-fields update only; no app-code change.
+
+**Status (April 2026):** SMTP is configured on this project and pointed at Resend. Testing with a Hotmail address to confirm deliverability (Hotmail was the original reason this exists — default Supabase SMTP was landing in its spam folder).
 
 If/when the Golf site moves onto its own subdomain (e.g. `golf.mycompanionapps.com`), update Site URL and the redirect allow-list, and that's it — sender stays on `mycompanionapps.com`.
 
