@@ -40,15 +40,23 @@ const TOPIC_ICONS = {
 // per-skill palette where the topics line up (swing → green, short game →
 // orange, putting → sky, course management → purple). Mental game and
 // fitness pick up their own hues to stay distinct.
-const TOPIC_COLORS = {
-  swing:              { outer: 'border-gray-200 border-l-8 border-l-green-600',  headerBg: 'bg-green-50',  title: 'text-green-900',  count: 'text-green-700',  bodyBg: 'bg-green-50/40'  },
-  'course management':{ outer: 'border-gray-200 border-l-8 border-l-purple-500', headerBg: 'bg-purple-50', title: 'text-purple-900', count: 'text-purple-700', bodyBg: 'bg-purple-50/40' },
-  'mental game':      { outer: 'border-gray-200 border-l-8 border-l-indigo-500', headerBg: 'bg-indigo-50', title: 'text-indigo-900', count: 'text-indigo-700', bodyBg: 'bg-indigo-50/40' },
-  fitness:            { outer: 'border-gray-200 border-l-8 border-l-rose-500',   headerBg: 'bg-rose-50',   title: 'text-rose-900',   count: 'text-rose-700',   bodyBg: 'bg-rose-50/40'   },
-  putting:            { outer: 'border-gray-200 border-l-8 border-l-sky-500',    headerBg: 'bg-sky-50',    title: 'text-sky-900',    count: 'text-sky-700',    bodyBg: 'bg-sky-50/40'    },
-  'short game':       { outer: 'border-gray-200 border-l-8 border-l-orange-500', headerBg: 'bg-orange-50', title: 'text-orange-900', count: 'text-orange-700', bodyBg: 'bg-orange-50/40' },
+// One unified green treatment across every topic — matches Swing Tips.
+const GREEN_TOPIC = {
+  outer: 'border-gray-200 border-l-8 border-l-green-600',
+  headerBg: 'bg-green-50',
+  title: 'text-green-900',
+  count: 'text-green-700',
+  bodyBg: 'bg-green-50/40',
 }
-const topicColor = (t) => TOPIC_COLORS[t] || { outer: 'border-gray-200 border-l-8 border-l-gray-400', headerBg: 'bg-gray-50', title: 'text-gray-900', count: 'text-gray-500', bodyBg: 'bg-white' }
+const TOPIC_COLORS = {
+  swing:               GREEN_TOPIC,
+  'course management': GREEN_TOPIC,
+  'mental game':       GREEN_TOPIC,
+  fitness:             GREEN_TOPIC,
+  putting:             GREEN_TOPIC,
+  'short game':        GREEN_TOPIC,
+}
+const topicColor = (t) => TOPIC_COLORS[t] || GREEN_TOPIC
 
 function renderMarkdown(text) {
   return text
