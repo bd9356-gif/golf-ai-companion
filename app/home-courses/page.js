@@ -215,33 +215,33 @@ export default function CoursesPage() {
               <p className="text-xs text-green-700 font-semibold leading-tight">Notes, tips &amp; tee times</p>
             </div>
           </div>
-          <a href="/bag" className="text-3xl shrink-0 hover:scale-110 transition-transform leading-none" aria-label="Your Golf Bag" title="Your Golf Bag">🏌️</a>
+          {/* Right-side cluster: always-visible + Add and MyBag link. */}
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => { setShowForm(true); setEditingId(null); setForm(EMPTY_FORM); setUseCustomWindow(false); setUseCustomTime(false) }}
+              className="px-2.5 py-1 text-xs font-semibold text-green-700 border-2 border-green-600 rounded-full hover:bg-green-50 transition-colors"
+              aria-label="Add a course"
+              title="Add a course"
+            >
+              + Add
+            </button>
+            <a href="/bag" className="text-3xl hover:scale-110 transition-transform leading-none" aria-label="Your Golf Bag" title="Your Golf Bag">🏌️</a>
+          </div>
         </div>
       </header>
-      {/* Locked sub-header: tagline + Add Course. Sits directly under the
-          main header and stays pinned on scroll so "Add Course" is always
-          one tap away. */}
-      <div className="fixed top-[60px] left-0 right-0 z-30 bg-white/95 backdrop-blur-sm border-b border-gray-100">
-        <div className="max-w-4xl mx-auto px-4 py-2.5 text-center">
+      {/* Spacer offsets the fixed header (~60px). Sub-header scrolls with
+          content so the first course isn't pushed below the fold. */}
+      <div className="h-[60px]" aria-hidden="true" />
+
+      <main className="max-w-4xl mx-auto px-4 py-5">
+        <div className="text-center px-2 mb-4">
           <p className="text-sm font-semibold text-gray-700 leading-snug">
             Your home courses, always within reach.
           </p>
           <p className="text-xs text-gray-500 leading-snug mt-0.5">
             Save favorite courses with notes, phone numbers, and tee time links — ready the next time you play.
           </p>
-          <button
-            onClick={() => { setShowForm(true); setEditingId(null); setForm(EMPTY_FORM); setUseCustomWindow(false); setUseCustomTime(false) }}
-            className="mt-1.5 text-xs font-semibold text-green-700 hover:text-green-900 hover:underline"
-          >
-            + Add Course
-          </button>
         </div>
-      </div>
-      {/* Spacer offsets header (~60px) + locked sub-header (~84px) so the
-          main scrollable content starts below both. */}
-      <div className="h-[144px]" aria-hidden="true" />
-
-      <main className="max-w-4xl mx-auto px-4 pb-5">
 
         {showForm && (
           <div className="mb-6 p-5 border-2 border-green-200 rounded-2xl bg-green-50">
