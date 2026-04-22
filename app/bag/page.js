@@ -38,60 +38,24 @@ const FIXED_BUCKETS = [
 const BUCKET_META = Object.fromEntries(FIXED_BUCKETS.map(b => [b.name, b]))
 const labelFor = (name) => BUCKET_META[name]?.label || name
 
-// Per-skill color scheme. Each bucket paints its own open area so you can
-// tell at a glance which skill you're inside. Tailwind classes are written
-// out as full strings so the v4 scanner can pick them up.
+// Left-stripe-only color treatment. Everything else is neutral gray/white —
+// the 8px colored left edge is the single wayfinding cue that tells you
+// which skill you're scrolling through. Classes are full strings so the
+// Tailwind v4 scanner picks them up.
+const NEUTRAL = {
+  headerBg: 'bg-white',
+  headerBorder: 'border-gray-100',
+  title: 'text-gray-900',
+  pill: 'bg-gray-100 text-gray-600',
+  bodyBg: 'bg-white',
+  hint: 'bg-gray-50 border-gray-200 text-gray-600',
+}
 const BUCKET_COLORS = {
-  'Holding Bucket': {
-    outer: 'border-gray-200 border-l-8 border-l-yellow-500',
-    headerBg: 'bg-yellow-50',
-    headerBorder: 'border-yellow-200',
-    title: 'text-yellow-900',
-    pill: 'bg-yellow-200 text-yellow-800',
-    ring: 'ring-yellow-200',
-    bodyBg: 'bg-yellow-50/40',
-    hint: 'bg-yellow-50 border-yellow-200 text-yellow-700',
-  },
-  'Full Swing': {
-    outer: 'border-gray-200 border-l-8 border-l-green-600',
-    headerBg: 'bg-green-50',
-    headerBorder: 'border-green-200',
-    title: 'text-green-900',
-    pill: 'bg-green-200 text-green-800',
-    ring: 'ring-green-200',
-    bodyBg: 'bg-green-50/40',
-    hint: 'bg-green-50 border-green-200 text-green-700',
-  },
-  'Short Game': {
-    outer: 'border-gray-200 border-l-8 border-l-orange-500',
-    headerBg: 'bg-orange-50',
-    headerBorder: 'border-orange-200',
-    title: 'text-orange-900',
-    pill: 'bg-orange-200 text-orange-800',
-    ring: 'ring-orange-200',
-    bodyBg: 'bg-orange-50/40',
-    hint: 'bg-orange-50 border-orange-200 text-orange-700',
-  },
-  'Putting': {
-    outer: 'border-gray-200 border-l-8 border-l-sky-500',
-    headerBg: 'bg-sky-50',
-    headerBorder: 'border-sky-200',
-    title: 'text-sky-900',
-    pill: 'bg-sky-200 text-sky-800',
-    ring: 'ring-sky-200',
-    bodyBg: 'bg-sky-50/40',
-    hint: 'bg-sky-50 border-sky-200 text-sky-700',
-  },
-  'Course Management': {
-    outer: 'border-gray-200 border-l-8 border-l-purple-500',
-    headerBg: 'bg-purple-50',
-    headerBorder: 'border-purple-200',
-    title: 'text-purple-900',
-    pill: 'bg-purple-200 text-purple-800',
-    ring: 'ring-purple-200',
-    bodyBg: 'bg-purple-50/40',
-    hint: 'bg-purple-50 border-purple-200 text-purple-700',
-  },
+  'Holding Bucket':    { ...NEUTRAL, outer: 'border-gray-200 border-l-8 border-l-yellow-500' },
+  'Full Swing':        { ...NEUTRAL, outer: 'border-gray-200 border-l-8 border-l-green-600'  },
+  'Short Game':        { ...NEUTRAL, outer: 'border-gray-200 border-l-8 border-l-orange-500' },
+  'Putting':           { ...NEUTRAL, outer: 'border-gray-200 border-l-8 border-l-sky-500'    },
+  'Course Management': { ...NEUTRAL, outer: 'border-gray-200 border-l-8 border-l-purple-500' },
 }
 const colorsFor = (name) => BUCKET_COLORS[name] || BUCKET_COLORS['Holding Bucket']
 
@@ -551,7 +515,7 @@ function Bucket(props) {
       <button
         type="button"
         onClick={toggleCollapsed}
-        className={`w-full flex items-center gap-2 px-4 py-3 rounded-t-2xl text-left ${collapsed ? 'bg-white rounded-b-2xl' : `${color.headerBg} border-b ${color.headerBorder}`}`}
+        className={`w-full flex items-center gap-2 px-4 py-3 rounded-t-2xl text-left bg-white ${collapsed ? 'rounded-b-2xl' : `border-b ${color.headerBorder}`}`}
         aria-expanded={!collapsed}
       >
         <span className="text-xl">{meta.icon}</span>
