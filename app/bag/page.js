@@ -43,7 +43,7 @@ const labelFor = (name) => BUCKET_META[name]?.label || name
 // out as full strings so the v4 scanner can pick them up.
 const BUCKET_COLORS = {
   'Holding Bucket': {
-    outer: 'border-yellow-300',
+    outer: 'border-gray-200 border-l-8 border-l-yellow-500',
     headerBg: 'bg-yellow-50',
     headerBorder: 'border-yellow-200',
     title: 'text-yellow-900',
@@ -53,7 +53,7 @@ const BUCKET_COLORS = {
     hint: 'bg-yellow-50 border-yellow-200 text-yellow-700',
   },
   'Full Swing': {
-    outer: 'border-green-300',
+    outer: 'border-gray-200 border-l-8 border-l-green-600',
     headerBg: 'bg-green-50',
     headerBorder: 'border-green-200',
     title: 'text-green-900',
@@ -63,7 +63,7 @@ const BUCKET_COLORS = {
     hint: 'bg-green-50 border-green-200 text-green-700',
   },
   'Short Game': {
-    outer: 'border-orange-300',
+    outer: 'border-gray-200 border-l-8 border-l-orange-500',
     headerBg: 'bg-orange-50',
     headerBorder: 'border-orange-200',
     title: 'text-orange-900',
@@ -73,7 +73,7 @@ const BUCKET_COLORS = {
     hint: 'bg-orange-50 border-orange-200 text-orange-700',
   },
   'Putting': {
-    outer: 'border-sky-300',
+    outer: 'border-gray-200 border-l-8 border-l-sky-500',
     headerBg: 'bg-sky-50',
     headerBorder: 'border-sky-200',
     title: 'text-sky-900',
@@ -83,7 +83,7 @@ const BUCKET_COLORS = {
     hint: 'bg-sky-50 border-sky-200 text-sky-700',
   },
   'Course Management': {
-    outer: 'border-purple-300',
+    outer: 'border-gray-200 border-l-8 border-l-purple-500',
     headerBg: 'bg-purple-50',
     headerBorder: 'border-purple-200',
     title: 'text-purple-900',
@@ -547,7 +547,7 @@ function Bucket(props) {
   const color = colorsFor(leaf.name)
 
   return (
-    <div className={`border-2 rounded-2xl bg-white transition-all ${color.outer} ${!collapsed ? `ring-2 ${color.ring}` : ''}`}>
+    <div className={`border-2 rounded-2xl bg-white transition-all ${color.outer}`}>
       <button
         type="button"
         onClick={toggleCollapsed}
