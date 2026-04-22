@@ -452,16 +452,16 @@ export default function BagPage() {
           </div>
         )}
 
-        <p className="mb-4 text-sm text-gray-600 leading-snug">
-          📥 New saves wait at <span className="font-semibold text-gray-900">The Starter</span> until you move them into a skill.
+        <p className="mb-5 text-sm text-gray-600 leading-snug text-balance">
+          📥 New saves wait in <span className="font-semibold text-gray-900">The&nbsp;Starter</span> — move them to a&nbsp;skill.
         </p>
 
         {loading ? (
-          <div className="space-y-4">
+          <div className="space-y-5">
             {Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-32 bg-gray-100 rounded-xl animate-pulse" />)}
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-5">
             {leaves.map(leaf => (
               <Bucket
                 key={leaf.id}
