@@ -213,6 +213,7 @@ export default function CoursesPage() {
             <div className="min-w-0">
               <h1 className="text-lg font-bold text-gray-900 truncate leading-tight">Home Courses</h1>
               <p className="text-xs text-green-700 font-semibold leading-tight truncate">Your home courses, always within reach.</p>
+              <p className="text-xs text-gray-900 leading-tight truncate">Notes, tips &amp; tee times</p>
             </div>
           </div>
           {/* Right-side cluster: always-visible + Add and MyBag link. */}
@@ -229,9 +230,9 @@ export default function CoursesPage() {
           </div>
         </div>
       </header>
-      {/* Spacer offsets the fixed header (~60px). Sub-header scrolls with
-          content so the first course isn't pushed below the fold. */}
-      <div className="h-[60px]" aria-hidden="true" />
+      {/* Spacer offsets the fixed header. Height bumped to ~78px to account
+          for the third header line ("Notes, tips & tee times"). */}
+      <div className="h-[78px]" aria-hidden="true" />
 
       <main className="max-w-4xl mx-auto px-4 py-5">
         {showForm && (
