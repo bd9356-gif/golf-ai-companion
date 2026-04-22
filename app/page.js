@@ -48,20 +48,9 @@ const FEATURES = [
   },
 ]
 
-const COURSE_IMAGES = [
-  { url: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=800&q=80&fit=crop', name: 'Morning Round' },
-  { url: 'https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=800&q=80&fit=crop', name: 'Golden Hour' },
-  { url: 'https://images.unsplash.com/photo-1593111774240-d529f12cf4bb?w=800&q=80&fit=crop', name: 'Fairway at Dawn' },
-  { url: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=800&q=80&fit=crop', name: 'The Approach' },
-  { url: 'https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=800&q=80&fit=crop', name: 'Links Course' },
-  { url: 'https://images.unsplash.com/photo-1593111774240-d529f12cf4bb?w=800&q=80&fit=crop', name: 'Sunset Green' },
-  { url: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=800&q=80&fit=crop', name: 'Early Morning Tee' },
-]
-
-function getDailyImage() {
-  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000)
-  return COURSE_IMAGES[dayOfYear % COURSE_IMAGES.length]
-}
+// Single landing hero image. Lives in /public/landing-hero.png so it's served
+// statically from the app's origin — no third-party CDN, no daily rotation.
+const LANDING_HERO = { url: '/landing-hero.png', name: 'MyGolf Companion' }
 
 function firstNameFromUser(user) {
   if (!user) return null
@@ -103,7 +92,7 @@ export default function HomePage() {
   }
 
   const userName = firstNameFromUser(user)
-  const image = getDailyImage()
+  const image = LANDING_HERO
 
   return (
     <div className="min-h-screen bg-green-50 flex flex-col">
