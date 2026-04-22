@@ -218,11 +218,11 @@ export default function CoursesPage() {
           <a href="/bag" className="text-3xl shrink-0 hover:scale-110 transition-transform leading-none" aria-label="Your Golf Bag" title="Your Golf Bag">🏌️</a>
         </div>
       </header>
-      {/* Spacer to offset fixed header height (py-3 + line-height ≈ 60px). */}
-      <div className="h-[60px]" aria-hidden="true" />
-
-      <main className="max-w-4xl mx-auto px-4 py-5">
-        <div className="text-center px-2 mb-4">
+      {/* Locked sub-header: tagline + Add Course. Sits directly under the
+          main header and stays pinned on scroll so "Add Course" is always
+          one tap away. */}
+      <div className="fixed top-[60px] left-0 right-0 z-30 bg-white/95 backdrop-blur-sm border-b border-gray-100">
+        <div className="max-w-4xl mx-auto px-4 py-2.5 text-center">
           <p className="text-sm font-semibold text-gray-700 leading-snug">
             Your home courses, always within reach.
           </p>
@@ -231,11 +231,17 @@ export default function CoursesPage() {
           </p>
           <button
             onClick={() => { setShowForm(true); setEditingId(null); setForm(EMPTY_FORM); setUseCustomWindow(false); setUseCustomTime(false) }}
-            className="mt-2 text-xs font-semibold text-green-700 hover:text-green-900 hover:underline"
+            className="mt-1.5 text-xs font-semibold text-green-700 hover:text-green-900 hover:underline"
           >
             + Add Course
           </button>
         </div>
+      </div>
+      {/* Spacer offsets header (~60px) + locked sub-header (~84px) so the
+          main scrollable content starts below both. */}
+      <div className="h-[144px]" aria-hidden="true" />
+
+      <main className="max-w-4xl mx-auto px-4 pb-5">
 
         {showForm && (
           <div className="mb-6 p-5 border-2 border-green-200 rounded-2xl bg-green-50">
