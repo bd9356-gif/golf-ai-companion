@@ -25,26 +25,31 @@ const FEATURES = [
     emoji: '📺',
     title: 'Golf TV',
     blurb: 'Instructional videos, filtered and ready when you are.',
+    href: '/golf-tv',
   },
   {
     emoji: '📖',
     title: 'Guides',
     blurb: 'AI-crafted articles to read smart and play smarter.',
+    href: '/guides',
   },
   {
     emoji: '🏌️',
     title: 'Your Golf Bag',
     blurb: 'Your saves, sorted into five skill buckets.',
+    href: '/bag',
   },
   {
     emoji: '🏠',
     title: 'Home Courses',
     blurb: 'Notes, phone numbers, and tee-time links for your favorite courses.',
+    href: '/home-courses',
   },
   {
     emoji: '🎓',
     title: 'Ask the Club Pro',
     blurb: "An AI coach who's always ready with a clear answer.",
+    href: '/club-pro',
   },
 ]
 
@@ -183,17 +188,19 @@ export default function HomePage() {
             What's inside
           </p>
           <div className="grid gap-2">
-            {FEATURES.map(({ emoji, title, blurb }) => (
-              <div
+            {FEATURES.map(({ emoji, title, blurb, href }) => (
+              <a
                 key={title}
-                className="bg-white border border-green-100 rounded-xl px-3.5 py-2.5 flex items-start gap-3"
+                href={user ? href : '/login'}
+                className="group bg-white border border-green-100 rounded-xl px-3.5 py-2.5 flex items-center gap-3 hover:border-green-300 hover:shadow-sm transition-all"
               >
-                <span className="text-lg leading-none shrink-0 mt-0.5">{emoji}</span>
+                <span className="text-lg leading-none shrink-0">{emoji}</span>
                 <div className="text-left min-w-0 flex-1">
                   <p className="text-gray-900 font-semibold text-sm leading-tight">{title}</p>
                   <p className="text-gray-600 text-xs leading-snug mt-0.5">{blurb}</p>
                 </div>
-              </div>
+                <span className="text-green-700 text-sm shrink-0 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all">→</span>
+              </a>
             ))}
           </div>
         </section>
