@@ -206,14 +206,13 @@ export default function CoursesPage() {
       {/* Fixed header — locked at the top on every scroll, including iOS
           Safari where `sticky` inside a flex-col body can drift. */}
       <header className="fixed top-0 left-0 right-0 z-40 border-b border-gray-100 bg-white/95 backdrop-blur-sm shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+        <div className="max-w-4xl mx-auto px-4 pt-3 pb-1.5 flex items-center justify-between gap-3">
           <a href="/clubhouse" className="text-gray-500 hover:text-gray-800 text-sm font-medium shrink-0" aria-label="Back to Clubhouse">← Clubhouse</a>
           <div className="flex items-center gap-2 min-w-0">
             <span className="text-2xl shrink-0">🏠</span>
             <div className="min-w-0">
               <h1 className="text-lg font-bold text-gray-900 truncate leading-tight">Home Courses</h1>
               <p className="text-xs text-green-700 font-semibold leading-tight truncate">Notes, tips &amp; tee times</p>
-              <p className="text-xs text-gray-900 leading-tight truncate">Your home courses, always within reach.</p>
             </div>
           </div>
           {/* Right-side cluster: always-visible + Add and MyBag link. */}
@@ -229,9 +228,14 @@ export default function CoursesPage() {
             <a href="/bag" className="text-3xl hover:scale-110 transition-transform leading-none" aria-label="Your Golf Bag" title="Your Golf Bag">🏌️</a>
           </div>
         </div>
+        {/* Full-width centered tagline so it can't get truncated by the
+            narrow title column between Clubhouse and the right cluster. */}
+        <div className="max-w-4xl mx-auto px-4 pb-2 text-center">
+          <p className="text-xs text-gray-900 leading-tight">Your home courses, always within reach.</p>
+        </div>
       </header>
-      {/* Spacer offsets the fixed header. Height bumped to ~78px to account
-          for the third header line ("Notes, tips & tee times"). */}
+      {/* Spacer offsets the fixed header — top row ~54px + centered tagline
+          row ~22px ≈ 78px. */}
       <div className="h-[78px]" aria-hidden="true" />
 
       <main className="max-w-4xl mx-auto px-4 py-5">
