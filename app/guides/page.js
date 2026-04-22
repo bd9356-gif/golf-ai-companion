@@ -41,14 +41,14 @@ const TOPIC_ICONS = {
 // orange, putting → sky, course management → purple). Mental game and
 // fitness pick up their own hues to stay distinct.
 const TOPIC_COLORS = {
-  swing:              { outer: 'border-green-300',  headerBg: 'bg-green-50',  title: 'text-green-900',  count: 'text-green-700',  bodyBg: 'bg-green-50/40'  },
-  'course management':{ outer: 'border-purple-300', headerBg: 'bg-purple-50', title: 'text-purple-900', count: 'text-purple-700', bodyBg: 'bg-purple-50/40' },
-  'mental game':      { outer: 'border-indigo-300', headerBg: 'bg-indigo-50', title: 'text-indigo-900', count: 'text-indigo-700', bodyBg: 'bg-indigo-50/40' },
-  fitness:            { outer: 'border-rose-300',   headerBg: 'bg-rose-50',   title: 'text-rose-900',   count: 'text-rose-700',   bodyBg: 'bg-rose-50/40'   },
-  putting:            { outer: 'border-sky-300',    headerBg: 'bg-sky-50',    title: 'text-sky-900',    count: 'text-sky-700',    bodyBg: 'bg-sky-50/40'    },
-  'short game':       { outer: 'border-orange-300', headerBg: 'bg-orange-50', title: 'text-orange-900', count: 'text-orange-700', bodyBg: 'bg-orange-50/40' },
+  swing:              { outer: 'border-gray-200 border-l-8 border-l-green-600',  headerBg: 'bg-green-50',  title: 'text-green-900',  count: 'text-green-700',  bodyBg: 'bg-green-50/40'  },
+  'course management':{ outer: 'border-gray-200 border-l-8 border-l-purple-500', headerBg: 'bg-purple-50', title: 'text-purple-900', count: 'text-purple-700', bodyBg: 'bg-purple-50/40' },
+  'mental game':      { outer: 'border-gray-200 border-l-8 border-l-indigo-500', headerBg: 'bg-indigo-50', title: 'text-indigo-900', count: 'text-indigo-700', bodyBg: 'bg-indigo-50/40' },
+  fitness:            { outer: 'border-gray-200 border-l-8 border-l-rose-500',   headerBg: 'bg-rose-50',   title: 'text-rose-900',   count: 'text-rose-700',   bodyBg: 'bg-rose-50/40'   },
+  putting:            { outer: 'border-gray-200 border-l-8 border-l-sky-500',    headerBg: 'bg-sky-50',    title: 'text-sky-900',    count: 'text-sky-700',    bodyBg: 'bg-sky-50/40'    },
+  'short game':       { outer: 'border-gray-200 border-l-8 border-l-orange-500', headerBg: 'bg-orange-50', title: 'text-orange-900', count: 'text-orange-700', bodyBg: 'bg-orange-50/40' },
 }
-const topicColor = (t) => TOPIC_COLORS[t] || { outer: 'border-gray-200', headerBg: 'bg-gray-50', title: 'text-gray-900', count: 'text-gray-500', bodyBg: 'bg-white' }
+const topicColor = (t) => TOPIC_COLORS[t] || { outer: 'border-gray-200 border-l-8 border-l-gray-400', headerBg: 'bg-gray-50', title: 'text-gray-900', count: 'text-gray-500', bodyBg: 'bg-white' }
 
 function renderMarkdown(text) {
   return text
@@ -243,7 +243,7 @@ export default function ArticlesPage() {
                 <section key={topic} className={`border-2 rounded-2xl ${c.outer}`}>
                   <button
                     onClick={() => toggleTopic(topic)}
-                    className={`w-full flex items-center justify-between px-4 py-3 text-left rounded-t-2xl ${c.headerBg} ${isCollapsed ? 'rounded-b-2xl' : ''}`}
+                    className={`w-full flex items-center justify-between px-4 py-3 text-left rounded-t-2xl ${isCollapsed ? 'bg-white rounded-b-2xl' : c.headerBg}`}
                     aria-expanded={!isCollapsed}
                   >
                     <div className="flex items-center gap-2">
