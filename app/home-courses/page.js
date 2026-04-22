@@ -64,12 +64,25 @@ const BOOKING_PRESETS = [
 
 // Preset buttons for the Booking Opens At segmented control. Covers the two
 // times that account for ~95% of Florida courses; anything else lives under
-// "Other" (shows a time picker) or in Booking Notes (phone-only, etc).
+// "Other" (shows an hour dropdown) or in Booking Notes (phone-only, etc).
 const BOOKING_TIME_PRESETS = [
   { label: 'Not set', value: '' },
   { label: 'Midnight', value: '00:00' },
   { label: '6 AM', value: '06:00' },
 ]
+
+// 24 hourly options in 12-hour format. Values stay "HH:mm" 24h for the DB,
+// labels are what the user sees. We only offer :00 marks — no golf course
+// has ever said "booking opens at 6:17 AM."
+const HOUR_OPTIONS = Array.from({ length: 24 }, (_, h) => {
+  const hh = h.toString().padStart(2, '0')
+  const ampm = h >= 12 ? 'PM' : 'AM'
+  const h12 = h % 12 === 0 ? 12 : h % 12
+  let label = `${h12}:00 ${ampm}`
+  if (h === 0) label = '12:00 AM (Midnight)'
+  if (h === 12) label = '12:00 PM (Noon)'
+  return { value: `${hh}:00`, label }
+})
 
 export default function CoursesPage() {
   const [user, setUser] = useState(null)
@@ -394,12 +407,16 @@ export default function CoursesPage() {
                   </div>
                   {useCustomTime && (
                     <div className="mt-2">
-                      <input
-                        type="time"
+                      <select
                         value={form.booking_opens_time || ''}
                         onChange={e => setForm(f => ({ ...f, booking_opens_time: e.target.value }))}
-                        className="border border-gray-200 rounded-xl px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-green-300"
-                      />
+                        className="border border-gray-200 rounded-xl px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-green-300 bg-white"
+                      >
+                        <option value="">— Pick a time —</option>
+                        {HOUR_OPTIONS.map(opt => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
                     </div>
                   )}
                 </div>
