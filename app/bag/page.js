@@ -49,7 +49,7 @@ const BUCKET_COLORS = {
     title: 'text-yellow-900',
     pill: 'bg-yellow-200 text-yellow-800',
     ring: 'ring-yellow-200',
-    bodyBg: 'bg-yellow-50/40',
+    bodyBg: 'bg-white',
     hint: 'bg-yellow-50 border-yellow-200 text-yellow-700',
   },
   'Full Swing': {
@@ -59,7 +59,7 @@ const BUCKET_COLORS = {
     title: 'text-green-900',
     pill: 'bg-green-200 text-green-800',
     ring: 'ring-green-200',
-    bodyBg: 'bg-green-50/40',
+    bodyBg: 'bg-white',
     hint: 'bg-green-50 border-green-200 text-green-700',
   },
   'Short Game': {
@@ -69,7 +69,7 @@ const BUCKET_COLORS = {
     title: 'text-orange-900',
     pill: 'bg-orange-200 text-orange-800',
     ring: 'ring-orange-200',
-    bodyBg: 'bg-orange-50/40',
+    bodyBg: 'bg-white',
     hint: 'bg-orange-50 border-orange-200 text-orange-700',
   },
   'Putting': {
@@ -79,7 +79,7 @@ const BUCKET_COLORS = {
     title: 'text-sky-900',
     pill: 'bg-sky-200 text-sky-800',
     ring: 'ring-sky-200',
-    bodyBg: 'bg-sky-50/40',
+    bodyBg: 'bg-white',
     hint: 'bg-sky-50 border-sky-200 text-sky-700',
   },
   'Course Management': {
@@ -89,7 +89,7 @@ const BUCKET_COLORS = {
     title: 'text-purple-900',
     pill: 'bg-purple-200 text-purple-800',
     ring: 'ring-purple-200',
-    bodyBg: 'bg-purple-50/40',
+    bodyBg: 'bg-white',
     hint: 'bg-purple-50 border-purple-200 text-purple-700',
   },
 }
