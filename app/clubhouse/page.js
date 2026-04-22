@@ -2,20 +2,9 @@
 import { useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
-const CLUBHOUSE_IMAGES = [
-  { url: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=800&q=80&fit=crop', name: 'Morning Round' },
-  { url: 'https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=800&q=80&fit=crop', name: 'Golden Hour' },
-  { url: 'https://images.unsplash.com/photo-1593111774240-d529f12cf4bb?w=800&q=80&fit=crop', name: 'Fairway at Dawn' },
-  { url: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=800&q=80&fit=crop', name: 'The Approach' },
-  { url: 'https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=800&q=80&fit=crop', name: 'Links Course' },
-  { url: 'https://images.unsplash.com/photo-1593111774240-d529f12cf4bb?w=800&q=80&fit=crop', name: 'Sunset Green' },
-  { url: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=800&q=80&fit=crop', name: 'Early Morning Tee' },
-]
-
-function getDailyImage() {
-  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000)
-  return CLUBHOUSE_IMAGES[(dayOfYear + 3) % CLUBHOUSE_IMAGES.length]
-}
+// Single Clubhouse hero. Lives in /public/clubhouse-hero.png so it's served
+// statically from the app's origin — no third-party CDN, no daily rotation.
+const CLUBHOUSE_HERO = { url: '/clubhouse-hero.png', name: 'The Clubhouse' }
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -89,7 +78,7 @@ export default function ClubhousePage() {
     init()
   }, [])
 
-  const daily = getDailyImage()
+  const hero = CLUBHOUSE_HERO
   const greeting = getGreeting()
 
   return (
@@ -115,10 +104,9 @@ export default function ClubhousePage() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-4 sm:py-5">
-        {/* Daily rotating course image — a little taller now that there's
-            room (h-28 mobile → h-40 sm → h-52 md). */}
+        {/* Clubhouse hero image — single static asset served from /public. */}
         <div className="relative w-full rounded-2xl overflow-hidden mb-4 sm:mb-5 h-28 sm:h-40 md:h-52">
-          <img src={daily.url} alt={daily.name} className="w-full h-full object-cover" />
+          <img src={hero.url} alt={hero.name} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-black/45 rounded-2xl" />
           <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
             <p className="text-green-100 text-[11px] sm:text-sm font-semibold tracking-wide uppercase leading-tight">{greeting}, golfer</p>
@@ -128,9 +116,6 @@ export default function ClubhousePage() {
             <p className="hidden sm:block text-green-200 text-xs sm:text-sm mt-1">
               Your home club — where your golf journey begins.
             </p>
-          </div>
-          <div className="absolute bottom-1 right-2 sm:bottom-2 sm:right-3">
-            <span className="text-white/50 text-[10px] sm:text-xs">{daily.name}</span>
           </div>
         </div>
 
