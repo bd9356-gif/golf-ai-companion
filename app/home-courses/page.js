@@ -212,7 +212,7 @@ export default function CoursesPage() {
             <span className="text-2xl shrink-0">🏠</span>
             <div className="min-w-0">
               <h1 className="text-lg font-bold text-gray-900 truncate leading-tight">Home Courses</h1>
-              <p className="text-xs text-green-700 font-semibold leading-tight">Notes, tips &amp; tee times</p>
+              <p className="text-xs text-green-700 font-semibold leading-tight truncate">Your home courses, always within reach.</p>
             </div>
           </div>
           {/* Right-side cluster: always-visible + Add and MyBag link. */}
@@ -234,15 +234,6 @@ export default function CoursesPage() {
       <div className="h-[60px]" aria-hidden="true" />
 
       <main className="max-w-4xl mx-auto px-4 py-5">
-        <div className="text-center px-2 mb-4">
-          <p className="text-sm font-semibold text-gray-700 leading-snug">
-            Your home courses, always within reach.
-          </p>
-          <p className="text-xs text-gray-500 leading-snug mt-0.5">
-            Save favorite courses with notes, phone numbers, and tee time links — ready the next time you play.
-          </p>
-        </div>
-
         {showForm && (
           <div className="mb-6 p-5 border-2 border-green-200 rounded-2xl bg-green-50">
             <h3 className="font-bold text-gray-900 mb-4">{editingId ? 'Edit Course' : 'Add a Course'}</h3>
