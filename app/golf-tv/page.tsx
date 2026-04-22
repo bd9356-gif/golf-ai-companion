@@ -36,12 +36,15 @@ type VideoRow = {
   pros: ProRow[] | ProRow | null
 }
 
+// Short chip labels so all five fit one row on a phone without horizontal
+// scroll. Full names still appear in the "X videos in <name>" count below
+// (see the map at the bottom of this file where it's used).
 const CATEGORIES = [
-  { label: 'All',        value: '',                   icon: '🎯' },
-  { label: 'Full Swing', value: 'full_swing',         icon: '🏌️' },
-  { label: 'Short Game', value: 'short_game',         icon: '🪓' },
-  { label: 'Putting',    value: 'putting',            icon: '⛳' },
-  { label: 'Course Mgmt', value: 'course_management', icon: '🗺️' },
+  { label: 'All',     full: 'All',                value: '' },
+  { label: 'Swing',   full: 'Full Swing',         value: 'full_swing' },
+  { label: 'Short',   full: 'Short Game',         value: 'short_game' },
+  { label: 'Putting', full: 'Putting',            value: 'putting' },
+  { label: 'Course',  full: 'Course Management',  value: 'course_management' },
 ]
 
 export default function GolfTVPage() {
@@ -56,6 +59,10 @@ export default function GolfTVPage() {
   const [previewVideoId, setPreviewVideoId] = useState<string | null>(null)
   const [playingId, setPlayingId] = useState<string | null>(null)
   const [selectedCategory, setSelectedCategory] = useState('')
+  // Search field is hidden behind a 🔍 toggle in the header to keep the
+  // chrome compact. We still auto-expand when `search` has text so an active
+  // query is never hidden.
+  const [searchOpen, setSearchOpen] = useState(false)
 
   useEffect(() => {
     fetchVideos()
@@ -195,7 +202,9 @@ export default function GolfTVPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <header className="border-b border-gray-100 bg-white sticky top-0 z-40">
+      {/* Fixed header — locked on scroll (matches Home Courses).
+          Right cluster: 🔍 search toggle + 🏌️ MyBag. */}
+      <header className="fixed top-0 left-0 right-0 z-40 border-b border-gray-100 bg-white/95 backdrop-blur-sm shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <a
             href="/clubhouse"
@@ -208,40 +217,57 @@ export default function GolfTVPage() {
             <span className="text-2xl shrink-0">📺</span>
             <div className="min-w-0">
               <h1 className="text-lg font-bold text-gray-900 truncate leading-tight">Golf TV</h1>
-              <p className="text-xs text-green-700 font-semibold leading-tight">Instructional video library</p>
+              <p className="text-xs text-green-700 font-semibold leading-tight truncate">Instructional video library</p>
             </div>
           </div>
-          <a
-            href="/bag"
-            className="text-3xl shrink-0 hover:scale-110 transition-transform leading-none"
-            aria-label="Your Golf Bag"
-            title="Your Golf Bag"
-          >
-            🏌️
-          </a>
+          <div className="flex items-center gap-3 shrink-0">
+            <button
+              onClick={() => setSearchOpen((o) => !o)}
+              className="text-xl hover:scale-110 transition-transform leading-none"
+              aria-label={searchOpen ? 'Close search' : 'Open search'}
+              title={searchOpen ? 'Close search' : 'Search'}
+            >
+              {searchOpen ? '✕' : '🔍'}
+            </button>
+            <a
+              href="/bag"
+              className="text-3xl hover:scale-110 transition-transform leading-none"
+              aria-label="Your Golf Bag"
+              title="Your Golf Bag"
+            >
+              🏌️
+            </a>
+          </div>
         </div>
       </header>
+      {/* Spacer offsets the fixed header (~60px). */}
+      <div className="h-[60px]" aria-hidden="true" />
 
-      {/* Sticky filter bar — stays locked below the page header when scrolling.
-          top-[57px] matches the header's py-3 + ~1px border. */}
-      <div className="sticky top-[57px] z-30 bg-white border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-4 pt-3 pb-2">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search the library…"
-            style={{ fontSize: '16px' }}
-            className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-green-400 transition-colors"
-          />
-          <div className="flex gap-1.5 mt-2 overflow-x-auto -mx-4 px-4 pb-1 scrollbar-none">
+      {/* Filter bar — sticky below the fixed header. Search input only
+          renders when toggled open OR an active query is present, so the
+          chrome stays compact but an active filter is never hidden.
+          Chips use flex-1 so all five fit one phone row — no scrolling. */}
+      <div className="sticky top-[60px] z-30 bg-white/95 backdrop-blur-sm border-b border-gray-100">
+        <div className="max-w-6xl mx-auto px-4 pt-2.5 pb-2">
+          {(searchOpen || search) && (
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search the library…"
+              autoFocus
+              style={{ fontSize: '16px' }}
+              className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 mb-2 focus:outline-none focus:border-green-400 transition-colors"
+            />
+          )}
+          <div className="flex gap-1.5">
             {CATEGORIES.map((cat) => (
               <button
                 key={cat.value}
                 onClick={() => setSelectedCategory(cat.value)}
-                className={`shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${selectedCategory === cat.value ? 'bg-green-700 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                className={`flex-1 px-2 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${selectedCategory === cat.value ? 'bg-green-700 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                title={cat.full}
               >
-                <span aria-hidden="true">{cat.icon}</span>
                 {cat.label}
               </button>
             ))}
@@ -264,7 +290,7 @@ export default function GolfTVPage() {
           </div>
         </div>
 
-        <p className="text-xs text-gray-500 mb-4">{filtered.length} {filtered.length === 1 ? 'video' : 'videos'}{selectedCategory && ` in ${CATEGORIES.find(c => c.value === selectedCategory)?.label}`}</p>
+        <p className="text-xs text-gray-500 mb-4">{filtered.length} {filtered.length === 1 ? 'video' : 'videos'}{selectedCategory && ` in ${CATEGORIES.find(c => c.value === selectedCategory)?.full}`}</p>
 
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
