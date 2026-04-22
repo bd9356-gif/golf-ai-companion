@@ -452,12 +452,9 @@ export default function BagPage() {
           </div>
         )}
 
-        <div className="mb-5 rounded-xl border-2 border-yellow-300 bg-yellow-50 px-4 py-3 flex items-start gap-3">
-          <span className="text-xl shrink-0">📥</span>
-          <p className="text-sm sm:text-base font-semibold text-yellow-900 leading-snug">
-            New saves wait at <span className="underline decoration-yellow-500 decoration-2 underline-offset-2">The Starter</span> until you move them into a skill.
-          </p>
-        </div>
+        <p className="mb-4 text-sm text-gray-600 leading-snug">
+          📥 New saves wait at <span className="font-semibold text-gray-900">The Starter</span> until you move them into a skill.
+        </p>
 
         {loading ? (
           <div className="space-y-4">
