@@ -551,7 +551,7 @@ function Bucket(props) {
       <button
         type="button"
         onClick={toggleCollapsed}
-        className={`w-full flex items-center gap-2 px-4 py-3 rounded-t-2xl text-left ${color.headerBg} ${!collapsed ? `border-b ${color.headerBorder}` : 'rounded-b-2xl'}`}
+        className={`w-full flex items-center gap-2 px-4 py-3 rounded-t-2xl text-left ${collapsed ? 'bg-white rounded-b-2xl' : `${color.headerBg} border-b ${color.headerBorder}`}`}
         aria-expanded={!collapsed}
       >
         <span className="text-xl">{meta.icon}</span>
