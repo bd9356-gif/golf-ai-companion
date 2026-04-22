@@ -203,7 +203,9 @@ export default function CoursesPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <header className="border-b border-gray-100 bg-white sticky top-0 z-40">
+      {/* Fixed header — locked at the top on every scroll, including iOS
+          Safari where `sticky` inside a flex-col body can drift. */}
+      <header className="fixed top-0 left-0 right-0 z-40 border-b border-gray-100 bg-white/95 backdrop-blur-sm shadow-sm">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <a href="/clubhouse" className="text-gray-500 hover:text-gray-800 text-sm font-medium shrink-0" aria-label="Back to Clubhouse">← Clubhouse</a>
           <div className="flex items-center gap-2 min-w-0">
@@ -216,6 +218,8 @@ export default function CoursesPage() {
           <a href="/bag" className="text-3xl shrink-0 hover:scale-110 transition-transform leading-none" aria-label="Your Golf Bag" title="Your Golf Bag">🏌️</a>
         </div>
       </header>
+      {/* Spacer to offset fixed header height (py-3 + line-height ≈ 60px). */}
+      <div className="h-[60px]" aria-hidden="true" />
 
       <main className="max-w-4xl mx-auto px-4 py-5">
         <div className="text-center px-2 mb-4">
