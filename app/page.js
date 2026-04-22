@@ -171,7 +171,7 @@ export default function HomePage() {
           </div>
           <a
             href={user ? '/clubhouse' : '/login'}
-            className="block w-full py-3.5 bg-green-600 text-white text-center text-base font-semibold hover:bg-green-700 transition-colors"
+            className="block w-full py-2.5 bg-green-600 text-white text-center text-sm font-semibold hover:bg-green-700 transition-colors"
           >
             {user ? 'Enter your clubhouse →' : 'Get started →'}
           </a>
