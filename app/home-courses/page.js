@@ -62,6 +62,15 @@ const BOOKING_PRESETS = [
   { label: '7 days', value: 7 },
 ]
 
+// Preset buttons for the Booking Opens At segmented control. Covers the two
+// times that account for ~95% of Florida courses; anything else lives under
+// "Other" (shows a time picker) or in Booking Notes (phone-only, etc).
+const BOOKING_TIME_PRESETS = [
+  { label: 'Not set', value: '' },
+  { label: 'Midnight', value: '00:00' },
+  { label: '6 AM', value: '06:00' },
+]
+
 export default function CoursesPage() {
   const [user, setUser] = useState(null)
   const [courses, setCourses] = useState([])
@@ -73,6 +82,9 @@ export default function CoursesPage() {
   // input. Tracked separately so a custom value like 14 doesn't re-match a
   // preset by coincidence.
   const [useCustomWindow, setUseCustomWindow] = useState(false)
+  // Same pattern for the time picker: most courses are Midnight or 6 AM, so
+  // those are one-tap presets. Anything else shows the <input type="time">.
+  const [useCustomTime, setUseCustomTime] = useState(false)
   const [saving, setSaving] = useState(false)
   const router = useRouter()
 
@@ -130,6 +142,7 @@ export default function CoursesPage() {
     }
     setForm(EMPTY_FORM)
     setUseCustomWindow(false)
+    setUseCustomTime(false)
     setEditingId(null)
     setShowForm(false)
     setSaving(false)
@@ -148,6 +161,10 @@ export default function CoursesPage() {
     // e.g. a course with a 14-day window shouldn't silently snap to a preset.
     const presetValues = BOOKING_PRESETS.map(p => p.value)
     setUseCustomWindow(hasDays && !presetValues.includes(days))
+    // Mirror the same preset-detection logic for the opens-at time.
+    const timeVal = course.booking_opens_time || ''
+    const timePresetValues = BOOKING_TIME_PRESETS.map(p => p.value)
+    setUseCustomTime(!!timeVal && !timePresetValues.includes(timeVal))
     setForm({
       name: course.name,
       notes: course.notes || '',
@@ -164,6 +181,7 @@ export default function CoursesPage() {
   function cancelForm() {
     setForm(EMPTY_FORM)
     setUseCustomWindow(false)
+    setUseCustomTime(false)
     setEditingId(null)
     setShowForm(false)
   }
@@ -195,7 +213,7 @@ export default function CoursesPage() {
             Save favorite courses with notes, phone numbers, and tee time links — ready the next time you play.
           </p>
           <button
-            onClick={() => { setShowForm(true); setEditingId(null); setForm(EMPTY_FORM); setUseCustomWindow(false) }}
+            onClick={() => { setShowForm(true); setEditingId(null); setForm(EMPTY_FORM); setUseCustomWindow(false); setUseCustomTime(false) }}
             className="mt-2 text-xs font-semibold text-green-700 hover:text-green-900 hover:underline"
           >
             + Add Course
@@ -329,13 +347,61 @@ export default function CoursesPage() {
 
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Booking Opens At</label>
-                  <input
-                    type="time"
-                    value={form.booking_opens_time || ''}
-                    onChange={e => setForm(f => ({ ...f, booking_opens_time: e.target.value }))}
-                    className="border border-gray-200 rounded-xl px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-green-300"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Most Florida courses open at midnight (12:00 AM) in season.</p>
+                  <p className="text-xs text-gray-500 mb-2">Most courses open at midnight or 6 AM. Anything else, use Other — or drop phone-only rules in the notes below.</p>
+                  <div className="flex flex-wrap gap-2">
+                    {BOOKING_TIME_PRESETS.map(opt => {
+                      const isActive = !useCustomTime && (form.booking_opens_time || '') === opt.value
+                      return (
+                        <button
+                          key={opt.label}
+                          type="button"
+                          onClick={() => {
+                            setUseCustomTime(false)
+                            setForm(f => ({ ...f, booking_opens_time: opt.value }))
+                          }}
+                          className={`px-3 py-1.5 rounded-full text-sm font-semibold border-2 transition-colors ${
+                            isActive
+                              ? 'bg-green-700 text-white border-green-700'
+                              : 'bg-white text-gray-700 border-gray-200 hover:border-green-400'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      )
+                    })}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUseCustomTime(true)
+                        // If current value matches a preset, clear it so the
+                        // custom picker starts fresh. Otherwise keep it.
+                        const timePresetValues = BOOKING_TIME_PRESETS.map(p => p.value)
+                        setForm(f => ({
+                          ...f,
+                          booking_opens_time: timePresetValues.includes(f.booking_opens_time || '')
+                            ? ''
+                            : f.booking_opens_time,
+                        }))
+                      }}
+                      className={`px-3 py-1.5 rounded-full text-sm font-semibold border-2 transition-colors ${
+                        useCustomTime
+                          ? 'bg-green-700 text-white border-green-700'
+                          : 'bg-white text-gray-700 border-gray-200 hover:border-green-400'
+                      }`}
+                    >
+                      Other
+                    </button>
+                  </div>
+                  {useCustomTime && (
+                    <div className="mt-2">
+                      <input
+                        type="time"
+                        value={form.booking_opens_time || ''}
+                        onChange={e => setForm(f => ({ ...f, booking_opens_time: e.target.value }))}
+                        className="border border-gray-200 rounded-xl px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-green-300"
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <div className="mt-4">
