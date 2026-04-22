@@ -212,8 +212,8 @@ export default function CoursesPage() {
             <span className="text-2xl shrink-0">🏠</span>
             <div className="min-w-0">
               <h1 className="text-lg font-bold text-gray-900 truncate leading-tight">Home Courses</h1>
-              <p className="text-xs text-green-700 font-semibold leading-tight truncate">Your home courses, always within reach.</p>
-              <p className="text-xs text-gray-900 leading-tight truncate">Notes, tips &amp; tee times</p>
+              <p className="text-xs text-green-700 font-semibold leading-tight truncate">Notes, tips &amp; tee times</p>
+              <p className="text-xs text-gray-900 leading-tight truncate">Your home courses, always within reach.</p>
             </div>
           </div>
           {/* Right-side cluster: always-visible + Add and MyBag link. */}
