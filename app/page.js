@@ -146,7 +146,7 @@ export default function HomePage() {
         <div className="bg-white border border-green-100 rounded-3xl overflow-hidden shadow-sm mb-5">
           <div className="w-full relative" style={{ height: '150px' }}>
             <img src={image.url} alt={image.name} className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/35 to-black/10" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/20 to-black/0" />
             <div className="absolute inset-0 flex flex-col items-center justify-center px-5 text-center">
               {userName ? (
                 <>
@@ -171,7 +171,7 @@ export default function HomePage() {
           </div>
           <a
             href={user ? '/clubhouse' : '/login'}
-            className="block w-full py-3.5 bg-green-700 text-white text-center text-base font-semibold hover:bg-green-800 transition-colors"
+            className="block w-full py-3.5 bg-green-600 text-white text-center text-base font-semibold hover:bg-green-700 transition-colors"
           >
             {user ? 'Enter your clubhouse →' : 'Get started →'}
           </a>
