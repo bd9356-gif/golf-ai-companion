@@ -405,10 +405,10 @@ export default function GolfTVPage() {
         {hasMore && (
           <div className="mt-6 text-center">
             <button
-              onClick={() => setShowCount((c) => c + 12)}
+              onClick={() => setShowCount((c) => c + 25)}
               className="px-8 py-3 bg-green-700 text-white rounded-xl text-base font-semibold hover:bg-green-800 transition-colors"
             >
-              Show More ({filtered.length - showCount} remaining)
+              Show {Math.min(25, filtered.length - showCount)} more ({filtered.length - showCount} remaining)
             </button>
           </div>
         )}
