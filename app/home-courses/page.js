@@ -18,13 +18,61 @@ function formatPhone(value) {
   return `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`
 }
 
+// Convert "HH:mm" 24h (from <input type="time">) to "H:MM AM/PM" for display.
+function formatTime12h(hhmm) {
+  if (!hhmm) return null
+  const [hStr, mStr] = hhmm.split(':')
+  const h = parseInt(hStr, 10)
+  const m = parseInt(mStr, 10)
+  if (Number.isNaN(h) || Number.isNaN(m)) return null
+  const ampm = h >= 12 ? 'PM' : 'AM'
+  const h12 = h % 12 === 0 ? 12 : h % 12
+  const mm = m.toString().padStart(2, '0')
+  return `${h12}:${mm} ${ampm}`
+}
+
+// Turn a course's booking window + opens-at time into a user-facing pill string.
+// Returns null when no window is set.
+function formatBookingLabel(days, time) {
+  if (days === null || days === undefined) return null
+  const t = formatTime12h(time)
+  if (days === 0) return t ? `Same-day booking at ${t}` : 'Same-day booking'
+  const base = `Books ${days} day${days === 1 ? '' : 's'} out`
+  return t ? `${base} at ${t}` : base
+}
+
+// Initial/empty state for the edit form. Keeping this as a helper so we reset
+// every field in exactly one place (add, cancel, after save all use this).
+const EMPTY_FORM = {
+  name: '',
+  notes: '',
+  tee_time_url: '',
+  phone: '',
+  booking_window_days: null,
+  booking_opens_time: '',
+  booking_notes: '',
+}
+
+// Preset buttons for the Booking Window segmented control. `null` = "Not set".
+const BOOKING_PRESETS = [
+  { label: 'Not set', value: null },
+  { label: 'Same day', value: 0 },
+  { label: '3 days', value: 3 },
+  { label: '5 days', value: 5 },
+  { label: '7 days', value: 7 },
+]
+
 export default function CoursesPage() {
   const [user, setUser] = useState(null)
   const [courses, setCourses] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState(null)
-  const [form, setForm] = useState({ name: '', notes: '', tee_time_url: '', phone: '' })
+  const [form, setForm] = useState(EMPTY_FORM)
+  // When true, the Booking Window segmented control switches to a numeric
+  // input. Tracked separately so a custom value like 14 doesn't re-match a
+  // preset by coincidence.
+  const [useCustomWindow, setUseCustomWindow] = useState(false)
   const [saving, setSaving] = useState(false)
   const router = useRouter()
 
@@ -52,12 +100,23 @@ export default function CoursesPage() {
   async function saveCourse() {
     if (!form.name.trim()) return
     setSaving(true)
+    // Normalize booking fields: empty time string → null in DB so the column
+    // stays truly "not set" rather than storing "".
+    const bookingPayload = {
+      booking_window_days:
+        form.booking_window_days === null || form.booking_window_days === undefined
+          ? null
+          : Math.max(0, parseInt(form.booking_window_days, 10)),
+      booking_opens_time: form.booking_opens_time || null,
+      booking_notes: form.booking_notes || null,
+    }
     if (editingId) {
       await supabase.from('saved_courses').update({
         name: form.name,
         notes: form.notes,
         tee_time_url: form.tee_time_url,
         phone: form.phone || '',
+        ...bookingPayload,
       }).eq('id', editingId)
     } else {
       await supabase.from('saved_courses').insert({
@@ -66,9 +125,11 @@ export default function CoursesPage() {
         notes: form.notes,
         tee_time_url: form.tee_time_url,
         phone: form.phone || '',
+        ...bookingPayload,
       })
     }
-    setForm({ name: '', notes: '', tee_time_url: '', phone: '' })
+    setForm(EMPTY_FORM)
+    setUseCustomWindow(false)
     setEditingId(null)
     setShowForm(false)
     setSaving(false)
@@ -81,18 +142,28 @@ export default function CoursesPage() {
   }
 
   function startEdit(course) {
+    const days = course.booking_window_days
+    const hasDays = days !== null && days !== undefined
+    // Switch to Custom mode if the saved value isn't one of our presets —
+    // e.g. a course with a 14-day window shouldn't silently snap to a preset.
+    const presetValues = BOOKING_PRESETS.map(p => p.value)
+    setUseCustomWindow(hasDays && !presetValues.includes(days))
     setForm({
       name: course.name,
       notes: course.notes || '',
       tee_time_url: course.tee_time_url || '',
       phone: course.phone || '',
+      booking_window_days: hasDays ? days : null,
+      booking_opens_time: course.booking_opens_time || '',
+      booking_notes: course.booking_notes || '',
     })
     setEditingId(course.id)
     setShowForm(true)
   }
 
   function cancelForm() {
-    setForm({ name: '', notes: '', tee_time_url: '', phone: '' })
+    setForm(EMPTY_FORM)
+    setUseCustomWindow(false)
     setEditingId(null)
     setShowForm(false)
   }
@@ -124,7 +195,7 @@ export default function CoursesPage() {
             Save favorite courses with notes, phone numbers, and tee time links — ready the next time you play.
           </p>
           <button
-            onClick={() => { setShowForm(true); setEditingId(null); setForm({ name: '', notes: '', tee_time_url: '', phone: '' }) }}
+            onClick={() => { setShowForm(true); setEditingId(null); setForm(EMPTY_FORM); setUseCustomWindow(false) }}
             className="mt-2 text-xs font-semibold text-green-700 hover:text-green-900 hover:underline"
           >
             + Add Course
@@ -185,6 +256,102 @@ export default function CoursesPage() {
                   className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-green-300"
                 />
               </div>
+
+              {/* Booking Rules — a small self-contained block inside the form.
+                  Saved to saved_courses.booking_window_days / _opens_time / _notes. */}
+              <div className="pt-2 border-t border-green-200">
+                <h4 className="text-sm font-bold text-gray-900 mb-1">📅 Booking Rules</h4>
+                <p className="text-xs text-gray-500 mb-3">Never miss a tee-time window again.</p>
+
+                <label className="block text-sm font-medium text-gray-700 mb-1">Booking Window</label>
+                <p className="text-xs text-gray-500 mb-2">How many days out does this course let you book?</p>
+                <div className="flex flex-wrap gap-2">
+                  {BOOKING_PRESETS.map(opt => {
+                    const isActive = !useCustomWindow && form.booking_window_days === opt.value
+                    return (
+                      <button
+                        key={String(opt.value)}
+                        type="button"
+                        onClick={() => {
+                          setUseCustomWindow(false)
+                          setForm(f => ({ ...f, booking_window_days: opt.value }))
+                        }}
+                        className={`px-3 py-1.5 rounded-full text-sm font-semibold border-2 transition-colors ${
+                          isActive
+                            ? 'bg-green-700 text-white border-green-700'
+                            : 'bg-white text-gray-700 border-gray-200 hover:border-green-400'
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    )
+                  })}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUseCustomWindow(true)
+                      // Preserve any existing custom value; otherwise seed with null
+                      // so the number input starts empty.
+                      const presetValues = BOOKING_PRESETS.map(p => p.value)
+                      setForm(f => ({
+                        ...f,
+                        booking_window_days: presetValues.includes(f.booking_window_days) ? null : f.booking_window_days,
+                      }))
+                    }}
+                    className={`px-3 py-1.5 rounded-full text-sm font-semibold border-2 transition-colors ${
+                      useCustomWindow
+                        ? 'bg-green-700 text-white border-green-700'
+                        : 'bg-white text-gray-700 border-gray-200 hover:border-green-400'
+                    }`}
+                  >
+                    Custom
+                  </button>
+                </div>
+                {useCustomWindow && (
+                  <div className="mt-2">
+                    <input
+                      type="number"
+                      min="0"
+                      max="365"
+                      value={form.booking_window_days ?? ''}
+                      onChange={e => {
+                        const v = e.target.value
+                        setForm(f => ({
+                          ...f,
+                          booking_window_days: v === '' ? null : Math.max(0, parseInt(v, 10) || 0),
+                        }))
+                      }}
+                      placeholder="Days in advance"
+                      className="w-40 border border-gray-200 rounded-xl px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-green-300"
+                    />
+                  </div>
+                )}
+
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Booking Opens At</label>
+                  <input
+                    type="time"
+                    value={form.booking_opens_time || ''}
+                    onChange={e => setForm(f => ({ ...f, booking_opens_time: e.target.value }))}
+                    className="border border-gray-200 rounded-xl px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-green-300"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Most Florida courses open at midnight (12:00 AM) in season.</p>
+                </div>
+
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Booking Notes</label>
+                  <textarea
+                    value={form.booking_notes || ''}
+                    onChange={e => setForm(f => ({ ...f, booking_notes: e.target.value.slice(0, 1000) }))}
+                    placeholder="Member priority, phone-only, any extra booking quirks..."
+                    rows={2}
+                    maxLength={1000}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-green-300 resize-none"
+                  />
+                  <p className="text-xs text-gray-400 mt-1 text-right">{(form.booking_notes || '').length}/1000</p>
+                </div>
+              </div>
+
               <div className="flex gap-3">
                 <button
                   onClick={saveCourse}
@@ -225,6 +392,19 @@ export default function CoursesPage() {
                       {course.name}
                     </h3>
 
+                    {/* Booking window pill — only shown when the user has set one.
+                        Reminds the golfer "Books 7 days out at 12:00 AM" so they
+                        don't miss the midnight drop during in-season. */}
+                    {(() => {
+                      const label = formatBookingLabel(course.booking_window_days, course.booking_opens_time)
+                      if (!label) return null
+                      return (
+                        <span className="inline-flex items-center gap-1 mt-2 px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800 border border-green-200">
+                          📅 {label}
+                        </span>
+                      )
+                    })()}
+
                     {/* Phone number — clickable tel: link */}
                     {course.phone && (
                       <a
@@ -237,6 +417,13 @@ export default function CoursesPage() {
 
                     {course.notes && (
                       <p className="text-sm text-gray-600 mt-3 leading-relaxed whitespace-pre-wrap">{course.notes}</p>
+                    )}
+
+                    {course.booking_notes && (
+                      <p className="text-sm text-gray-600 mt-3 leading-relaxed whitespace-pre-wrap">
+                        <span className="font-semibold text-gray-700">📅 Booking: </span>
+                        {course.booking_notes}
+                      </p>
                     )}
 
                     {course.tee_time_url && (
