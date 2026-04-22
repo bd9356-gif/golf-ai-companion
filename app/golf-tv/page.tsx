@@ -52,7 +52,10 @@ export default function GolfTVPage() {
   const [filtered, setFiltered] = useState<VideoRow[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [showCount, setShowCount] = useState(12)
+  // Pagination: each "page" is PAGE_SIZE videos. Clicking Next/Previous
+  // REPLACES the current batch instead of appending to it.
+  const PAGE_SIZE = 25
+  const [pageStart, setPageStart] = useState(0)
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
   const [user, setUser] = useState<any>(null)
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
@@ -76,6 +79,9 @@ export default function GolfTVPage() {
   }, [])
 
   useEffect(() => { applyFilters() }, [videos, search, selectedCategory])
+  // Always start back at page 1 when the user changes search or category,
+  // otherwise they could land on an empty last page after narrowing results.
+  useEffect(() => { setPageStart(0) }, [search, selectedCategory])
 
   async function fetchVideos() {
     setLoading(true)
@@ -197,8 +203,19 @@ export default function GolfTVPage() {
     return match ? match[1] : null
   }
 
-  const visibleVideos = filtered.slice(0, showCount)
-  const hasMore = filtered.length > showCount
+  // Show one page at a time (pageStart → pageStart + PAGE_SIZE).
+  const visibleVideos = filtered.slice(pageStart, pageStart + PAGE_SIZE)
+  const hasNext = filtered.length > pageStart + PAGE_SIZE
+  const hasPrev = pageStart > 0
+  const pageEnd = Math.min(pageStart + PAGE_SIZE, filtered.length)
+
+  // Jump back to the top when paging so the new batch is immediately visible.
+  function goToPage(next: number) {
+    setPageStart(Math.max(0, next))
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -290,7 +307,12 @@ export default function GolfTVPage() {
           </div>
         </div>
 
-        <p className="text-xs text-gray-500 mb-4">{filtered.length} {filtered.length === 1 ? 'video' : 'videos'}{selectedCategory && ` in ${CATEGORIES.find(c => c.value === selectedCategory)?.full}`}</p>
+        <p className="text-xs text-gray-500 mb-4">
+          {filtered.length === 0
+            ? '0 videos'
+            : `${pageStart + 1}–${pageEnd} of ${filtered.length} ${filtered.length === 1 ? 'video' : 'videos'}`}
+          {selectedCategory && ` in ${CATEGORIES.find(c => c.value === selectedCategory)?.full}`}
+        </p>
 
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -402,14 +424,24 @@ export default function GolfTVPage() {
           </div>
         )}
 
-        {hasMore && (
-          <div className="mt-6 text-center">
-            <button
-              onClick={() => setShowCount((c) => c + 25)}
-              className="px-8 py-3 bg-green-700 text-white rounded-xl text-base font-semibold hover:bg-green-800 transition-colors"
-            >
-              Show {Math.min(25, filtered.length - showCount)} more ({filtered.length - showCount} remaining)
-            </button>
+        {(hasPrev || hasNext) && (
+          <div className="mt-6 flex items-center justify-center gap-3">
+            {hasPrev && (
+              <button
+                onClick={() => goToPage(pageStart - PAGE_SIZE)}
+                className="px-5 py-3 border-2 border-green-700 text-green-700 rounded-xl text-sm font-semibold hover:bg-green-50 transition-colors"
+              >
+                ← Previous
+              </button>
+            )}
+            {hasNext && (
+              <button
+                onClick={() => goToPage(pageStart + PAGE_SIZE)}
+                className="px-5 py-3 bg-green-700 text-white rounded-xl text-sm font-semibold hover:bg-green-800 transition-colors"
+              >
+                Next {Math.min(PAGE_SIZE, filtered.length - pageStart - PAGE_SIZE)} →
+              </button>
+            )}
           </div>
         )}
       </main>
