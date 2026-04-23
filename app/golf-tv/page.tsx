@@ -249,8 +249,8 @@ export default function GolfTVPage() {
             <a
               href="/bag"
               className="text-3xl hover:scale-110 transition-transform leading-none"
-              aria-label="Your Golf Bag"
-              title="Your Golf Bag"
+              aria-label="My Golf Bag"
+              title="My Golf Bag"
             >
               🏌️
             </a>
@@ -302,7 +302,7 @@ export default function GolfTVPage() {
           <div className="min-w-0 flex-1">
             <p className="text-sm font-bold text-green-900 leading-tight">Where your journey begins</p>
             <p className="text-xs text-green-800 leading-snug mt-0.5">
-              Tap <span className="font-semibold">Add to Bag</span> on any video and it lands in <span className="font-semibold">The Starter</span> — the launch pad in <a href="/bag" className="underline font-semibold hover:text-green-900">Your Golf Bag</a> where you sort lessons into skills.
+              Tap <span className="font-semibold">Add to Bag</span> on any video and it lands in <span className="font-semibold">The Starter</span> — the launch pad in <a href="/bag" className="underline font-semibold hover:text-green-900">My Golf Bag</a> where you sort lessons into skills.
             </p>
           </div>
         </div>

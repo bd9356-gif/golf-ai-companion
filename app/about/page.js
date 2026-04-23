@@ -43,22 +43,22 @@ export default function AboutPage() {
               },
               {
                 icon: '📖',
-                title: 'Guides — The Buddies',
+                title: 'Playbook — The Buddies',
                 desc: 'Expert articles covering swing tips, course management, the mental game, and fitness — all matched to your skill level and filterable by topic.'
               },
               {
                 icon: '🎓',
-                title: 'Ask the Club Pro',
+                title: 'Club Pro',
                 desc: 'Your AI golf coach available 24/7. Ask anything about your swing, course strategy, practice drills, or scoring — and save the answers to your Bag.'
               },
               {
                 icon: '🏌️',
-                title: 'Your Golf Bag',
+                title: 'My Golf Bag',
                 desc: 'Save videos, guides, and AI answers as you go. Everything you\'ve collected lives in your Bag, organized by your skill journey. Nothing ever gets lost.'
               },
               {
-                icon: '🏌️',
-                title: 'Your Home Courses',
+                icon: '🏠',
+                title: 'My Courses',
                 desc: 'Save your favorite courses with notes, tips, phone numbers, and tee time links — all in one place. Tap to call or book directly from the app.'
               },
               {
@@ -93,7 +93,7 @@ export default function AboutPage() {
         <div className="mb-12 bg-green-50 border border-green-100 rounded-2xl p-6">
           <h3 className="text-lg font-bold text-green-900 mb-3">⛳ The Clubhouse Metaphor</h3>
           <p className="text-sm text-green-800 leading-relaxed">
-            We think of MyGolf Companion as your personal clubhouse. The home page is the drive up — a fresh course view every day. Once inside, Videos is the course, Guides are your buddies, the Club Pro is your AI coach, and Your Golf Bag is everything you carry with you. It all feels like golf because it is golf.
+            We think of MyGolf Companion as your personal clubhouse. The home page is the drive up — a fresh course view every day. Once inside, Golf TV is the course, the Playbook is your buddies, the Club Pro is your AI coach, and My Golf Bag is everything you carry with you. It all feels like golf because it is golf.
           </p>
         </div>
 
@@ -114,9 +114,9 @@ export default function AboutPage() {
         <div className="max-w-5xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-400">
           <p>⛳ MyGolf Companion — Your AI guide to better golf</p>
           <div className="flex gap-6">
-            <a href="/bag" className="hover:text-gray-600">Videos</a>
-            <a href="/guides" className="hover:text-gray-600">Guides</a>
-            <a href="/bag" className="hover:text-gray-600">Your Golf Bag</a>
+            <a href="/golf-tv" className="hover:text-gray-600">Golf TV</a>
+            <a href="/guides" className="hover:text-gray-600">Playbook</a>
+            <a href="/bag" className="hover:text-gray-600">My Golf Bag</a>
             <a href="/about" className="hover:text-gray-600">About</a>
           </div>
         </div>

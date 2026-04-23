@@ -211,7 +211,7 @@ export default function CoursesPage() {
           <div className="flex items-center gap-2 min-w-0">
             <span className="text-2xl shrink-0">🏠</span>
             <div className="min-w-0">
-              <h1 className="text-lg font-bold text-gray-900 truncate leading-tight">Home Courses</h1>
+              <h1 className="text-lg font-bold text-gray-900 truncate leading-tight">My Courses</h1>
               <p className="text-xs text-green-700 font-semibold leading-tight truncate">Notes, tips &amp; tee times</p>
             </div>
           </div>
@@ -225,7 +225,7 @@ export default function CoursesPage() {
             >
               + Add
             </button>
-            <a href="/bag" className="text-3xl hover:scale-110 transition-transform leading-none" aria-label="Your Golf Bag" title="Your Golf Bag">🏌️</a>
+            <a href="/bag" className="text-3xl hover:scale-110 transition-transform leading-none" aria-label="My Golf Bag" title="My Golf Bag">🏌️</a>
           </div>
         </div>
         {/* Full-width centered tagline so it can't get truncated by the

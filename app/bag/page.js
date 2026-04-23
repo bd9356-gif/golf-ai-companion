@@ -370,7 +370,7 @@ export default function BagPage() {
           <div className="flex items-center gap-2 min-w-0">
             <span className="text-2xl shrink-0">🏌️</span>
             <div className="min-w-0">
-              <h1 className="text-lg font-bold text-gray-900 truncate leading-tight">Your Golf Bag</h1>
+              <h1 className="text-lg font-bold text-gray-900 truncate leading-tight">My Golf Bag</h1>
               <p className="text-xs text-green-700 font-semibold leading-tight">
                 {totalSaved} saved · 5 skills
               </p>

@@ -242,6 +242,7 @@ export default function ProfilePage() {
                 <p className="text-gray-500 font-medium">No saved answers yet</p>
                 <p className="text-sm text-gray-400 mt-1">Save AI answers from the Club Pro</p>
                 <a href="/club-pro" className="mt-4 inline-block text-sm text-green-700 font-semibold hover:underline">Ask the Club Pro →</a>
+                {/* Button label keeps the verb "Ask" as a call-to-action; tile label on Clubhouse is just "Club Pro". */}
               </div>
             ) : (
               <div className="space-y-3">

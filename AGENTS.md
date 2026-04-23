@@ -35,10 +35,10 @@ Canonical names — use them exactly:
 | ----------------- | ---------------- | -------------------------------------------------------------- |
 | MyClubhouse       | `/clubhouse`     | The hub. Everything routes from here. Daily course-photo hero. |
 | Golf TV           | `/golf-tv`       | Instructional video library (YouTube-backed).                  |
-| Guides            | `/guides`        | AI-crafted articles grouped by topic.                          |
-| Your Golf Bag     | `/bag`           | Personal saves organized into five fixed skill buckets.        |
-| Home Courses      | `/home-courses`  | Saved courses (notes, phone, tee-time link).                   |
-| Ask the Club Pro  | `/club-pro`      | AI chat for personal guidance.                                 |
+| My Golf Bag       | `/bag`           | Personal saves organized into five fixed skill buckets.        |
+| My Courses        | `/home-courses`  | Saved courses (notes, phone, tee-time link). Route stays `/home-courses` for bookmark preservation. |
+| Playbook          | `/guides`        | AI-crafted articles grouped by topic. Route stays `/guides`.   |
+| Club Pro          | `/club-pro`      | AI chat for personal guidance. Inside-app CTA buttons may still read "Ask the Club Pro" as an action verb. |
 
 Other routes: `/login`, `/profile`, `/about`, `/auth/callback`, `/auth/confirm`, `/admin/starter`, `/admin/featured`.
 
@@ -48,15 +48,24 @@ Header pattern across all pages: `← Clubhouse` (left) / emoji + title + tiny g
 
 ## Clubhouse tiles (`/clubhouse`)
 
-The hub is a short list of rounded tiles, each with a left-edge color stripe that maps to the destination's own color. Tiles show icon + title + subtitle + a short one-line tagline.
+The hub splits tiles into two labeled sections: **Your Golf Journey** (personal saves + your home courses) and **The Pro Shop** (AI-powered tools framed as staff you consult). Every tile uses the same unified style — thin gray ring with a thick green left stripe — so the whole page reads as one app, not a rainbow of per-section colors. Green is the brand color throughout.
 
-| Tile             | Stripe      | Tagline                          |
-| ---------------- | ----------- | -------------------------------- |
-| Golf TV          | `green-500` | Every lesson, one tap away.      |
-| Guides           | `purple-500`| Read smart. Play smarter.        |
-| Your Golf Bag    | `yellow-500`| Your saves, sorted and ready.    |
-| Home Courses     | `orange-500`| Notes, tips, tee times.          |
-| Ask the Club Pro | `emerald-500`| Ask anything. Get clear answers.|
+Tile anatomy: icon + title + short one-line description + a right-side → arrow. No dash subtitles — the description is the subtitle.
+
+**Your Golf Journey**
+
+| Tile         | Description                        |
+| ------------ | ---------------------------------- |
+| Golf TV      | Every lesson, one tap away.        |
+| My Golf Bag  | Save, sort, and build your game.   |
+| My Courses   | Notes, tips, tee times.            |
+
+**The Pro Shop** (AI tools — the label is "The Pro Shop", not "AI ProShop"; we want the metaphor to do the work, not the acronym)
+
+| Tile         | Description                        |
+| ------------ | ---------------------------------- |
+| Playbook     | Read smarter. Play better.         |
+| Club Pro     | Ask anything. Get clear answers.   |
 
 The page is sized to fit an iPhone viewport without scrolling. Descriptions are `truncate`d so any future rewording can't break the fit. Hero height is responsive: `h-28 sm:h-40 md:h-52`. Greeting line uses `getGreeting()` for a time-of-day line ("Good morning, golfer").
 
@@ -84,7 +93,7 @@ Per-skill color is applied to the outer border, header background, title text, c
 - **Practice mode.** A focus overlay walks through plan items one at a time, keyboard-arrow and ESC friendly.
 - **Deletes cascade through leaves.** `removeSavedVideo/Article/Answer` also delete the matching `leaf_items` rows and any `cart_items` row — the bag stays consistent across surfaces.
 
-## Guides topic colors (`/guides`)
+## Playbook topic colors (`/guides`)
 
 Topics are grouped into collapsed sections. Each group has a color stripe matching MyBag where the skills overlap:
 

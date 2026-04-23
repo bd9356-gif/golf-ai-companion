@@ -18,28 +18,18 @@ const JOURNEY_SECTIONS = [
   {
     icon: '📺',
     title: 'Golf TV',
-    subtitle: 'Watch & learn',
     href: '/golf-tv',
     description: 'Every lesson, one tap away.',
   },
   {
-    icon: '📖',
-    title: 'Guides',
-    subtitle: 'The Playbook',
-    href: '/guides',
-    description: 'Read smart. Play smarter.',
-  },
-  {
     icon: '🏌️',
-    title: 'Your Golf Bag',
-    subtitle: 'MyBag',
+    title: 'My Golf Bag',
     href: '/bag',
-    description: 'Your saves, sorted and ready.',
+    description: 'Save, sort, and build your game.',
   },
   {
     icon: '🏠',
-    title: 'Home Courses',
-    subtitle: 'MyCourses',
+    title: 'My Courses',
     href: '/home-courses',
     description: 'Notes, tips, tee times.',
   },
@@ -47,9 +37,14 @@ const JOURNEY_SECTIONS = [
 
 const PROSHOP_SECTIONS = [
   {
+    icon: '📖',
+    title: 'Playbook',
+    href: '/guides',
+    description: 'Read smarter. Play better.',
+  },
+  {
     icon: '🎓',
-    title: 'Ask the Club Pro',
-    subtitle: 'Your AI coach',
+    title: 'Club Pro',
     href: '/club-pro',
     description: 'Ask anything. Get clear answers.',
   },
@@ -127,11 +122,8 @@ export default function ClubhousePage() {
               <div className="flex items-center gap-3">
                 <span className="text-2xl shrink-0">{section.icon}</span>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-baseline gap-2 flex-wrap">
-                    <h3 className="font-bold text-base sm:text-lg text-gray-900 leading-tight">{section.title}</h3>
-                    <span className="text-xs text-green-700 font-semibold">— {section.subtitle}</span>
-                  </div>
-                  <p className="text-sm mt-1 leading-snug text-gray-600 truncate">{section.description}</p>
+                  <h3 className="font-bold text-base sm:text-lg text-gray-900 leading-tight">{section.title}</h3>
+                  <p className="text-sm mt-0.5 leading-snug text-gray-600 truncate">{section.description}</p>
                 </div>
                 <span className="text-gray-400 shrink-0 text-lg">→</span>
               </div>
@@ -139,19 +131,16 @@ export default function ClubhousePage() {
           ))}
         </div>
 
-        {/* AI ProShop */}
-        <h3 className="text-xs font-bold tracking-wider text-gray-600 uppercase px-1 mt-5 sm:mt-7 mb-2.5">🤖 AI ProShop</h3>
+        {/* The Pro Shop — AI-powered tools framed as staff you can consult. */}
+        <h3 className="text-xs font-bold tracking-wider text-gray-600 uppercase px-1 mt-5 sm:mt-7 mb-2.5">The Pro Shop</h3>
         <div className="space-y-2.5">
           {PROSHOP_SECTIONS.map((section) => (
             <a key={section.title} href={section.href} className={TILE_CLASSES}>
               <div className="flex items-center gap-3">
                 <span className="text-2xl shrink-0">{section.icon}</span>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-baseline gap-2 flex-wrap">
-                    <h3 className="font-bold text-base sm:text-lg text-gray-900 leading-tight">{section.title}</h3>
-                    <span className="text-xs text-green-700 font-semibold">— {section.subtitle}</span>
-                  </div>
-                  <p className="text-sm mt-1 leading-snug text-gray-600 truncate">{section.description}</p>
+                  <h3 className="font-bold text-base sm:text-lg text-gray-900 leading-tight">{section.title}</h3>
+                  <p className="text-sm mt-0.5 leading-snug text-gray-600 truncate">{section.description}</p>
                 </div>
                 <span className="text-gray-400 shrink-0 text-lg">→</span>
               </div>
