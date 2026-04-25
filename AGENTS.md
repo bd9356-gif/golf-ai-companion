@@ -161,12 +161,15 @@ Legacy manual-run scripts live in the repo root / historical paths. Current pref
 
 ## Authentication
 
-Two ways to sign in, both on `/login` (mirrors the Recipe site — no password, no separate signup page):
+Three ways to sign in, all on `/login` (mirrors the Recipe site — no password, no separate signup page):
 
-- **Email magic-link** — `supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: '<origin>/auth/callback' } })`. Primary button ("Email me a sign-in link"). After submit the form swaps to a "📬 Check your email" confirmation panel with a "Use a different email" escape hatch.
-- **Continue with Google** — `supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: '<origin>/auth/callback' } })`.
+- **Sign in with Gmail** — `supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: '<origin>/auth/callback' } })`.
+- **Sign in with Microsoft** — `supabase.auth.signInWithOAuth({ provider: 'azure', options: { redirectTo: '<origin>/auth/callback', scopes: 'email openid profile' } })`. Covers Hotmail, Outlook.com, Live, MSN, Office365. Added April 2026 because magic-link is fragile inside mobile email apps' in-app browsers (Outlook on iOS opens links in its own webview that doesn't share storage with Safari).
+- **Email magic-link** — `supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: '<origin>/auth/callback' } })`. Catch-all for testers whose email isn't Gmail or Microsoft. After submit the form swaps to a "📬 Check your email" confirmation panel with a "Use a different email" escape hatch.
 
-Both flows land on `app/auth/callback/` → `app/auth/confirm/` → `/clubhouse`. First-time magic-link sign-in creates the account automatically, so there's no `/signup` route and no password field anywhere.
+All flows land on `app/auth/callback/` → `app/auth/confirm/` → `/clubhouse`. First-time sign-in (any provider) creates the account automatically, so there's no `/signup` route and no password field anywhere.
+
+**Azure / Microsoft setup.** Shared with Recipe — one Azure app registration covers both projects. The redirect URIs in the Azure registration must include both Supabase projects' callback URLs (`https://<recipe-ref>.supabase.co/auth/v1/callback` and `https://<this-project-ref>.supabase.co/auth/v1/callback`). The Application (client) ID + client secret get pasted into Supabase → Authentication → Providers → Azure → enable. Tenant defaults to `common` so both personal and work Microsoft accounts can sign in.
 
 ### SMTP for magic-link deliverability (Resend)
 
