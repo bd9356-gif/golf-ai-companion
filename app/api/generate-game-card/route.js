@@ -1,4 +1,3 @@
-cat > ~/golf-ai-companion/app/api/generate-game-card/route.js << 'ENDOFFILE'
 import Anthropic from '@anthropic-ai/sdk'
 import { checkRateLimit } from '@/lib/rate_limit'
 
@@ -19,35 +18,38 @@ export async function POST(request) {
   }
 
   const names = golferNames.join(', ')
+  const [g1, g2, g3, g4] = golferNames
 
-  const prompt = `Golf situation: "${situationTitle}". Golfers in the group: ${names}.
+  const prompt = `You are writing what four weekend golfers actually say to each other on the course when ${situationTitle} happens. Not what the rules say — what the guys in the group actually say.
 
-Each golfer in the group has their own take on what to do in this situation. Write one ruling per golfer — casual, first-person address using their name, like a buddy calling it at the course.
+Golfers: ${names}.
 
-The tone is exactly like these examples:
-- "John, you hit it in the water—it doesn't count. Just drop one up by the green."
+Write one line for each golfer. Each line is what THAT golfer says out loud to the group. Use their name at the start. Sound exactly like these real examples:
+- "Bill, you hit it in the water — it doesn't count. Just drop one up by the green."
 - "John, just throw another ball over there. Nobody cares where it crossed."
-- "John, it's a red stake. That means you can drop anywhere over here."
+- "Keith, it's a red stake, you can drop anywhere over here, just add one."
+- "Art, that's a lateral — drop within two club lengths and keep moving."
 
-Rules for each ruling:
-- Start with the golfer's name
-- One sentence, under 15 words
-- Sounds like a different guy giving his take — some dismissive, some permissive, some half-know-the-rule, some totally wrong
-- No rulebook language, no "the player shall", no formal tone
-- Random variety — each one should feel like a different personality
-- No two rulings should sound the same
+NEVER write:
+- Formal phrases like "drop at crossing point" or "relief options" or "provisional"
+- Anything that sounds like a rule book
+- More than one sentence per golfer
 
-Then write the REAL golf rule — one plain English sentence, accurate USGA/R&A, under 15 words.
+Each golfer should sound like a DIFFERENT person — one who waves it off, one who half-knows the rule, one who just makes something up, one who's seen it on TV once.
 
-Return ONLY valid JSON, no markdown, no extra text:
+Then write the real USGA rule in one plain casual sentence.
+
+Return ONLY valid JSON:
 {
   "situation": "${situationTitle}",
   "takes": [
-    { "golfer": "${golferNames[0]}", "rule": "the ruling" }
+    { "golfer": "${g1}", "rule": "what ${g1} actually says" },
+    { "golfer": "${g2}", "rule": "what ${g2} actually says" },
+    { "golfer": "${g3}", "rule": "what ${g3} actually says" },
+    { "golfer": "${g4}", "rule": "what ${g4} actually says" }
   ],
-  "real_rule": "the actual rule in one sentence"
-}
-Include all ${golferNames.length} golfers in takes, in this order: ${names}.`
+  "real_rule": "the actual rule in plain English"
+}`
 
   const response = await anthropic.messages.create({
     model: 'claude-sonnet-4-6',
@@ -58,4 +60,3 @@ Include all ${golferNames.length} golfers in takes, in this order: ${names}.`
 
   return Response.json({ result: response.content[0].text })
 }
-ENDOFFILE
