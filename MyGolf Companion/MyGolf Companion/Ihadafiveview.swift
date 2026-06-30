@@ -1,0 +1,645 @@
+import SwiftUI
+import Supabase
+
+// MARK: - Models
+struct GolfGroup: Codable {
+    var id: UUID?
+    var userId: UUID?
+    var golfer1: String
+    var golfer2: String
+    var golfer3: String
+    var golfer4: String
+
+    enum CodingKeys: String, CodingKey {
+        case id, golfer1 = "golfer_1", golfer2 = "golfer_2",
+             golfer3 = "golfer_3", golfer4 = "golfer_4", userId = "user_id"
+    }
+
+    var names: [String] { [golfer1, golfer2, golfer3, golfer4].filter { !$0.isEmpty } }
+}
+
+struct Situation: Codable, Identifiable, Hashable {
+    var id: UUID
+    var category: String
+    var title: String
+}
+
+struct GameCard: Codable, Identifiable {
+    var id: UUID?
+    var userId: UUID?
+    var createdBy: String
+    var gameContent: String
+    var createdAt: Date?
+    var situationTitle: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, userId = "user_id", createdBy = "created_by",
+             gameContent = "game_content", createdAt = "created_at",
+             situationTitle = "situation_title"
+    }
+}
+
+struct RoundCardData {
+    var situation: String
+    var takes: [GolferTake]
+    var realRule: String
+
+    static func parse(from json: String) -> RoundCardData? {
+        guard let data = json.data(using: .utf8),
+              let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let takesArr = obj["takes"] as? [[String: Any]],
+              let realRule = obj["real_rule"] as? String else { return nil }
+        let takes = takesArr.compactMap { t -> GolferTake? in
+            guard let golfer = t["golfer"] as? String,
+                  let rule = t["rule"] as? String else { return nil }
+            return GolferTake(golfer: golfer, rule: rule)
+        }
+        return RoundCardData(
+            situation: obj["situation"] as? String ?? "",
+            takes: takes,
+            realRule: realRule
+        )
+    }
+}
+
+struct GolferTake: Identifiable {
+    let id = UUID()
+    let golfer: String
+    let rule: String
+}
+
+// MARK: - Main View
+struct IHadAFiveView: View {
+    @EnvironmentObject var authViewModel: AuthViewModel
+    @State private var group: GolfGroup? = nil
+    @State private var gameCards: [GameCard] = []
+    @State private var situations: [Situation] = []
+    @State private var isLoading = true
+    @State private var isGenerating = false
+    @State private var showGroupSetup = false
+    @State private var currentCard: GameCard? = nil
+    @State private var nextCreator: String = ""
+    @State private var errorMessage: String? = nil
+    @State private var selectedSituation: Situation? = nil
+
+    private let supabase = SupabaseClient.shared.client
+
+    var groupedSituations: [String: [Situation]] {
+        Dictionary(grouping: situations, by: { $0.category })
+    }
+    var categoryOrder: [String] { ["Trouble Shots", "Course Conditions", "Etiquette & Calls"] }
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 0) {
+                    headerBanner
+
+                    if isLoading {
+                        ProgressView().padding(48)
+                    } else if group == nil {
+                        VStack(spacing: 12) {
+                            Text("Set up your foursome first!")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(Color(hex: "#1B5E20"))
+                                .padding(.top, 24)
+                            GroupSetupView(onSave: { newGroup in
+                                Task { await saveGroup(newGroup) }
+                            })
+                        }
+                        .padding(16)
+                    } else if showGroupSetup {
+                        GroupSetupView(existing: group, onSave: { newGroup in
+                            Task { await saveGroup(newGroup) }
+                        })
+                        .padding(16)
+                    } else {
+                        VStack(spacing: 16) {
+                            whosUpCard
+                            situationPicker
+
+                            if selectedSituation != nil {
+                                buildButton
+                            }
+
+                            if let error = errorMessage {
+                                Text(error)
+                                    .font(.system(size: 13))
+                                    .foregroundColor(.red)
+                                    .padding(.horizontal, 16)
+                            }
+
+                            if let card = currentCard {
+                                if let data = RoundCardData.parse(from: card.gameContent) {
+                                    RoundCardView(data: data, card: card, group: group!)
+                                        .padding(.horizontal, 16)
+                                } else {
+                                    RawGameCardView(card: card)
+                                        .padding(.horizontal, 16)
+                                }
+                                nextWeekSection
+                            }
+
+                            if !gameCards.isEmpty {
+                                historySection
+                            }
+                        }
+                        .padding(.top, 16)
+                        .padding(.bottom, 32)
+                    }
+                }
+            }
+            .background(Color(hex: "#F9F6F0"))
+            .navigationBarHidden(true)
+            .onAppear { Task { await loadData() } }
+        }
+    }
+
+    // MARK: - Header
+    private var headerBanner: some View {
+        VStack(spacing: 0) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Casual Code of Conduct")
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundColor(Color(hex: "#1B5E20"))
+                    Text("The House Rules, Your Way")
+                        .font(.system(size: 13))
+                        .foregroundColor(Color(hex: "#5C5C5C"))
+                        .italic()
+                }
+                Spacer()
+                Button { showGroupSetup = true } label: {
+                    Text("Edit Group")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(Color(hex: "#1B5E20"))
+                        .padding(.horizontal, 12).padding(.vertical, 6)
+                        .background(Color(hex: "#E8F5E9")).cornerRadius(20)
+                }
+            }
+            .padding(.horizontal, 16).padding(.vertical, 14)
+            Divider()
+        }
+        .background(Color.white)
+    }
+
+    // MARK: - Who's Up
+    private var whosUpCard: some View {
+        HStack(spacing: 12) {
+            Text("🎯").font(.system(size: 28))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(nextCreator.isEmpty ? (group?.golfer1 ?? "") : nextCreator)
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(Color(hex: "#1A1A1A"))
+                Text("picks this week's situation")
+                    .font(.system(size: 13))
+                    .foregroundColor(Color(hex: "#5C5C5C"))
+            }
+            Spacer()
+        }
+        .padding(16)
+        .background(Color(hex: "#E8F5E9"))
+        .cornerRadius(14)
+        .padding(.horizontal, 16)
+    }
+
+    // MARK: - Situation Picker
+    private var situationPicker: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("This Round's Situation")
+                .font(.system(size: 15, weight: .bold))
+                .foregroundColor(Color(hex: "#1A1A1A"))
+
+            Menu {
+                ForEach(categoryOrder, id: \.self) { category in
+                    if let items = groupedSituations[category] {
+                        Section(category) {
+                            ForEach(items) { situation in
+                                Button(situation.title) {
+                                    selectedSituation = situation
+                                }
+                            }
+                        }
+                    }
+                }
+            } label: {
+                HStack {
+                    Text(selectedSituation?.title ?? "Pick a situation...")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(selectedSituation == nil ? Color(hex: "#888888") : Color(hex: "#1A1A1A"))
+                    Spacer()
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(Color(hex: "#1B5E20"))
+                }
+                .padding(16)
+                .background(Color.white)
+                .cornerRadius(14)
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color(hex: "#D0E8D0"), lineWidth: 1.5))
+            }
+        }
+        .padding(.horizontal, 16)
+    }
+
+    // MARK: - Build Button
+    private var buildButton: some View {
+        Button { Task { await generateRound() } } label: {
+            HStack(spacing: 10) {
+                if isGenerating {
+                    ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .white)).scaleEffect(0.8)
+                } else {
+                    Text("⚖️").font(.system(size: 20))
+                }
+                Text(isGenerating ? "Settling the debate..." : "Settle It")
+                    .font(.system(size: 17, weight: .bold))
+                    .foregroundColor(.white)
+            }
+            .frame(maxWidth: .infinity).frame(height: 56)
+            .background(isGenerating ? Color(hex: "#4A7A4A") : Color(hex: "#1B5E20"))
+            .cornerRadius(16)
+        }
+        .disabled(isGenerating)
+        .padding(.horizontal, 16)
+    }
+
+    // MARK: - Next Week
+    private var nextWeekSection: some View {
+        VStack(spacing: 12) {
+            Text("19th Hole — Who's Up Next Week?")
+                .font(.system(size: 15, weight: .bold))
+                .foregroundColor(Color(hex: "#1A1A1A"))
+            if let g = group {
+                HStack(spacing: 10) {
+                    ForEach(g.names, id: \.self) { name in
+                        Button {
+                            nextCreator = name
+                            Task { await saveNextCreator(name) }
+                        } label: {
+                            Text(name)
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(nextCreator == name ? .white : Color(hex: "#1B5E20"))
+                                .padding(.horizontal, 14).padding(.vertical, 10)
+                                .background(nextCreator == name ? Color(hex: "#1B5E20") : Color(hex: "#E8F5E9"))
+                                .cornerRadius(20)
+                        }
+                    }
+                }
+            }
+        }
+        .padding(16)
+        .background(Color.white)
+        .cornerRadius(16)
+        .shadow(color: Color.black.opacity(0.04), radius: 4, x: 0, y: 2)
+        .padding(.horizontal, 16)
+    }
+
+    // MARK: - History
+    private var historySection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("PAST ROUNDS")
+                .font(.system(size: 11, weight: .bold))
+                .tracking(1.4)
+                .foregroundColor(Color(hex: "#1B5E20"))
+                .padding(.horizontal, 16)
+
+            let grouped = Dictionary(grouping: gameCards) { card -> String in
+                let f = DateFormatter(); f.dateFormat = "MMMM yyyy"
+                return f.string(from: card.createdAt ?? Date())
+            }
+            ForEach(grouped.keys.sorted().reversed(), id: \.self) { month in
+                MonthSection(month: month, cards: grouped[month] ?? [], group: group!)
+                    .padding(.horizontal, 16)
+            }
+        }
+        .padding(.top, 8)
+    }
+
+    // MARK: - Generate
+    func generateRound() async {
+        guard let g = group, let situation = selectedSituation else { return }
+        isGenerating = true
+        errorMessage = nil
+        let creator = nextCreator.isEmpty ? g.golfer1 : nextCreator
+        let names = g.names
+
+        let prompt = """
+        Golf situation: "\(situation.title)". Golfers in the group: \(names.joined(separator: ", ")).
+        
+        You are drafting an entry in this group's "Casual Code of Conduct" — their own house rulebook for weekend golf. It reads like a real rulebook: structured, titled, disciplined — but clearly written by four buddies who play by their own standards, not the USGA's.
+        
+        Write ONE house rule for EACH golfer for this situation. Each should sound like a confident, official-sounding ruling — short, declarative, like a clause in a rulebook — under 14 words, no jokes for the sake of jokes, just dry deadpan confidence. Each golfer's ruling should have a slightly different angle or standard.
+        
+        Then write the REAL golf rule for this situation — one sentence, under 15 words, plain English, accurate to USGA/R&A rules.
+        
+        Return ONLY valid JSON, no markdown, no extra text:
+        {
+          "situation": "\(situation.title)",
+          "takes": [
+            { "golfer": "\(names.first ?? "")", "rule": "the ruling" }
+          ],
+          "real_rule": "the actual rule in one sentence"
+        }
+        Include all \(names.count) golfers in takes, in this order: \(names.joined(separator: ", ")).
+        """
+
+        guard let url = URL(string: "https://api.anthropic.com/v1/messages") else { return }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(Config.anthropicAPIKey, forHTTPHeaderField: "x-api-key")
+        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+        let body: [String: Any] = [
+            "model": "claude-sonnet-4-6",
+            "max_tokens": 1024,
+            "system": "You are a JSON API. Return only raw valid JSON with no markdown, no code fences, no backticks, no preamble, no text after the JSON object.",
+            "messages": [["role": "user", "content": prompt]]
+        ]
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+        do {
+            let (data, _) = try await URLSession.shared.data(for: request)
+            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let content = (json["content"] as? [[String: Any]])?.first,
+               var text = content["text"] as? String {
+                text = text.trimmingCharacters(in: .whitespacesAndNewlines)
+                if text.hasPrefix("```") {
+                    text = text.components(separatedBy: "\n").dropFirst().joined(separator: "\n")
+                    if text.hasSuffix("```") { text = String(text.dropLast(3)) }
+                }
+                let cleanText = text.trimmingCharacters(in: .whitespacesAndNewlines)
+                var card = GameCard(createdBy: creator, gameContent: cleanText, situationTitle: situation.title)
+                if let userId = authViewModel.currentUser?.id {
+                    card.userId = userId
+                    let saved: GameCard? = try? await supabase.from("game_cards").insert(card).select().single().execute().value
+                    currentCard = saved ?? card
+                    gameCards.insert(currentCard!, at: 0)
+                }
+            } else {
+                errorMessage = "Failed to settle it. Please try again."
+            }
+        } catch {
+            errorMessage = "Network error. Please try again."
+        }
+        isGenerating = false
+    }
+
+    // MARK: - Data
+    func loadData() async {
+        guard let userId = authViewModel.currentUser?.id else { return }
+        isLoading = true
+        let groups: [GolfGroup] = (try? await supabase.from("golf_group").select().eq("user_id", value: userId).limit(1).execute().value) ?? []
+        group = groups.first
+        nextCreator = UserDefaults.standard.string(forKey: "next_creator_\(userId)") ?? ""
+
+        let sits: [Situation] = (try? await supabase.from("situations").select().eq("active", value: true).order("sort_order").execute().value) ?? []
+        situations = sits
+
+        let cards: [GameCard] = (try? await supabase.from("game_cards").select().eq("user_id", value: userId).order("created_at", ascending: false).execute().value) ?? []
+        gameCards = cards
+        currentCard = cards.first
+        isLoading = false
+    }
+
+    func saveGroup(_ newGroup: GolfGroup) async {
+        guard let userId = authViewModel.currentUser?.id else { return }
+        var g = newGroup; g.userId = userId
+        try? await supabase.from("golf_group").upsert(g, onConflict: "user_id").execute()
+        group = g
+        showGroupSetup = false
+    }
+
+    func saveNextCreator(_ name: String) async {
+        guard let userId = authViewModel.currentUser?.id else { return }
+        UserDefaults.standard.set(name, forKey: "next_creator_\(userId)")
+    }
+}
+
+// MARK: - Round Card View
+struct RoundCardView: View {
+    let data: RoundCardData
+    let card: GameCard
+    let group: GolfGroup
+    @State private var showShareSheet = false
+
+    var shareText: String {
+        var text = "⛳ Casual Code of Conduct\n\(data.situation)\n\n"
+        for take in data.takes {
+            text += "\(take.golfer): \(take.rule)\n"
+        }
+        text += "\nOfficial USGA Ruling: \(data.realRule)"
+        return text
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Header
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("⛳ \(data.situation)")
+                        .font(.system(size: 17, weight: .bold))
+                        .foregroundColor(Color(hex: "#1B5E20"))
+                    Text("Article \(Int.random(in: 1...12)) — Group Ruling")
+                        .font(.system(size: 12))
+                        .foregroundColor(Color(hex: "#5C5C5C"))
+                        .italic()
+                }
+                Spacer()
+                Button { showShareSheet = true } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "square.and.arrow.up").font(.system(size: 13))
+                        Text("Share").font(.system(size: 13, weight: .semibold))
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 14).padding(.vertical, 8)
+                    .background(Color(hex: "#1B5E20")).cornerRadius(20)
+                }
+            }
+            .padding(16)
+            .background(Color(hex: "#E8F5E9"))
+
+            // Golfer takes
+            VStack(spacing: 0) {
+                ForEach(data.takes) { take in
+                    HStack(alignment: .top, spacing: 12) {
+                        Circle()
+                            .fill(Color(hex: "#1B5E20").opacity(0.12))
+                            .frame(width: 32, height: 32)
+                            .overlay(Text(String(take.golfer.prefix(1))).font(.system(size: 14, weight: .bold)).foregroundColor(Color(hex: "#1B5E20")))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(take.golfer)
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundColor(Color(hex: "#1A1A1A"))
+                            Text(take.rule)
+                                .font(.system(size: 15, weight: .medium))
+                                .foregroundColor(Color(hex: "#2C2C2C"))
+                        }
+                        Spacer()
+                    }
+                    .padding(14)
+                    if take.id != data.takes.last?.id {
+                        Divider().padding(.horizontal, 14)
+                    }
+                }
+
+                Divider()
+
+                // Real rule
+                HStack(alignment: .top, spacing: 12) {
+                    Text("⚖️")
+                        .font(.system(size: 20))
+                        .frame(width: 32)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Official USGA Ruling")
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundColor(Color(hex: "#C8401A"))
+                        Text(data.realRule)
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(Color(hex: "#1A1A1A"))
+                    }
+                    Spacer()
+                }
+                .padding(16)
+                .background(Color(hex: "#FFF4EC"))
+            }
+            .background(Color.white)
+        }
+        .cornerRadius(16)
+        .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
+        .sheet(isPresented: $showShareSheet) {
+            ShareSheet(items: [shareText])
+        }
+    }
+}
+
+// MARK: - Raw fallback
+struct RawGameCardView: View {
+    let card: GameCard
+    @State private var showShareSheet = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                Text("⛳ This Round")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundColor(Color(hex: "#1B5E20"))
+                Spacer()
+                Button { showShareSheet = true } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "square.and.arrow.up").font(.system(size: 13))
+                        Text("Share").font(.system(size: 13, weight: .semibold))
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 14).padding(.vertical, 8)
+                    .background(Color(hex: "#1B5E20")).cornerRadius(20)
+                }
+            }
+            .padding(16).background(Color(hex: "#E8F5E9"))
+            Text(card.gameContent)
+                .font(.system(size: 14)).foregroundColor(Color(hex: "#1A1A1A"))
+                .padding(16).frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .background(Color.white).cornerRadius(16)
+        .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
+        .sheet(isPresented: $showShareSheet) { ShareSheet(items: [card.gameContent]) }
+    }
+}
+
+// MARK: - Group Setup
+struct GroupSetupView: View {
+    var existing: GolfGroup? = nil
+    let onSave: (GolfGroup) -> Void
+    @State private var golfer1 = ""
+    @State private var golfer2 = ""
+    @State private var golfer3 = ""
+    @State private var golfer4 = ""
+
+    var body: some View {
+        VStack(spacing: 20) {
+            VStack(spacing: 4) {
+                Text("Your Foursome")
+                    .font(.system(size: 22, weight: .bold)).foregroundColor(Color(hex: "#1A1A1A"))
+                Text("Enter your golf group names")
+                    .font(.system(size: 14)).foregroundColor(Color(hex: "#5C5C5C"))
+            }
+            .padding(.top, 24)
+
+            VStack(spacing: 12) {
+                ForEach(Array(zip(["Golfer 1", "Golfer 2", "Golfer 3", "Golfer 4"],
+                                  [$golfer1, $golfer2, $golfer3, $golfer4])), id: \.0) { label, binding in
+                    HStack(spacing: 12) {
+                        Text("🏌️").font(.system(size: 20))
+                        TextField(label, text: binding)
+                            .font(.system(size: 16)).padding(14)
+                            .background(Color.white).cornerRadius(12)
+                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(hex: "#D0E8D0"), lineWidth: 1))
+                    }
+                }
+            }
+
+            Button {
+                onSave(GolfGroup(golfer1: golfer1, golfer2: golfer2, golfer3: golfer3, golfer4: golfer4))
+            } label: {
+                Text("Save My Group")
+                    .font(.system(size: 17, weight: .bold)).foregroundColor(.white)
+                    .frame(maxWidth: .infinity).frame(height: 54)
+                    .background(golfer1.isEmpty ? Color.gray : Color(hex: "#1B5E20")).cornerRadius(14)
+            }
+            .disabled(golfer1.isEmpty).padding(.top, 8)
+        }
+        .padding(20).background(Color.white).cornerRadius(20)
+        .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
+        .onAppear {
+            if let g = existing {
+                golfer1 = g.golfer1; golfer2 = g.golfer2
+                golfer3 = g.golfer3; golfer4 = g.golfer4
+            }
+        }
+    }
+}
+
+// MARK: - Month Section
+struct MonthSection: View {
+    let month: String
+    let cards: [GameCard]
+    let group: GolfGroup
+    @State private var isExpanded = false
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Button {
+                withAnimation(.easeInOut(duration: 0.2)) { isExpanded.toggle() }
+            } label: {
+                HStack {
+                    Text(month).font(.system(size: 15, weight: .semibold)).foregroundColor(Color(hex: "#1A1A1A"))
+                    Spacer()
+                    Text("\(cards.count) round\(cards.count == 1 ? "" : "s")").font(.system(size: 12)).foregroundColor(Color(hex: "#5C5C5C"))
+                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down").font(.system(size: 12, weight: .semibold)).foregroundColor(Color(hex: "#1B5E20"))
+                }
+                .padding(14).background(Color.white).cornerRadius(12)
+            }
+            .buttonStyle(PlainButtonStyle())
+
+            if isExpanded {
+                VStack(spacing: 10) {
+                    ForEach(cards) { card in
+                        if let data = RoundCardData.parse(from: card.gameContent) {
+                            RoundCardView(data: data, card: card, group: group)
+                        } else {
+                            RawGameCardView(card: card)
+                        }
+                    }
+                }
+                .padding(.top, 8)
+            }
+        }
+    }
+}
+
+// MARK: - Share Sheet
+struct ShareSheet: UIViewControllerRepresentable {
+    let items: [Any]
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: items, applicationActivities: nil)
+    }
+    func updateUIViewController(_ uvc: UIActivityViewController, context: Context) {}
+}

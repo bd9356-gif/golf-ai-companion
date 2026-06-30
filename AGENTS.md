@@ -220,6 +220,34 @@ Never commit `.env.local`. Service role key is ONLY for server routes that need 
 - The GitHub PAT is currently embedded in the `origin` remote URL of `/tmp/golf-ai-clone/.git/config`. Rotate at https://github.com/settings/tokens and reset the remote to SSH or a credential helper when convenient.
 - `app/api/fetch-videos`: `totalInserted` counts both inserts and updates; the real "new rows" delta is `SELECT count(*) FROM videos` before vs after.
 
+## Roadmap — foundation laid, not yet built
+
+These are features with scaffolding in place (schema, framing, naming) but no UI yet. The point of laying foundation early is that the next session won't have to rebuild context — the spec is already on disk and the schema is ready to run.
+
+### I Had a Five — The Buddy Edition
+
+**What it is.** A per-user rule book that holds the home golfer's group's *actual* playing rules — not the USGA version, the version their group plays. Mulligans, gimmes, "I had a five" scoring rules, money-game terms, etiquette, and rules specifically tied to friends no longer with the group. Heritage feature in the same spirit as Recipe Cards' Family Notes on the cooking side.
+
+**Why it matters.** Most golfers play by their group's rules, not the rulebook. That version of golf is the one people remember — named after specific people, evolved over years. No other app captures it because no other app would think to ask. When a buddy is gone, the rule named after him is the small thing that remains. The value compounds: a row entered today is just typing; a row entered three years ago with a story attached is something you can't get back.
+
+**Data model.** Table `buddy_rules` — see `supabase/008_buddy_rules.sql`. Owner-scoped RLS. Fields: title, rule_text, story, in_memory_of, category, photo_url, sort_order. Categories suggested but not constrained: `tee`, `green`, `money`, `etiquette`, `memorial`.
+
+**UI direction (when built).**
+- Cream paper background + **Caveat handwriting font** for rule entries (same heritage typeface family Recipe Cards uses; mirrors the visual on the other product so heritage feels consistent across the MyCompanion apps).
+- Rows marked `in_memory_of` get a small ribbon or muted color — distinguished from active rules.
+- One-tap "Add a buddy rule" from anywhere on the surface; rules should be quick to add (mid-round, post-round, no friction).
+- Categories render as collapsed accordion sections with counts (mirror the pattern from Recipe Library / Playbook).
+- Optional v2: generate a printable PDF "Our Rules" book the group can carry — reuse the Shopping List in-page print pattern (no popup window — got stuck on iOS Safari there; in-page is the right move).
+
+**Where it lives.** Either a new MyClubhouse tile or a new section inside MyBag. Bill's call when we build.
+
+**Estimated effort.** ~4-6 hours when ready. Schema is done. Build is: one page route, an add-rule form, the Caveat-font row renderer, the category accordion, and a small "in memory of" tag treatment.
+
+**Related future Golf roadmap items** (waiting for the same "comeback features" phase):
+
+- **Round Notes for MyCourses** — dated entries every time you play a course, mirroring Recipe Cards' Family Notes. Schema not yet laid; ~4 hours when ready.
+- **Rules Study Hall** — port the Recipe Library's Chef Jennifer-quizzes-you pattern to Golf with the Club Pro and USGA rules content. Schema/code pattern proven on Recipe (`supabase/021_study_hall.sql`, `app/api/study-hall/`, `app/study/[articleId]/`). Probably 3-4 hours to port.
+
 ## Decision log
 
 - **Pre-2019 videos are hidden from Golf TV.** Vintage 2010–2016 lessons were outranking newer videos due to sort-by-quality. One-off UPDATE moved 76 rows to `editorial_status = 'hidden'`. If we want them back, flip back to `approved`.
