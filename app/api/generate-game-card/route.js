@@ -1,11 +1,9 @@
+cat > ~/golf-ai-companion/app/api/generate-game-card/route.js << 'ENDOFFILE'
 import Anthropic from '@anthropic-ai/sdk'
 import { checkRateLimit } from '@/lib/rate_limit'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-// /api/generate-game-card — backs I Had a Five™'s "Settle It" button.
-// Takes the situation + golfer names, returns the Casual Code of
-// Conduct JSON (one ruling per golfer + the real USGA rule).
 export async function POST(request) {
   const rl = await checkRateLimit(request, 'generate-game-card', 20)
   if (!rl.ok) {
@@ -24,11 +22,22 @@ export async function POST(request) {
 
   const prompt = `Golf situation: "${situationTitle}". Golfers in the group: ${names}.
 
-You are drafting an entry in this group's "Casual Code of Conduct" — their own house rulebook for weekend golf. It reads like a real rulebook: structured, titled, disciplined — but clearly written by four buddies who play by their own standards, not the USGA's.
+Each golfer in the group has their own take on what to do in this situation. Write one ruling per golfer — casual, first-person address using their name, like a buddy calling it at the course.
 
-Write ONE house rule for EACH golfer for this situation. Each should sound like a confident, official-sounding ruling — short, declarative, like a clause in a rulebook — under 14 words, no jokes for the sake of jokes, just dry deadpan confidence. Each golfer's ruling should have a slightly different angle or standard.
+The tone is exactly like these examples:
+- "John, you hit it in the water—it doesn't count. Just drop one up by the green."
+- "John, just throw another ball over there. Nobody cares where it crossed."
+- "John, it's a red stake. That means you can drop anywhere over here."
 
-Then write the REAL golf rule for this situation — one sentence, under 15 words, plain English, accurate to USGA/R&A rules.
+Rules for each ruling:
+- Start with the golfer's name
+- One sentence, under 15 words
+- Sounds like a different guy giving his take — some dismissive, some permissive, some half-know-the-rule, some totally wrong
+- No rulebook language, no "the player shall", no formal tone
+- Random variety — each one should feel like a different personality
+- No two rulings should sound the same
+
+Then write the REAL golf rule — one plain English sentence, accurate USGA/R&A, under 15 words.
 
 Return ONLY valid JSON, no markdown, no extra text:
 {
@@ -49,3 +58,4 @@ Include all ${golferNames.length} golfers in takes, in this order: ${names}.`
 
   return Response.json({ result: response.content[0].text })
 }
+ENDOFFILE
