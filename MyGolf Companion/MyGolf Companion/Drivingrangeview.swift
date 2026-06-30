@@ -123,24 +123,19 @@ struct DrivingRangeView: View {
 
     func loadGuide(topic: GuideTopic) async {
         isLoading = true
-        let prompt = "Write a short, practical golf guide on \(topic.prompt). Keep it under 250 words, friendly tone, with 3-4 actionable tips. No markdown formatting, just plain readable text with clear paragraph breaks."
 
-        guard let url = URL(string: "https://api.anthropic.com/v1/messages") else { return }
+        guard let url = URL(string: "https://golf-ai-companion.vercel.app/api/driving-range-guide") else { return }
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue(Config.anthropicAPIKey, forHTTPHeaderField: "x-api-key")
-        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
-        let body: [String: Any] = ["model": "claude-sonnet-4-6", "max_tokens": 600,
-                                    "messages": [["role": "user", "content": prompt]]]
+        let body: [String: Any] = ["topic": topic.prompt]
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
 
         do {
             let (data, _) = try await URLSession.shared.data(for: request)
             if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-               let content = (json["content"] as? [[String: Any]])?.first,
-               let text = content["text"] as? String {
-                guideContent = text
+               let guide = json["guide"] as? String {
+                guideContent = guide
             } else {
                 guideContent = "Sorry, couldn't load this guide. Please try again."
             }

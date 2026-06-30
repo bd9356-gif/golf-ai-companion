@@ -158,24 +158,18 @@ struct AskTheProView: View {
         messages.append(ChatMessage(role: "user", content: text))
         isLoading = true
 
-        let prompt = "You are a friendly, knowledgeable golf pro. Answer this golfer's question clearly and practically, with actionable tips. Keep it conversational, under 150 words.\n\nQuestion: \(text)"
-
-        guard let url = URL(string: "https://api.anthropic.com/v1/messages") else { return }
+        guard let url = URL(string: "https://golf-ai-companion.vercel.app/api/ask-the-pro") else { return }
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue(Config.anthropicAPIKey, forHTTPHeaderField: "x-api-key")
-        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
-        let body: [String: Any] = ["model": "claude-sonnet-4-6", "max_tokens": 512,
-                                    "messages": [["role": "user", "content": prompt]]]
+        let body: [String: Any] = ["question": text]
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
 
         do {
             let (data, _) = try await URLSession.shared.data(for: request)
             if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-               let content = (json["content"] as? [[String: Any]])?.first,
-               let text = content["text"] as? String {
-                messages.append(ChatMessage(role: "assistant", content: text))
+               let reply = json["reply"] as? String {
+                messages.append(ChatMessage(role: "assistant", content: reply))
             } else {
                 messages.append(ChatMessage(role: "assistant", content: "Sorry, something went wrong. Please try again."))
             }

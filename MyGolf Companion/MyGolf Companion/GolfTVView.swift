@@ -362,23 +362,17 @@ struct GolfTVView: View {
         isExplaining = true
         let question = video.title
 
-        let prompt = "You are a friendly, knowledgeable golf pro. A golfer just saved this video and wants it explained: \"\(question)\". Give a clear, practical written explanation with actionable tips, as if teaching the topic the video covers. Keep it conversational, under 150 words."
-
-        guard let url = URL(string: "https://api.anthropic.com/v1/messages") else { isExplaining = false; return }
+        guard let url = URL(string: "https://golf-ai-companion.vercel.app/api/explain-video") else { isExplaining = false; return }
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue(Config.anthropicAPIKey, forHTTPHeaderField: "x-api-key")
-        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
-        let body: [String: Any] = ["model": "claude-sonnet-4-6", "max_tokens": 512,
-                                    "messages": [["role": "user", "content": prompt]]]
+        let body: [String: Any] = ["videoTitle": video.title]
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
 
         do {
             let (data, _) = try await URLSession.shared.data(for: request)
             if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-               let content = (json["content"] as? [[String: Any]])?.first,
-               let text = content["text"] as? String {
+               let explanation = json["explanation"] as? String {
                 struct NewSavedAnswer: Codable {
                     var userId: UUID
                     var question: String
@@ -389,7 +383,7 @@ struct GolfTVView: View {
                         case relatedVideoId = "related_video_id"
                     }
                 }
-                let saved = NewSavedAnswer(userId: userId, question: question, answer: text, relatedVideoId: video.id)
+                let saved = NewSavedAnswer(userId: userId, question: question, answer: explanation, relatedVideoId: video.id)
                 try? await supabase.from("saved_answers").insert(saved).execute()
                 explainedVideoIds.insert(video.id)
             }

@@ -12,21 +12,21 @@ struct ClubhouseView: View {
 
     private let yourGameSections: [ClubhouseSection] = [
         ClubhouseSection(
-            icon: "trophy.fill",
+            icon: "i-had-a-five",
             iconColor: Color(hex: "#C8941A"),
             title: "I Had a Five™",
             subtitle: "Build this week's game",
             destination: .iHadAFive
         ),
         ClubhouseSection(
-            icon: "bag.fill",
+            icon: "my-bag",
             iconColor: Color(hex: "#1B5E20"),
             title: "MyBag",
             subtitle: "Your skill + game for Saturday",
             destination: .myBag
         ),
         ClubhouseSection(
-            icon: "mappin.circle.fill",
+            icon: "courses",
             iconColor: Color(hex: "#2E7D32"),
             title: "My Courses",
             subtitle: "Your golf address book",
@@ -36,28 +36,28 @@ struct ClubhouseView: View {
 
     private let aiClubhouseSections: [ClubhouseSection] = [
         ClubhouseSection(
-            icon: "person.fill.questionmark",
+            icon: "pro-bill",
             iconColor: Color(hex: "#1B5E20"),
             title: "Ask The Pro",
             subtitle: "Get clear answers",
             destination: .askThePro
         ),
         ClubhouseSection(
-            icon: "play.rectangle.fill",
+            icon: "golf-tv",
             iconColor: Color(hex: "#C62828"),
             title: "Golf TV",
             subtitle: "Watch and learn",
             destination: .golfTV
         ),
         ClubhouseSection(
-            icon: "books.vertical.fill",
+            icon: "driving-range",
             iconColor: Color(hex: "#E65100"),
             title: "Driving Range",
             subtitle: "Guides & techniques",
             destination: .drivingRange
         ),
         ClubhouseSection(
-            icon: "book.closed.fill",
+            icon: "playbook",
             iconColor: Color(hex: "#4527A0"),
             title: "My Playbook",
             subtitle: "Your saved lessons",
@@ -147,9 +147,10 @@ struct ClubhouseTile: View {
                     RoundedRectangle(cornerRadius: 12)
                         .fill(section.iconColor.opacity(0.12))
                         .frame(width: 48, height: 48)
-                    Image(systemName: section.icon)
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundColor(section.iconColor)
+                    Image(section.icon)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 32, height: 32)
                 }
 
                 // Text

@@ -322,45 +322,20 @@ struct IHadAFiveView: View {
         let creator = nextCreator.isEmpty ? g.golfer1 : nextCreator
         let names = g.names
 
-        let prompt = """
-        Golf situation: "\(situation.title)". Golfers in the group: \(names.joined(separator: ", ")).
-        
-        You are drafting an entry in this group's "Casual Code of Conduct" — their own house rulebook for weekend golf. It reads like a real rulebook: structured, titled, disciplined — but clearly written by four buddies who play by their own standards, not the USGA's.
-        
-        Write ONE house rule for EACH golfer for this situation. Each should sound like a confident, official-sounding ruling — short, declarative, like a clause in a rulebook — under 14 words, no jokes for the sake of jokes, just dry deadpan confidence. Each golfer's ruling should have a slightly different angle or standard.
-        
-        Then write the REAL golf rule for this situation — one sentence, under 15 words, plain English, accurate to USGA/R&A rules.
-        
-        Return ONLY valid JSON, no markdown, no extra text:
-        {
-          "situation": "\(situation.title)",
-          "takes": [
-            { "golfer": "\(names.first ?? "")", "rule": "the ruling" }
-          ],
-          "real_rule": "the actual rule in one sentence"
-        }
-        Include all \(names.count) golfers in takes, in this order: \(names.joined(separator: ", ")).
-        """
-
-        guard let url = URL(string: "https://api.anthropic.com/v1/messages") else { return }
+        guard let url = URL(string: "https://golf-ai-companion.vercel.app/api/generate-game-card") else { return }
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue(Config.anthropicAPIKey, forHTTPHeaderField: "x-api-key")
-        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
         let body: [String: Any] = [
-            "model": "claude-sonnet-4-6",
-            "max_tokens": 1024,
-            "system": "You are a JSON API. Return only raw valid JSON with no markdown, no code fences, no backticks, no preamble, no text after the JSON object.",
-            "messages": [["role": "user", "content": prompt]]
+            "situationTitle": situation.title,
+            "golferNames": names
         ]
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
 
         do {
             let (data, _) = try await URLSession.shared.data(for: request)
             if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-               let content = (json["content"] as? [[String: Any]])?.first,
-               var text = content["text"] as? String {
+               var text = json["result"] as? String {
                 text = text.trimmingCharacters(in: .whitespacesAndNewlines)
                 if text.hasPrefix("```") {
                     text = text.components(separatedBy: "\n").dropFirst().joined(separator: "\n")
