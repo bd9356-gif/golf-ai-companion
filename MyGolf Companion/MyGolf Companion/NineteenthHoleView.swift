@@ -125,6 +125,7 @@ struct NineteenthHoleView: View {
                             .padding(.bottom, 32)
                         }
                     }
+                } // ScrollView
                 .background(Color(hex: "#F9F6F0"))
             }
             .background(Color(hex: "#F9F6F0"))
