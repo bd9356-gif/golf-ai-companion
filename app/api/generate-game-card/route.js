@@ -3,6 +3,17 @@ import { checkRateLimit } from '@/lib/rate_limit'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
+const CHARACTERS = [
+  { type: "doesn't care", voice: "waves it off, doesn't care, just wants to keep moving" },
+  { type: "half-remembers", voice: "half-remembers seeing something like this on TV once, sounds confident but probably wrong" },
+  { type: "makes it up", voice: "completely makes up a rule that sounds official but isn't" },
+  { type: "just picks it up", voice: "just picks it up and gives himself a number, done" },
+]
+
+function shuffle(arr) {
+  return arr.sort(() => Math.random() - 0.5)
+}
+
 export async function POST(request) {
   const rl = await checkRateLimit(request, 'generate-game-card', 20)
   if (!rl.ok) {
@@ -18,89 +29,71 @@ export async function POST(request) {
   }
 
   const names = golferNames.join(', ')
-  const [g1, g2, g3, g4] = golferNames
   const seed = Math.floor(Math.random() * 9999)
+
+  // Randomly assign a character type to each golfer
+  const shuffled = shuffle([...CHARACTERS])
+  const assignments = golferNames.map((name, i) => ({
+    name,
+    character: shuffled[i % shuffled.length]
+  }))
 
   let prompt
 
   if (oneRuleForAll) {
-    prompt = `[Session: ${seed}] Four weekend golfers: ${names}. Situation: ${situationTitle}.
+    const char = shuffled[0]
+    prompt = `[Session: ${seed}] Golf situation: ${situationTitle}. Group: ${names}.
 
-Write ONE thing the loudest guy in the group says to everyone. This is NOT the real rule — it's what the group actually does on Saturday.
+You are writing one line of dialogue. The loudest guy in the group is the type who ${char.voice}.
 
-RULES:
-- Address the whole group
-- Maximum 10 words
-- Sound like a buddy, not a rulebook
-- Must be a made-up house ruling, never the real USGA rule
+Write exactly ONE line he says to the whole group about this situation.
+- Max 10 words
+- No golf rule terminology whatsoever  
+- Sounds like a real person talking, not a rulebook
+- Start with "Alright" or "Everyone" or just dive straight in
 
-NEVER write the actual rule. Write what the group does instead.
+Only return the line of dialogue. Nothing else.
 
-PERFECT examples:
-- "Alright everyone, kick it out, no penalty."
-- "We're all dropping in the fairway, move it."
-- "Everyone gets a foot, that's it, let's go."
-- "Pick it up, give yourself a five, keep moving."
-- "Nobody's counting that one, just drop it and go."
-
-Then the real USGA rule in one plain English sentence under 12 words.
+Then separately, give the real USGA rule in plain English under 12 words.
 
 Return ONLY valid JSON:
 {
   "situation": "${situationTitle}",
-  "group_rule": "what the group actually does",
-  "real_rule": "the real rule"
+  "group_rule": "one line of dialogue",
+  "real_rule": "real rule"
 }`
   } else {
-    prompt = `[Session: ${seed}] Four weekend golfers: ${names}. Situation: ${situationTitle}.
+    const characterLines = assignments.map(a =>
+      `- ${a.name} is the guy who ${a.character.voice}. Write his ONE line about ${situationTitle}. Start with "${a.name}," and keep it under 10 words total.`
+    ).join('\n')
 
-Each golfer gets one ruling. Write exactly what their buddy says to them on the course.
+    prompt = `[Session: ${seed}] Golf situation: ${situationTitle}.
 
-RULES:
-- Start with the golfer's name
-- Maximum 8 words after the name
-- No explanation, no story, just the call
-- Each one different — some lenient, some strict, some funny, some clueless
-- Sound like a buddy, not a rulebook
+You are writing dialogue for four different guys in a golf group. Each has a distinct personality. Write exactly what each one says when ${situationTitle} happens.
 
-NEVER USE THESE WORDS OR PHRASES:
-- "unplayable lie"
-- "penalty stroke"
-- "relief"
-- "drop zone"
-- "lateral"
-- "stroke and distance"
-- any official golf rule terminology
+${characterLines}
 
-PERFECT examples:
-- "John, kick it out."
-- "Bill, just drop it in the fairway."
-- "Keith, ask John."
-- "Art, pick it up — you got a five."
-- "Bill, move it a foot, nobody's watching."
-- "John, toe it out, nobody cares."
-- "Keith, do whatever you want."
-- "Art, throw it back, we're not counting anyway."
+Rules for ALL lines:
+- Never use real golf terminology (no "unplayable", "penalty stroke", "relief", "lateral", "stroke and distance")
+- Sound like actual people talking
+- Short, punchy, done
 
-Then one real USGA rule — plain English, under 12 words.
+Then the real USGA rule in plain English under 12 words.
 
 Return ONLY valid JSON:
 {
   "situation": "${situationTitle}",
   "takes": [
-    { "golfer": "${g1}", "rule": "ruling" },
-    { "golfer": "${g2}", "rule": "ruling" },
-    { "golfer": "${g3}", "rule": "ruling" },
-    { "golfer": "${g4}", "rule": "ruling" }
+    ${assignments.map(a => `{ "golfer": "${a.name}", "rule": "his line" }`).join(',\n    ')}
   ],
-  "real_rule": "the real rule"
+  "real_rule": "real rule"
 }`
   }
 
   const response = await anthropic.messages.create({
     model: 'claude-opus-4-6',
     max_tokens: 1024,
-    system: 'You are a JSON API. Return only raw valid JSON with no markdown, no code fences, no backticks, no preamble, no text after the JSON object.',
+    system: 'You are a JSON API writing casual dialogue for a golf app. Return only raw valid JSON. No markdown, no code fences, no extra text.',
     messages: [{ role: 'user', content: prompt }],
   })
 
