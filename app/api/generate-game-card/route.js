@@ -26,27 +26,29 @@ export async function POST(request) {
   if (oneRuleForAll) {
     prompt = `[Session: ${seed}] Four weekend golfers: ${names}. Situation: ${situationTitle}.
 
-The group needs ONE ruling they all play by. Write what the most vocal guy in the group says to everyone.
+Write ONE thing the loudest guy in the group says to everyone. This is NOT the real rule — it's what the group actually does on Saturday.
 
 RULES:
-- Address the whole group, not one person
+- Address the whole group
 - Maximum 10 words
-- No rulebook language
-- Sound like a buddy making the call
-- Different every time
+- Sound like a buddy, not a rulebook
+- Must be a made-up house ruling, never the real USGA rule
+
+NEVER write the actual rule. Write what the group does instead.
 
 PERFECT examples:
 - "Alright everyone, kick it out, no penalty."
 - "We're all dropping in the fairway, move it."
 - "Everyone gets a foot, that's it, let's go."
 - "Pick it up, give yourself a five, keep moving."
+- "Nobody's counting that one, just drop it and go."
 
-Then one real USGA rule — plain English, under 12 words.
+Then the real USGA rule in one plain English sentence under 12 words.
 
 Return ONLY valid JSON:
 {
   "situation": "${situationTitle}",
-  "group_rule": "the one ruling for everyone",
+  "group_rule": "what the group actually does",
   "real_rule": "the real rule"
 }`
   } else {
