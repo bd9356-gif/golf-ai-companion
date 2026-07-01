@@ -78,14 +78,16 @@ struct NineteenthHoleView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 0) {
-                    headerBanner
+            VStack(spacing: 0) {
+                // Sticky header — never scrolls
+                headerBanner
 
-                    if isLoading {
-                        ProgressView().padding(48)
-                    } else {
-                        VStack(spacing: 24) {
+                ScrollView {
+                    VStack(spacing: 0) {
+                        if isLoading {
+                            ProgressView().padding(48)
+                        } else {
+                            VStack(spacing: 24) {
 
                             // Add buttons row
                             HStack(spacing: 12) {
@@ -123,6 +125,7 @@ struct NineteenthHoleView: View {
                         .padding(.bottom, 32)
                     }
                 }
+                .background(Color(hex: "#F9F6F0"))
             }
             .background(Color(hex: "#F9F6F0"))
             .navigationBarHidden(true)
@@ -362,7 +365,7 @@ struct ThisWeeksGameCard: View {
 // MARK: - Collapsible Month Section
 struct CollapsibleMonthSection<Content: View>: View {
     let month: String
-    @State private var isExpanded = true
+    @State private var isExpanded = false
     @ViewBuilder let content: () -> Content
 
     var body: some View {
@@ -370,23 +373,25 @@ struct CollapsibleMonthSection<Content: View>: View {
             Button {
                 withAnimation(.easeInOut(duration: 0.2)) { isExpanded.toggle() }
             } label: {
-                HStack {
+                HStack(spacing: 10) {
                     Rectangle()
                         .fill(Color(hex: "#1B5E20").opacity(0.3))
                         .frame(height: 1)
                     Text(month.uppercased())
-                        .font(.system(size: 10, weight: .bold))
+                        .font(.system(size: 13, weight: .bold))
                         .tracking(1.6)
                         .foregroundColor(Color(hex: "#1B5E20"))
                         .fixedSize()
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                        .font(.system(size: 9, weight: .bold))
+                        .font(.system(size: 12, weight: .bold))
                         .foregroundColor(Color(hex: "#1B5E20"))
                     Rectangle()
                         .fill(Color(hex: "#1B5E20").opacity(0.3))
                         .frame(height: 1)
                 }
                 .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(Color(hex: "#F9F6F0"))
             }
             .buttonStyle(PlainButtonStyle())
 
