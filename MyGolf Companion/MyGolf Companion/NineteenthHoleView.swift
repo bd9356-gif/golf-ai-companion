@@ -184,22 +184,7 @@ struct NineteenthHoleView: View {
                 emptyCard(icon: "📸", message: "Add your first golf photo memory.")
             } else {
                 ForEach(groupedMemories, id: \.month) { group in
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Rectangle()
-                                .fill(Color(hex: "#1B5E20").opacity(0.3))
-                                .frame(height: 1)
-                            Text(group.month.uppercased())
-                                .font(.system(size: 10, weight: .bold))
-                                .tracking(1.6)
-                                .foregroundColor(Color(hex: "#1B5E20"))
-                                .fixedSize()
-                            Rectangle()
-                                .fill(Color(hex: "#1B5E20").opacity(0.3))
-                                .frame(height: 1)
-                        }
-                        .padding(.horizontal, 16)
-
+                    CollapsibleMonthSection(month: group.month) {
                         ForEach(group.items) { memory in
                             MemoryCard(memory: memory, onDelete: {
                                 Task { await deleteMemory(memory) }
@@ -221,22 +206,7 @@ struct NineteenthHoleView: View {
                 emptyCard(icon: "📓", message: "Your private golf reflections live here.")
             } else {
                 ForEach(groupedJournal, id: \.month) { group in
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Rectangle()
-                                .fill(Color(hex: "#1B5E20").opacity(0.3))
-                                .frame(height: 1)
-                            Text(group.month.uppercased())
-                                .font(.system(size: 10, weight: .bold))
-                                .tracking(1.6)
-                                .foregroundColor(Color(hex: "#1B5E20"))
-                                .fixedSize()
-                            Rectangle()
-                                .fill(Color(hex: "#1B5E20").opacity(0.3))
-                                .frame(height: 1)
-                        }
-                        .padding(.horizontal, 16)
-
+                    CollapsibleMonthSection(month: group.month) {
                         ForEach(group.items) { entry in
                             JournalCard(entry: entry, onDelete: {
                                 Task { await deleteJournalEntry(entry) }
@@ -386,6 +356,46 @@ struct ThisWeeksGameCard: View {
         }
         .cornerRadius(16)
         .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+    }
+}
+
+// MARK: - Collapsible Month Section
+struct CollapsibleMonthSection<Content: View>: View {
+    let month: String
+    @State private var isExpanded = true
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Button {
+                withAnimation(.easeInOut(duration: 0.2)) { isExpanded.toggle() }
+            } label: {
+                HStack {
+                    Rectangle()
+                        .fill(Color(hex: "#1B5E20").opacity(0.3))
+                        .frame(height: 1)
+                    Text(month.uppercased())
+                        .font(.system(size: 10, weight: .bold))
+                        .tracking(1.6)
+                        .foregroundColor(Color(hex: "#1B5E20"))
+                        .fixedSize()
+                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundColor(Color(hex: "#1B5E20"))
+                    Rectangle()
+                        .fill(Color(hex: "#1B5E20").opacity(0.3))
+                        .frame(height: 1)
+                }
+                .padding(.horizontal, 16)
+            }
+            .buttonStyle(PlainButtonStyle())
+
+            if isExpanded {
+                VStack(spacing: 8) {
+                    content()
+                }
+            }
+        }
     }
 }
 
