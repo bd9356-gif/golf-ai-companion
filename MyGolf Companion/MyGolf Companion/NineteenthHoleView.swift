@@ -88,43 +88,43 @@ struct NineteenthHoleView: View {
                             ProgressView().padding(48)
                         } else {
                             VStack(spacing: 24) {
+                                // Add buttons row
+                                HStack(spacing: 12) {
+                                    Button { showAddMemory = true } label: {
+                                        HStack(spacing: 6) {
+                                            Image(systemName: "photo").font(.system(size: 14))
+                                            Text("Add Memory").font(.system(size: 14, weight: .semibold))
+                                        }
+                                        .foregroundColor(.white)
+                                        .frame(maxWidth: .infinity).padding(.vertical, 12)
+                                        .background(Color(hex: "#1B5E20")).cornerRadius(12)
+                                    }
+                                    Button { showAddJournal = true } label: {
+                                        HStack(spacing: 6) {
+                                            Image(systemName: "pencil").font(.system(size: 14))
+                                            Text("Add Journal").font(.system(size: 14, weight: .semibold))
+                                        }
+                                        .foregroundColor(Color(hex: "#1B5E20"))
+                                        .frame(maxWidth: .infinity).padding(.vertical, 12)
+                                        .background(Color(hex: "#E8F5E9")).cornerRadius(12)
+                                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(hex: "#1B5E20"), lineWidth: 1))
+                                    }
+                                }
+                                .padding(.horizontal, 16)
 
-                            // Add buttons row
-                            HStack(spacing: 12) {
-                                Button { showAddMemory = true } label: {
-                                    HStack(spacing: 6) {
-                                        Image(systemName: "photo").font(.system(size: 14))
-                                        Text("Add Memory").font(.system(size: 14, weight: .semibold))
-                                    }
-                                    .foregroundColor(.white)
-                                    .frame(maxWidth: .infinity).padding(.vertical, 12)
-                                    .background(Color(hex: "#1B5E20")).cornerRadius(12)
-                                }
-                                Button { showAddJournal = true } label: {
-                                    HStack(spacing: 6) {
-                                        Image(systemName: "pencil").font(.system(size: 14))
-                                        Text("Add Journal").font(.system(size: 14, weight: .semibold))
-                                    }
-                                    .foregroundColor(Color(hex: "#1B5E20"))
-                                    .frame(maxWidth: .infinity).padding(.vertical, 12)
-                                    .background(Color(hex: "#E8F5E9")).cornerRadius(12)
-                                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(hex: "#1B5E20"), lineWidth: 1))
-                                }
+                                // 1. This Week's Game
+                                thisWeeksGameSection
+
+                                // 2. Photo Memories
+                                photoMemoriesSection
+
+                                // 3. Golf Journal
+                                golfJournalSection
                             }
-                            .padding(.horizontal, 16)
-                            // 1. This Week's Game
-                            thisWeeksGameSection
-
-                            // 2. Photo Memories
-                            photoMemoriesSection
-
-                            // 3. Golf Journal
-                            golfJournalSection
+                            .padding(.top, 16)
+                            .padding(.bottom, 32)
                         }
-                        .padding(.top, 16)
-                        .padding(.bottom, 32)
                     }
-                }
                 .background(Color(hex: "#F9F6F0"))
             }
             .background(Color(hex: "#F9F6F0"))
