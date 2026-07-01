@@ -351,19 +351,20 @@ struct AddMemoryView: View {
 
         var photoUrl: String? = nil
 
-        if let image = selectedImage,
-           let data = image.jpegData(compressionQuality: 0.7) {
-            let filename = "\(userId)/\(UUID().uuidString).jpg"
-            do {
-                try await supabase.storage
-                    .from("golf-memories")
-                    .upload(filename, data: data, options: FileOptions(contentType: "image/jpeg"))
-                let urlResult = try? supabase.storage.from("golf-memories").getPublicURL(path: filename)
-                photoUrl = urlResult?.absoluteString
-                print("✅ Photo uploaded: \(photoUrl ?? "no url")")
-            } catch {
-                print("❌ Photo upload failed: \(error) — saving without photo")
-                // Save continues without photo rather than hanging
+        if let image = selectedImage {
+            let resized = resizeImage(image, maxWidth: 1200)
+            if let data = resized.jpegData(compressionQuality: 0.7) {
+                let filename = "\(userId)/\(UUID().uuidString).jpg"
+                do {
+                    try await supabase.storage
+                        .from("golf-memories")
+                        .upload(filename, data: data, options: FileOptions(contentType: "image/jpeg"))
+                    let urlResult = try? supabase.storage.from("golf-memories").getPublicURL(path: filename)
+                    photoUrl = urlResult?.absoluteString
+                    print("✅ Photo uploaded: \(photoUrl ?? "no url")")
+                } catch {
+                    print("❌ Photo upload failed: \(error) — saving without photo")
+                }
             }
         }
 
@@ -376,6 +377,18 @@ struct AddMemoryView: View {
         )
         onSave(memory)
         isUploading = false
+    }
+
+    func resizeImage(_ image: UIImage, maxWidth: CGFloat) -> UIImage {
+        let ratio = image.size.height / image.size.width
+        let newWidth = min(image.size.width, maxWidth)
+        let newHeight = newWidth * ratio
+        let newSize = CGSize(width: newWidth, height: newHeight)
+        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+        image.draw(in: CGRect(origin: .zero, size: newSize))
+        let resized = UIGraphicsGetImageFromCurrentImageContext() ?? image
+        UIGraphicsEndImageContext()
+        return resized
     }
 
     func generateCaption() async {
