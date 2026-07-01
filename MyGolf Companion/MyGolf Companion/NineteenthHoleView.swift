@@ -86,6 +86,30 @@ struct NineteenthHoleView: View {
                         ProgressView().padding(48)
                     } else {
                         VStack(spacing: 24) {
+
+                            // Add buttons row
+                            HStack(spacing: 12) {
+                                Button { showAddMemory = true } label: {
+                                    HStack(spacing: 6) {
+                                        Image(systemName: "photo").font(.system(size: 14))
+                                        Text("Add Memory").font(.system(size: 14, weight: .semibold))
+                                    }
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity).padding(.vertical, 12)
+                                    .background(Color(hex: "#1B5E20")).cornerRadius(12)
+                                }
+                                Button { showAddJournal = true } label: {
+                                    HStack(spacing: 6) {
+                                        Image(systemName: "pencil").font(.system(size: 14))
+                                        Text("Add Journal").font(.system(size: 14, weight: .semibold))
+                                    }
+                                    .foregroundColor(Color(hex: "#1B5E20"))
+                                    .frame(maxWidth: .infinity).padding(.vertical, 12)
+                                    .background(Color(hex: "#E8F5E9")).cornerRadius(12)
+                                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(hex: "#1B5E20"), lineWidth: 1))
+                                }
+                            }
+                            .padding(.horizontal, 16)
                             // 1. This Week's Game
                             thisWeeksGameSection
 
@@ -127,18 +151,6 @@ struct NineteenthHoleView: View {
                     .scaledToFit()
                     .frame(height: 60)
                 Spacer()
-                Menu {
-                    Button { showAddMemory = true } label: {
-                        Label("Add Photo Memory", systemImage: "photo")
-                    }
-                    Button { showAddJournal = true } label: {
-                        Label("Add Journal Entry", systemImage: "pencil")
-                    }
-                } label: {
-                    Image(systemName: "plus.circle.fill")
-                        .font(.system(size: 30))
-                        .foregroundColor(Color(hex: "#1B5E20"))
-                }
             }
             .padding(.horizontal, 16).padding(.vertical, 14)
             Divider()
