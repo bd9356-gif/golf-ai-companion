@@ -85,10 +85,12 @@ struct IHadAFiveView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 0) {
-                    headerBanner
+            VStack(spacing: 0) {
+                // Sticky header
+                headerBanner
 
+                ScrollView {
+                    VStack(spacing: 0) {
                     if isLoading {
                         ProgressView().padding(48)
                     } else if group == nil {
@@ -142,8 +144,9 @@ struct IHadAFiveView: View {
                         .padding(.bottom, 32)
                     }
                 }
-            }
-            .background(Color(hex: "#F9F6F0"))
+                } // ScrollView
+                .background(Color(hex: "#F9F6F0"))
+            } // outer VStack
             .navigationBarHidden(true)
             .onAppear { Task { await loadData() } }
         }
@@ -152,11 +155,12 @@ struct IHadAFiveView: View {
     // MARK: - Header
     private var headerBanner: some View {
         VStack(spacing: 0) {
+            Image("had-five-hero")
+                .resizable()
+                .scaledToFit()
+                .frame(maxWidth: .infinity)
+
             HStack {
-                Image("had-five-hero")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxWidth: .infinity)
                 Spacer()
                 Button { showGroupSetup = true } label: {
                     Text("Edit Group")
@@ -165,9 +169,8 @@ struct IHadAFiveView: View {
                         .padding(.horizontal, 12).padding(.vertical, 6)
                         .background(Color(hex: "#E8F5E9")).cornerRadius(20)
                 }
-                .padding(.trailing, 16)
+                .padding(.horizontal, 16).padding(.vertical, 8)
             }
-            .padding(.vertical, 8)
             Divider()
         }
         .background(Color.white)
