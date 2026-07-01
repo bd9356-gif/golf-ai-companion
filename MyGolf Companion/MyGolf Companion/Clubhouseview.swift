@@ -52,9 +52,9 @@ struct ClubhouseView: View {
         ClubhouseSection(
             icon: "driving-range",
             iconColor: Color(hex: "#E65100"),
-            title: "Driving Range",
+            title: "Golf Library",
             subtitle: "Guides & techniques",
-            destination: .drivingRange
+            destination: .golfLibrary
         ),
         ClubhouseSection(
             icon: "playbook",
@@ -80,18 +80,58 @@ struct ClubhouseView: View {
                     )
                     .padding(.top, 24)
 
-                    // MARK: AI Clubhouse
-                    sectionGroup(
-                        title: "AI Clubhouse",
-                        sections: aiClubhouseSections
-                    )
-                    .padding(.top, 8)
-
                     Spacer(minLength: 32)
                 }
             }
             .background(Color(hex: "#F9F6F0"))
             .navigationBarHidden(true)
+        }
+    }
+
+    // MARK: - AI Clubhouse Grid
+    private var aiClubhouseGrid: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            // Section header
+            HStack(spacing: 10) {
+                Image("pro-bill")
+                    .resizable().scaledToFit()
+                    .frame(width: 44, height: 44)
+                    .cornerRadius(10)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("AI Clubhouse")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundColor(Color(hex: "#1B5E20"))
+                    Text("Learn. Practice. Master.")
+                        .font(.system(size: 11))
+                        .foregroundColor(Color(hex: "#5C5C5C"))
+                }
+            }
+            .padding(.horizontal, 16)
+
+            // 2x2 grid
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+                ForEach(aiClubhouseSections) { section in
+                    NavigationLink(destination: destinationView(for: section.destination)) {
+                        ClubhouseGridCard(section: section)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+            }
+            .padding(.horizontal, 16)
+        }
+        .padding(.bottom, 16)
+    }
+
+    @ViewBuilder
+    private func destinationView(for destination: ClubhouseDestination) -> some View {
+        switch destination {
+        case .iHadAFive:    IHadAFiveView()
+        case .myBag:        MyBagView()
+        case .myCourses:    MyCoursesView()
+        case .askThePro:    AskTheProView()
+        case .golfTV:       GolfTVView()
+        case .golfLibrary:  GolfLibraryView()
+        case .myPlaybook:   MyPlaybookView()
         }
     }
 
@@ -189,13 +229,43 @@ struct ClubhouseTile: View {
         case .myCourses:    MyCoursesView()
         case .askThePro:    AskTheProView()
         case .golfTV:       GolfTVView()
-        case .drivingRange: DrivingRangeView()
+        case .golfLibrary: GolfLibraryView()
         case .myPlaybook:   MyPlaybookView()
         }
     }
 }
 
 // MARK: - Models
+// MARK: - Grid Card (for AI Clubhouse 2x2)
+struct ClubhouseGridCard: View {
+    let section: ClubhouseSection
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
+                Image(section.icon)
+                    .resizable().scaledToFit()
+                    .frame(width: 32, height: 32)
+                    .cornerRadius(8)
+                Text(section.title)
+                    .font(.caption).fontWeight(.bold)
+                    .foregroundColor(.primary)
+                    .lineLimit(1)
+            }
+            Text(section.subtitle)
+                .font(.caption2).foregroundColor(.secondary)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, minHeight: 60, alignment: .topLeading)
+        .padding(10)
+        .background(Color.white)
+        .cornerRadius(12)
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(hex: "#1B5E20").opacity(0.2), lineWidth: 1.5))
+        .shadow(color: .black.opacity(0.04), radius: 3, x: 0, y: 2)
+    }
+}
+
 struct ClubhouseSection: Identifiable {
     let id = UUID()
     let icon: String
@@ -211,7 +281,7 @@ enum ClubhouseDestination {
     case myCourses
     case askThePro
     case golfTV
-    case drivingRange
+    case golfLibrary
     case myPlaybook
 }
 

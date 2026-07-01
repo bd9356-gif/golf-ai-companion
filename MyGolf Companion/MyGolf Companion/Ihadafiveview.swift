@@ -504,11 +504,20 @@ struct IHadAFiveView: View {
                 return f.string(from: card.createdAt ?? Date())
             }
             ForEach(grouped.keys.sorted().reversed(), id: \.self) { month in
-                MonthSection(month: month, cards: grouped[month] ?? [], group: group!)
-                    .padding(.horizontal, 16)
+                MonthSection(month: month, cards: grouped[month] ?? [], group: group!, onDelete: { card in
+                    Task { await deleteCard(card) }
+                })
+                .padding(.horizontal, 16)
             }
         }
         .padding(.top, 8)
+    }
+
+    func deleteCard(_ card: GameCard) async {
+        guard let id = card.id else { return }
+        try? await supabase.from("game_cards").delete().eq("id", value: id).execute()
+        gameCards.removeAll { $0.id == id }
+        if currentCard?.id == id { currentCard = gameCards.first }
     }
 
     // MARK: - Data
@@ -657,6 +666,7 @@ struct MonthSection: View {
     let month: String
     let cards: [GameCard]
     let group: GolfGroup
+    let onDelete: (GameCard) -> Void
     @State private var isExpanded = false
 
     var body: some View {
@@ -678,9 +688,19 @@ struct MonthSection: View {
                 VStack(spacing: 10) {
                     ForEach(cards) { card in
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("⛳ \(card.situationTitle ?? "Round")")
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(Color(hex: "#1B5E20"))
+                            HStack {
+                                Text("⛳ \(card.situationTitle ?? "Round")")
+                                    .font(.system(size: 14, weight: .bold))
+                                    .foregroundColor(Color(hex: "#1B5E20"))
+                                Spacer()
+                                Button {
+                                    onDelete(card)
+                                } label: {
+                                    Image(systemName: "trash")
+                                        .font(.system(size: 13))
+                                        .foregroundColor(Color(hex: "#CCCCCC"))
+                                }
+                            }
                             Text(card.gameContent)
                                 .font(.system(size: 13))
                                 .foregroundColor(Color(hex: "#2C2C2C"))

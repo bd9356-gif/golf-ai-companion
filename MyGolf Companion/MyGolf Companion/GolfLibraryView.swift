@@ -8,7 +8,7 @@ struct GuideTopic: Identifiable {
     let prompt: String
 }
 
-struct DrivingRangeView: View {
+struct GolfLibraryView: View {
     @State private var selectedTopic: GuideTopic? = nil
     @State private var guideContent: String = ""
     @State private var isLoading = false
@@ -44,7 +44,7 @@ struct DrivingRangeView: View {
         VStack(spacing: 0) {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Driving Range")
+                    Text("Golf Library")
                         .font(.system(size: 22, weight: .bold))
                         .foregroundColor(Color(hex: "#1B5E20"))
                     Text("Guides & techniques")
