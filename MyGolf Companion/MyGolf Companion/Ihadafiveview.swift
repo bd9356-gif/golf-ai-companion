@@ -68,6 +68,24 @@ struct GolferTake: Identifiable {
     let rule: String
 }
 
+struct GroupRuleCardData {
+    var situation: String
+    var groupRule: String
+    var realRule: String
+
+    static func parse(from json: String) -> GroupRuleCardData? {
+        guard let data = json.data(using: .utf8),
+              let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let groupRule = obj["group_rule"] as? String,
+              let realRule = obj["real_rule"] as? String else { return nil }
+        return GroupRuleCardData(
+            situation: obj["situation"] as? String ?? "",
+            groupRule: groupRule,
+            realRule: realRule
+        )
+    }
+}
+
 // MARK: - Main View
 struct IHadAFiveView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
@@ -81,13 +99,14 @@ struct IHadAFiveView: View {
     @State private var nextCreator: String = ""
     @State private var errorMessage: String? = nil
     @State private var selectedSituation: Situation? = nil
+    @State private var oneRuleForAll: Bool = false
 
     private let supabase = SupabaseClient.shared.client
 
     var groupedSituations: [String: [Situation]] {
         Dictionary(grouping: situations, by: { $0.category })
     }
-    var categoryOrder: [String] { ["Trouble Shots", "Course Conditions", "Etiquette & Calls"] }
+    var categoryOrder: [String] { ["On the Course"] }
 
     var body: some View {
         NavigationStack {
@@ -119,6 +138,7 @@ struct IHadAFiveView: View {
                             situationPicker
 
                             if selectedSituation != nil {
+                                modeToggle
                                 buildButton
                             }
 
@@ -130,7 +150,10 @@ struct IHadAFiveView: View {
                             }
 
                             if let card = currentCard {
-                                if let data = RoundCardData.parse(from: card.gameContent) {
+                                if let groupRule = GroupRuleCardData.parse(from: card.gameContent) {
+                                    GroupRuleCardView(data: groupRule, card: card)
+                                        .padding(.horizontal, 16)
+                                } else if let data = RoundCardData.parse(from: card.gameContent) {
                                     RoundCardView(data: data, card: card, group: group!)
                                         .padding(.horizontal, 16)
                                 } else {
@@ -241,6 +264,26 @@ struct IHadAFiveView: View {
         .padding(.horizontal, 16)
     }
 
+    // MARK: - Mode Toggle
+    private var modeToggle: some View {
+        HStack(spacing: 12) {
+            Text("One Card Each")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(!oneRuleForAll ? Color(hex: "#1B5E20") : Color(hex: "#888888"))
+            Toggle("", isOn: $oneRuleForAll)
+                .labelsHidden()
+                .tint(Color(hex: "#1B5E20"))
+            Text("One Rule for All")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(oneRuleForAll ? Color(hex: "#1B5E20") : Color(hex: "#888888"))
+        }
+        .padding(14)
+        .background(Color.white)
+        .cornerRadius(14)
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color(hex: "#E0EAE0"), lineWidth: 1))
+        .padding(.horizontal, 16)
+    }
+
     // MARK: - Build Button
     private var buildButton: some View {
         Button { Task { await generateRound() } } label: {
@@ -328,7 +371,8 @@ struct IHadAFiveView: View {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         let body: [String: Any] = [
             "situationTitle": situation.title,
-            "golferNames": names
+            "golferNames": names,
+            "oneRuleForAll": oneRuleForAll
         ]
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
 
@@ -487,6 +531,76 @@ struct RoundCardView: View {
 }
 
 // MARK: - Raw fallback
+// MARK: - Group Rule Card View
+struct GroupRuleCardView: View {
+    let data: GroupRuleCardData
+    let card: GameCard
+    @State private var showShareSheet = false
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Header
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("⛳ \(data.situation)")
+                        .font(.system(size: 17, weight: .bold))
+                        .foregroundColor(Color(hex: "#1B5E20"))
+                    Text("One Rule for All")
+                        .font(.system(size: 12))
+                        .foregroundColor(Color(hex: "#5C5C5C"))
+                        .italic()
+                }
+                Spacer()
+                Button { showShareSheet = true } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "square.and.arrow.up").font(.system(size: 13))
+                        Text("Share").font(.system(size: 13, weight: .semibold))
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 14).padding(.vertical, 8)
+                    .background(Color(hex: "#1B5E20")).cornerRadius(20)
+                }
+            }
+            .padding(16)
+            .background(Color(hex: "#E8F5E9"))
+
+            // Group ruling
+            VStack(spacing: 12) {
+                Text(data.groupRule)
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(Color(hex: "#1A1A1A"))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 20)
+
+                Divider().padding(.horizontal, 16)
+
+                // Real rule
+                HStack(alignment: .top, spacing: 10) {
+                    Text("⚖️").font(.system(size: 16))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Official USGA Ruling")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(Color(hex: "#C8401A"))
+                        Text(data.realRule)
+                            .font(.system(size: 14))
+                            .foregroundColor(Color(hex: "#1A1A1A"))
+                    }
+                    Spacer()
+                }
+                .padding(16)
+                .background(Color(hex: "#FFF4EC"))
+            }
+            .background(Color.white)
+        }
+        .cornerRadius(16)
+        .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
+        .sheet(isPresented: $showShareSheet) {
+            ShareSheet(items: ["\(data.situation)\n\n\(data.groupRule)\n\nUSGA: \(data.realRule)"])
+        }
+    }
+}
+
 struct RawGameCardView: View {
     let card: GameCard
     @State private var showShareSheet = false
