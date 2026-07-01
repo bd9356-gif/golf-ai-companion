@@ -70,12 +70,15 @@ struct IHadAFiveView: View {
     @State private var nextCreator: String = ""
     @State private var errorMessage: String? = nil
     @State private var selectedSituation: Situation? = nil
+    @State private var oneRuleForAll: Bool = false
+    @State private var groupPick: String? = nil
     @State private var currentOptions: OptionsCardData? = nil
     @State private var golferPicks: [String: String] = [:] // golfer name -> picked option
 
     private let supabase = SupabaseClient.shared.client
 
     var allPicksMade: Bool {
+        if oneRuleForAll { return groupPick != nil }
         guard let g = group else { return false }
         return g.names.allSatisfy { golferPicks[$0] != nil }
     }
@@ -110,6 +113,7 @@ struct IHadAFiveView: View {
                             situationPicker
 
                             if selectedSituation != nil && currentOptions == nil {
+                                modeToggle
                                 getOptionsButton
                             }
 
@@ -209,6 +213,7 @@ struct IHadAFiveView: View {
                         selectedSituation = situation
                         currentOptions = nil
                         golferPicks = [:]
+                        groupPick = nil
                     }
                 }
             } label: {
@@ -227,6 +232,31 @@ struct IHadAFiveView: View {
                 .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color(hex: "#D0E8D0"), lineWidth: 1.5))
             }
         }
+        .padding(.horizontal, 16)
+    }
+
+    // MARK: - Mode Toggle
+    private var modeToggle: some View {
+        HStack(spacing: 12) {
+            Text("Each Picks")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(!oneRuleForAll ? Color(hex: "#1B5E20") : Color(hex: "#888888"))
+            Toggle("", isOn: $oneRuleForAll)
+                .labelsHidden()
+                .tint(Color(hex: "#1B5E20"))
+                .onChange(of: oneRuleForAll) {
+                    golferPicks = [:]
+                    groupPick = nil
+                    currentOptions = nil
+                }
+            Text("One Rule for All")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(oneRuleForAll ? Color(hex: "#1B5E20") : Color(hex: "#888888"))
+        }
+        .padding(14)
+        .background(Color.white)
+        .cornerRadius(14)
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color(hex: "#E0EAE0"), lineWidth: 1))
         .padding(.horizontal, 16)
     }
 
@@ -254,22 +284,62 @@ struct IHadAFiveView: View {
     // MARK: - Options Section
     private func optionsSection(options: OptionsCardData) -> some View {
         VStack(spacing: 16) {
-            // Situation header
             VStack(spacing: 4) {
                 Text("⛳ \(options.situation)")
                     .font(.system(size: 18, weight: .bold))
                     .foregroundColor(Color(hex: "#1B5E20"))
-                Text("Each golfer picks their rule for the round")
+                Text(oneRuleForAll ? "Pick one rule for the whole group" : "Each golfer picks their rule for the round")
                     .font(.system(size: 13))
                     .foregroundColor(Color(hex: "#5C5C5C"))
                     .italic()
             }
             .padding(.horizontal, 16)
 
-            // Each golfer picks
-            if let g = group {
-                ForEach(g.names, id: \.self) { golfer in
-                    golferPickSection(golfer: golfer, options: options.options)
+            if oneRuleForAll {
+                // Single pick for everyone
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(nextCreator.isEmpty ? (group?.golfer1 ?? "You") : nextCreator)
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundColor(Color(hex: "#1A1A1A"))
+                        .padding(.horizontal, 16)
+
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(options.options, id: \.self) { option in
+                                Button {
+                                    groupPick = option
+                                } label: {
+                                    Text(option)
+                                        .font(.system(size: 13, weight: .semibold))
+                                        .foregroundColor(groupPick == option ? .white : Color(hex: "#1B5E20"))
+                                        .padding(.horizontal, 14).padding(.vertical, 10)
+                                        .background(groupPick == option ? Color(hex: "#1B5E20") : Color(hex: "#E8F5E9"))
+                                        .cornerRadius(20)
+                                        .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color(hex: "#1B5E20"), lineWidth: groupPick == option ? 0 : 1))
+                                }
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                    }
+
+                    if let pick = groupPick {
+                        Text("Everyone plays: \"\(pick)\"")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(Color(hex: "#1B5E20"))
+                            .padding(.horizontal, 16)
+                    }
+                }
+                .padding(.vertical, 8)
+                .background(Color.white)
+                .cornerRadius(14)
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color(hex: "#E0EAE0"), lineWidth: 1))
+                .padding(.horizontal, 16)
+            } else {
+                // Individual picks
+                if let g = group {
+                    ForEach(g.names, id: \.self) { golfer in
+                        golferPickSection(golfer: golfer, options: options.options)
+                    }
                 }
             }
 
@@ -479,11 +549,14 @@ struct IHadAFiveView: View {
               let userId = authViewModel.currentUser?.id else { return }
         let creator = nextCreator.isEmpty ? g.golfer1 : nextCreator
 
-        // Build card content from picks
         var content = "⛳ \(options.situation)\n\n"
-        for name in g.names {
-            if let pick = golferPicks[name] {
-                content += "\(name): \(pick)\n"
+        if oneRuleForAll, let pick = groupPick {
+            content += "Everyone: \(pick)\n"
+        } else {
+            for name in g.names {
+                if let pick = golferPicks[name] {
+                    content += "\(name): \(pick)\n"
+                }
             }
         }
         content += "\n⚖️ Real rule: \(options.realRule)"
@@ -495,6 +568,7 @@ struct IHadAFiveView: View {
         gameCards.insert(currentCard!, at: 0)
         currentOptions = nil
         golferPicks = [:]
+        groupPick = nil
     }
 
     func loadData() async {
