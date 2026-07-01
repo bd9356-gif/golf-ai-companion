@@ -2,6 +2,7 @@ import SwiftUI
 import Supabase
 import PhotosUI
 
+// MARK: - Models
 struct GolfMemory: Codable, Identifiable {
     var id: UUID?
     var userId: UUID?
@@ -19,42 +20,56 @@ struct GolfMemory: Codable, Identifiable {
     }
 }
 
-// Timeline item — wraps either a photo memory or a game card
-enum TimelineItem: Identifiable {
-    case memory(GolfMemory)
-    case gameCard(GameCard)
+struct GolfJournalEntry: Codable, Identifiable {
+    var id: UUID?
+    var userId: UUID?
+    var title: String?
+    var entry: String
+    var entryDate: String
+    var createdAt: Date?
 
-    var id: String {
-        switch self {
-        case .memory(let m): return "memory-\(m.id?.uuidString ?? UUID().uuidString)"
-        case .gameCard(let g): return "card-\(g.id?.uuidString ?? UUID().uuidString)"
-        }
-    }
-
-    var date: Date {
-        switch self {
-        case .memory(let m):
-            let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"
-            return f.date(from: m.memoryDate) ?? Date.distantPast
-        case .gameCard(let g):
-            return g.createdAt ?? Date.distantPast
-        }
+    enum CodingKeys: String, CodingKey {
+        case id, title, entry
+        case userId = "user_id"
+        case entryDate = "entry_date"
+        case createdAt = "created_at"
     }
 }
 
+// MARK: - Main View
 struct NineteenthHoleView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
     @State private var memories: [GolfMemory] = []
-    @State private var gameCards: [GameCard] = []
+    @State private var journalEntries: [GolfJournalEntry] = []
+    @State private var currentGameCard: GameCard? = nil
     @State private var isLoading = true
     @State private var showAddMemory = false
+    @State private var showAddJournal = false
 
     private let supabase = SupabaseClient.shared.client
 
-    var groupedTimeline: [(month: String, items: [TimelineItem])] {
+    var groupedMemories: [(month: String, items: [GolfMemory])] {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMMM yyyy"
-        let grouped = Dictionary(grouping: timeline) { formatter.string(from: $0.date) }
+        let grouped = Dictionary(grouping: memories) { m -> String in
+            let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"
+            let date = f.date(from: m.memoryDate) ?? Date()
+            return formatter.string(from: date)
+        }
+        return grouped.keys.sorted { a, b in
+            let f = DateFormatter(); f.dateFormat = "MMMM yyyy"
+            return (f.date(from: a) ?? Date.distantPast) > (f.date(from: b) ?? Date.distantPast)
+        }.map { (month: $0, items: grouped[$0]!) }
+    }
+
+    var groupedJournal: [(month: String, items: [GolfJournalEntry])] {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMMM yyyy"
+        let grouped = Dictionary(grouping: journalEntries) { e -> String in
+            let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"
+            let date = f.date(from: e.entryDate) ?? Date()
+            return formatter.string(from: date)
+        }
         return grouped.keys.sorted { a, b in
             let f = DateFormatter(); f.dateFormat = "MMMM yyyy"
             return (f.date(from: a) ?? Date.distantPast) > (f.date(from: b) ?? Date.distantPast)
@@ -69,58 +84,41 @@ struct NineteenthHoleView: View {
 
                     if isLoading {
                         ProgressView().padding(48)
-                    } else if groupedTimeline.isEmpty {
-                        emptyState
                     } else {
-                        LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
-                            ForEach(groupedTimeline, id: \.month) { group in
-                                Section {
-                                    VStack(spacing: 12) {
-                                        ForEach(group.items) { item in
-                                            switch item {
-                                            case .memory(let memory):
-                                                MemoryCard(memory: memory, onDelete: {
-                                                    Task { await deleteMemory(memory) }
-                                                })
-                                            case .gameCard(let card):
-                                                GameCardMemoryView(card: card)
-                                            }
-                                        }
-                                    }
-                                    .padding(.horizontal, 16)
-                                    .padding(.bottom, 16)
-                                } header: {
-                                    HStack {
-                                        Text(group.month.uppercased())
-                                            .font(.system(size: 11, weight: .bold))
-                                            .tracking(1.4)
-                                            .foregroundColor(Color(hex: "#1B5E20"))
-                                        Spacer()
-                                        Text("\(group.items.count) moment\(group.items.count == 1 ? "" : "s")")
-                                            .font(.system(size: 11))
-                                            .foregroundColor(Color(hex: "#888888"))
-                                    }
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 8)
-                                    .background(Color(hex: "#F9F6F0"))
-                                }
-                            }
+                        VStack(spacing: 24) {
+                            // 1. This Week's Game
+                            thisWeeksGameSection
+
+                            // 2. Photo Memories
+                            photoMemoriesSection
+
+                            // 3. Golf Journal
+                            golfJournalSection
                         }
+                        .padding(.top, 16)
+                        .padding(.bottom, 32)
                     }
                 }
             }
             .background(Color(hex: "#F9F6F0"))
             .navigationBarHidden(true)
-            .onAppear { Task { await loadMemories() } }
+            .onAppear { Task { await loadAll() } }
             .sheet(isPresented: $showAddMemory) {
                 AddMemoryView(onSave: { memory in
                     Task { await saveMemory(memory) }
                     showAddMemory = false
                 })
             }
+            .sheet(isPresented: $showAddJournal) {
+                AddJournalView(onSave: { entry in
+                    Task { await saveJournalEntry(entry) }
+                    showAddJournal = false
+                })
+            }
         }
     }
 
+    // MARK: - Header
     private var headerBanner: some View {
         VStack(spacing: 0) {
             HStack {
@@ -134,8 +132,13 @@ struct NineteenthHoleView: View {
                         .italic()
                 }
                 Spacer()
-                Button {
-                    showAddMemory = true
+                Menu {
+                    Button { showAddMemory = true } label: {
+                        Label("Add Photo Memory", systemImage: "photo")
+                    }
+                    Button { showAddJournal = true } label: {
+                        Label("Add Journal Entry", systemImage: "pencil")
+                    }
                 } label: {
                     Image(systemName: "plus.circle.fill")
                         .font(.system(size: 30))
@@ -148,60 +151,164 @@ struct NineteenthHoleView: View {
         .background(Color.white)
     }
 
-    private var emptyState: some View {
-        VStack(spacing: 16) {
-            Text("🍺").font(.system(size: 52))
-            Text("Your 19th Hole is empty")
-                .font(.system(size: 17, weight: .bold))
-                .foregroundColor(Color(hex: "#1A1A1A"))
-            Text("Add a photo and caption to capture\nthe moments you'll never forget")
-                .font(.system(size: 14))
-                .foregroundColor(Color(hex: "#5C5C5C"))
-                .multilineTextAlignment(.center)
-            Button {
-                showAddMemory = true
-            } label: {
-                Text("Add a Memory")
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 28).padding(.vertical, 12)
-                    .background(Color(hex: "#1B5E20"))
-                    .cornerRadius(14)
+    // MARK: - This Week's Game
+    private var thisWeeksGameSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            sectionHeader(title: "THIS WEEK'S GAME", icon: "🏆")
+
+            if let card = currentGameCard {
+                ThisWeeksGameCard(card: card)
+                    .padding(.horizontal, 16)
+            } else {
+                emptyCard(
+                    icon: "🏆",
+                    message: "No game card yet — head to I Had a Five™ to settle it."
+                )
             }
         }
-        .padding(.top, 60).padding(.horizontal, 32)
     }
 
-    func loadMemories() async {
+    // MARK: - Photo Memories
+    private var photoMemoriesSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                sectionHeader(title: "PHOTO MEMORIES", icon: "📸")
+                Spacer()
+                Button { showAddMemory = true } label: {
+                    Image(systemName: "plus.circle")
+                        .font(.system(size: 20))
+                        .foregroundColor(Color(hex: "#1B5E20"))
+                }
+                .padding(.trailing, 16)
+            }
+
+            if memories.isEmpty {
+                emptyCard(icon: "📸", message: "Add your first golf photo memory.")
+            } else {
+                ForEach(groupedMemories, id: \.month) { group in
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(group.month)
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(Color(hex: "#888888"))
+                            .padding(.horizontal, 16)
+
+                        ForEach(group.items) { memory in
+                            MemoryCard(memory: memory, onDelete: {
+                                Task { await deleteMemory(memory) }
+                            })
+                            .padding(.horizontal, 16)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - Golf Journal
+    private var golfJournalSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                sectionHeader(title: "GOLF JOURNAL", icon: "📓")
+                Spacer()
+                Button { showAddJournal = true } label: {
+                    Image(systemName: "plus.circle")
+                        .font(.system(size: 20))
+                        .foregroundColor(Color(hex: "#1B5E20"))
+                }
+                .padding(.trailing, 16)
+            }
+
+            if journalEntries.isEmpty {
+                emptyCard(icon: "📓", message: "Your private golf reflections live here.")
+            } else {
+                ForEach(groupedJournal, id: \.month) { group in
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(group.month)
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(Color(hex: "#888888"))
+                            .padding(.horizontal, 16)
+
+                        ForEach(group.items) { entry in
+                            JournalCard(entry: entry, onDelete: {
+                                Task { await deleteJournalEntry(entry) }
+                            })
+                            .padding(.horizontal, 16)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - Helpers
+    private func sectionHeader(title: String, icon: String) -> some View {
+        HStack(spacing: 6) {
+            Text(icon).font(.system(size: 14))
+            Text(title)
+                .font(.system(size: 11, weight: .bold))
+                .tracking(1.4)
+                .foregroundColor(Color(hex: "#1B5E20"))
+        }
+        .padding(.horizontal, 16)
+    }
+
+    private func emptyCard(icon: String, message: String) -> some View {
+        HStack(spacing: 10) {
+            Text(icon).font(.system(size: 20))
+            Text(message)
+                .font(.system(size: 13))
+                .foregroundColor(Color(hex: "#888888"))
+                .italic()
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.white)
+        .cornerRadius(14)
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color(hex: "#E0EAE0"), style: StrokeStyle(lineWidth: 1, dash: [5])))
+        .padding(.horizontal, 16)
+    }
+
+    // MARK: - Data
+    func loadAll() async {
         guard let userId = authViewModel.currentUser?.id else { return }
         isLoading = true
-        let result: [GolfMemory] = (try? await supabase
-            .from("golf_memories")
-            .select()
-            .eq("user_id", value: userId)
-            .order("memory_date", ascending: false)
-            .execute()
-            .value) ?? []
-        memories = result
 
         let cards: [GameCard] = (try? await supabase
             .from("game_cards")
             .select()
             .eq("user_id", value: userId)
             .order("created_at", ascending: false)
+            .limit(1)
             .execute()
             .value) ?? []
-        gameCards = cards
+        currentGameCard = cards.first
+
+        let mems: [GolfMemory] = (try? await supabase
+            .from("golf_memories")
+            .select()
+            .eq("user_id", value: userId)
+            .order("memory_date", ascending: false)
+            .execute()
+            .value) ?? []
+        memories = mems
+
+        let entries: [GolfJournalEntry] = (try? await supabase
+            .from("golf_journal")
+            .select()
+            .eq("user_id", value: userId)
+            .order("entry_date", ascending: false)
+            .execute()
+            .value) ?? []
+        journalEntries = entries
 
         isLoading = false
     }
 
     func saveMemory(_ memory: GolfMemory) async {
         guard let userId = authViewModel.currentUser?.id else { return }
-        var m = memory
-        m.userId = userId
+        var m = memory; m.userId = userId
         try? await supabase.from("golf_memories").insert(m).execute()
-        await loadMemories()
+        await loadAll()
     }
 
     func deleteMemory(_ memory: GolfMemory) async {
@@ -209,10 +316,23 @@ struct NineteenthHoleView: View {
         try? await supabase.from("golf_memories").delete().eq("id", value: id).execute()
         memories.removeAll { $0.id == id }
     }
+
+    func saveJournalEntry(_ entry: GolfJournalEntry) async {
+        guard let userId = authViewModel.currentUser?.id else { return }
+        var e = entry; e.userId = userId
+        try? await supabase.from("golf_journal").insert(e).execute()
+        await loadAll()
+    }
+
+    func deleteJournalEntry(_ entry: GolfJournalEntry) async {
+        guard let id = entry.id else { return }
+        try? await supabase.from("golf_journal").delete().eq("id", value: id).execute()
+        journalEntries.removeAll { $0.id == id }
+    }
 }
 
-// MARK: - Game Card Memory View
-struct GameCardMemoryView: View {
+// MARK: - This Week's Game Card
+struct ThisWeeksGameCard: View {
     let card: GameCard
     @State private var isExpanded = false
 
@@ -224,18 +344,16 @@ struct GameCardMemoryView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Header — always visible, tap to expand
             Button {
                 withAnimation(.easeInOut(duration: 0.2)) { isExpanded.toggle() }
             } label: {
-                HStack(spacing: 10) {
-                    Text("🏆").font(.system(size: 18))
+                HStack {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(card.situationTitle ?? "I Had a Five™")
-                            .font(.system(size: 15, weight: .bold))
-                            .foregroundColor(Color(hex: "#1B5E20"))
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(Color(hex: "#1A1A1A"))
                         Text("Created by \(card.createdBy) · \(formattedDate)")
-                            .font(.system(size: 11))
+                            .font(.system(size: 12))
                             .foregroundColor(Color(hex: "#888888"))
                     }
                     Spacer()
@@ -248,7 +366,6 @@ struct GameCardMemoryView: View {
             }
             .buttonStyle(PlainButtonStyle())
 
-            // Content — collapsible
             if isExpanded {
                 Text(card.gameContent)
                     .font(.system(size: 14))
@@ -272,23 +389,19 @@ struct MemoryCard: View {
     @State private var showPhoto = false
 
     var formattedDate: String {
-        let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd"
+        let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"
         if let date = f.date(from: memory.memoryDate) {
-            let display = DateFormatter()
-            display.dateStyle = .long
-            return display.string(from: date)
+            let d = DateFormatter(); d.dateStyle = .long
+            return d.string(from: date)
         }
         return memory.memoryDate
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-
-            // Caption + date + actions (always visible)
             VStack(alignment: .leading, spacing: 8) {
                 Text(memory.caption)
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundColor(Color(hex: "#1A1A1A"))
 
                 HStack {
@@ -301,48 +414,36 @@ struct MemoryCard: View {
                             withAnimation(.easeInOut(duration: 0.2)) { showPhoto.toggle() }
                         } label: {
                             Image(systemName: showPhoto ? "photo.fill" : "photo")
-                                .font(.system(size: 15))
+                                .font(.system(size: 14))
                                 .foregroundColor(Color(hex: "#1B5E20"))
                         }
                     }
-                    Button {
-                        showShareSheet = true
-                    } label: {
+                    Button { showShareSheet = true } label: {
                         Image(systemName: "square.and.arrow.up")
-                            .font(.system(size: 15))
+                            .font(.system(size: 14))
                             .foregroundColor(Color(hex: "#1B5E20"))
                     }
-                    Button {
-                        showDeleteConfirm = true
-                    } label: {
+                    Button { showDeleteConfirm = true } label: {
                         Image(systemName: "trash")
-                            .font(.system(size: 15))
+                            .font(.system(size: 14))
                             .foregroundColor(Color(hex: "#CCCCCC"))
                     }
                 }
             }
             .padding(14)
 
-            // Photo — collapsible
             if showPhoto, let photoUrl = memory.photoUrl, let url = URL(string: photoUrl) {
                 AsyncImage(url: url) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(maxWidth: .infinity)
-                        .frame(maxHeight: 280)
-                        .clipped()
+                    image.resizable().aspectRatio(contentMode: .fit)
+                        .frame(maxWidth: .infinity).frame(maxHeight: 280).clipped()
                 } placeholder: {
-                    Rectangle()
-                        .fill(Color(hex: "#E8F5E9"))
-                        .frame(height: 200)
-                        .overlay(ProgressView())
+                    Rectangle().fill(Color(hex: "#E8F5E9")).frame(height: 200).overlay(ProgressView())
                 }
             }
         }
         .background(Color.white)
-        .cornerRadius(16)
-        .shadow(color: Color.black.opacity(0.06), radius: 6, x: 0, y: 2)
+        .cornerRadius(14)
+        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
         .alert("Delete this memory?", isPresented: $showDeleteConfirm) {
             Button("Delete", role: .destructive, action: onDelete)
             Button("Cancel", role: .cancel) {}
@@ -353,6 +454,82 @@ struct MemoryCard: View {
             } else {
                 ShareSheet(items: [memory.caption])
             }
+        }
+    }
+}
+
+// MARK: - Journal Card
+struct JournalCard: View {
+    let entry: GolfJournalEntry
+    let onDelete: () -> Void
+    @State private var isExpanded = false
+    @State private var showDeleteConfirm = false
+
+    var formattedDate: String {
+        let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"
+        if let date = f.date(from: entry.entryDate) {
+            let d = DateFormatter(); d.dateStyle = .long
+            return d.string(from: date)
+        }
+        return entry.entryDate
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Button {
+                withAnimation(.easeInOut(duration: 0.2)) { isExpanded.toggle() }
+            } label: {
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        if let title = entry.title, !title.isEmpty {
+                            Text(title)
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundColor(Color(hex: "#1A1A1A"))
+                        } else {
+                            Text(entry.entry)
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundColor(Color(hex: "#1A1A1A"))
+                                .lineLimit(1)
+                        }
+                        Text(formattedDate)
+                            .font(.system(size: 12))
+                            .foregroundColor(Color(hex: "#888888"))
+                    }
+                    Spacer()
+                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(Color(hex: "#1B5E20"))
+                }
+                .padding(14)
+            }
+            .buttonStyle(PlainButtonStyle())
+
+            if isExpanded {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text(entry.entry)
+                        .font(.system(size: 14))
+                        .foregroundColor(Color(hex: "#2C2C2C"))
+                        .lineSpacing(5)
+
+                    HStack {
+                        Spacer()
+                        Button { showDeleteConfirm = true } label: {
+                            Image(systemName: "trash")
+                                .font(.system(size: 14))
+                                .foregroundColor(Color(hex: "#CCCCCC"))
+                        }
+                    }
+                }
+                .padding(14)
+                .background(Color(hex: "#FAFAFA"))
+            }
+        }
+        .background(Color.white)
+        .cornerRadius(14)
+        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+        .alert("Delete this journal entry?", isPresented: $showDeleteConfirm) {
+            Button("Delete", role: .destructive, action: onDelete)
+            Button("Cancel", role: .cancel) {}
         }
     }
 }
@@ -376,27 +553,17 @@ struct AddMemoryView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
-
-                    // Photo picker
                     PhotosPicker(selection: $selectedPhoto, matching: .images) {
                         if let image = selectedImage {
                             Image(uiImage: image)
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(maxWidth: .infinity)
-                                .cornerRadius(16)
+                                .resizable().aspectRatio(contentMode: .fit)
+                                .frame(maxWidth: .infinity).cornerRadius(16)
                         } else {
                             ZStack {
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(Color(hex: "#E8F5E9"))
-                                    .frame(height: 180)
+                                RoundedRectangle(cornerRadius: 16).fill(Color(hex: "#E8F5E9")).frame(height: 180)
                                 VStack(spacing: 8) {
-                                    Image(systemName: "photo.on.rectangle.angled")
-                                        .font(.system(size: 36))
-                                        .foregroundColor(Color(hex: "#1B5E20"))
-                                    Text("Tap to add a photo")
-                                        .font(.system(size: 14, weight: .semibold))
-                                        .foregroundColor(Color(hex: "#1B5E20"))
+                                    Image(systemName: "photo.on.rectangle.angled").font(.system(size: 36)).foregroundColor(Color(hex: "#1B5E20"))
+                                    Text("Tap to add a photo").font(.system(size: 14, weight: .semibold)).foregroundColor(Color(hex: "#1B5E20"))
                                 }
                             }
                         }
@@ -404,53 +571,35 @@ struct AddMemoryView: View {
                     .onChange(of: selectedPhoto) {
                         Task {
                             if let data = try? await selectedPhoto?.loadTransferable(type: Data.self),
-                               let image = UIImage(data: data) {
-                                selectedImage = image
-                            }
+                               let image = UIImage(data: data) { selectedImage = image }
                         }
                     }
 
-                    // Caption
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
-                            Text("Caption")
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(Color(hex: "#1A1A1A"))
+                            Text("Caption").font(.system(size: 14, weight: .bold)).foregroundColor(Color(hex: "#1A1A1A"))
                             Spacer()
                             Button {
                                 Task { await generateCaption() }
                             } label: {
                                 HStack(spacing: 4) {
-                                    if isGeneratingCaption {
-                                        ProgressView().scaleEffect(0.7)
-                                    } else {
-                                        Image(systemName: "sparkles")
-                                            .font(.system(size: 12))
-                                    }
-                                    Text("Expand it")
-                                        .font(.system(size: 12, weight: .semibold))
+                                    if isGeneratingCaption { ProgressView().scaleEffect(0.7) }
+                                    else { Image(systemName: "sparkles").font(.system(size: 12)) }
+                                    Text("Expand it").font(.system(size: 12, weight: .semibold))
                                 }
                                 .foregroundColor(Color(hex: "#1B5E20"))
                             }
-                            .disabled(isGeneratingCaption)
+                            .disabled(isGeneratingCaption || caption.isEmpty)
                         }
-
                         TextField("A few words... AI will expand it", text: $caption, axis: .vertical)
-                            .font(.system(size: 15))
-                            .lineLimit(3...6)
-                            .padding(12)
-                            .background(Color(hex: "#F5F5F5"))
-                            .cornerRadius(12)
+                            .font(.system(size: 15)).lineLimit(3...6).padding(12)
+                            .background(Color(hex: "#F5F5F5")).cornerRadius(12)
                     }
 
-                    // Date
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("When")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(Color(hex: "#1A1A1A"))
+                        Text("When").font(.system(size: 14, weight: .bold)).foregroundColor(Color(hex: "#1A1A1A"))
                         DatePicker("", selection: $memoryDate, displayedComponents: .date)
-                            .datePickerStyle(.compact)
-                            .labelsHidden()
+                            .datePickerStyle(.compact).labelsHidden()
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
@@ -460,14 +609,10 @@ struct AddMemoryView: View {
             .navigationTitle("Add a Memory")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(isUploading ? "Saving..." : "Save") {
-                        Task { await save() }
-                    }
-                    .disabled(caption.isEmpty || isUploading)
+                    Button(isUploading ? "Saving..." : "Save") { Task { await save() } }
+                        .disabled(caption.isEmpty || isUploading)
                 }
             }
         }
@@ -476,7 +621,6 @@ struct AddMemoryView: View {
     func save() async {
         guard let userId = authViewModel.currentUser?.id else { return }
         isUploading = true
-
         var photoUrl: String? = nil
 
         if let image = selectedImage {
@@ -484,25 +628,14 @@ struct AddMemoryView: View {
             if let data = resized.jpegData(compressionQuality: 0.7) {
                 let filename = "\(userId)/\(UUID().uuidString).jpg"
                 do {
-                    try await supabase.storage
-                        .from("golf-memories")
-                        .upload(filename, data: data, options: FileOptions(contentType: "image/jpeg"))
-                    let urlResult = try? supabase.storage.from("golf-memories").getPublicURL(path: filename)
-                    photoUrl = urlResult?.absoluteString
-                    print("✅ Photo uploaded: \(photoUrl ?? "no url")")
-                } catch {
-                    print("❌ Photo upload failed: \(error) — saving without photo")
-                }
+                    try await supabase.storage.from("golf-memories").upload(filename, data: data, options: FileOptions(contentType: "image/jpeg"))
+                    photoUrl = try? supabase.storage.from("golf-memories").getPublicURL(path: filename).absoluteString
+                } catch { print("❌ Photo upload failed: \(error)") }
             }
         }
 
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        let memory = GolfMemory(
-            photoUrl: photoUrl,
-            caption: caption,
-            memoryDate: formatter.string(from: memoryDate)
-        )
+        let formatter = DateFormatter(); formatter.dateFormat = "yyyy-MM-dd"
+        let memory = GolfMemory(photoUrl: photoUrl, caption: caption, memoryDate: formatter.string(from: memoryDate))
         onSave(memory)
         isUploading = false
     }
@@ -510,8 +643,7 @@ struct AddMemoryView: View {
     func resizeImage(_ image: UIImage, maxWidth: CGFloat) -> UIImage {
         let ratio = image.size.height / image.size.width
         let newWidth = min(image.size.width, maxWidth)
-        let newHeight = newWidth * ratio
-        let newSize = CGSize(width: newWidth, height: newHeight)
+        let newSize = CGSize(width: newWidth, height: newWidth * ratio)
         UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
         image.draw(in: CGRect(origin: .zero, size: newSize))
         let resized = UIGraphicsGetImageFromCurrentImageContext() ?? image
@@ -537,4 +669,105 @@ struct AddMemoryView: View {
         }
         isGeneratingCaption = false
     }
+}
+
+// MARK: - Add Journal View
+struct AddJournalView: View {
+    let onSave: (GolfJournalEntry) -> Void
+    @Environment(\.dismiss) var dismiss
+    @EnvironmentObject var authViewModel: AuthViewModel
+
+    @State private var title = ""
+    @State private var entry = ""
+    @State private var entryDate = Date()
+    @State private var isExpanding = false
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 20) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Title (optional)")
+                            .font(.system(size: 14, weight: .bold)).foregroundColor(Color(hex: "#1A1A1A"))
+                        TextField("e.g. The day I broke 90", text: $title)
+                            .font(.system(size: 15)).padding(12)
+                            .background(Color(hex: "#F5F5F5")).cornerRadius(12)
+                    }
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text("Reflection")
+                                .font(.system(size: 14, weight: .bold)).foregroundColor(Color(hex: "#1A1A1A"))
+                            Spacer()
+                            Button {
+                                Task { await expandEntry() }
+                            } label: {
+                                HStack(spacing: 4) {
+                                    if isExpanding { ProgressView().scaleEffect(0.7) }
+                                    else { Image(systemName: "sparkles").font(.system(size: 12)) }
+                                    Text("Expand it").font(.system(size: 12, weight: .semibold))
+                                }
+                                .foregroundColor(Color(hex: "#1B5E20"))
+                            }
+                            .disabled(isExpanding || entry.isEmpty)
+                        }
+                        TextField("Write what you remember, how it felt, what made it special...", text: $entry, axis: .vertical)
+                            .font(.system(size: 15)).lineLimit(6...20).padding(12)
+                            .background(Color(hex: "#F5F5F5")).cornerRadius(12)
+                    }
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Date")
+                            .font(.system(size: 14, weight: .bold)).foregroundColor(Color(hex: "#1A1A1A"))
+                        DatePicker("", selection: $entryDate, displayedComponents: .date)
+                            .datePickerStyle(.compact).labelsHidden()
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .padding(20)
+            }
+            .background(Color(hex: "#F9F6F0"))
+            .navigationTitle("Golf Journal")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        let formatter = DateFormatter(); formatter.dateFormat = "yyyy-MM-dd"
+                        let e = GolfJournalEntry(title: title.isEmpty ? nil : title, entry: entry, entryDate: formatter.string(from: entryDate))
+                        onSave(e)
+                    }
+                    .disabled(entry.isEmpty)
+                }
+            }
+        }
+    }
+
+    func expandEntry() async {
+        guard !entry.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+        isExpanding = true
+        let prompt = "A golfer wrote these rough notes about a golf memory or reflection: \"\(entry)\". Expand this into a heartfelt, personal paragraph that captures the feeling and significance of this golf moment. Keep it genuine, 2-4 sentences. Return only the paragraph, nothing else."
+
+        guard let url = URL(string: "https://golf-ai-companion.vercel.app/api/ask-the-pro") else { return }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: ["question": prompt])
+
+        if let (data, _) = try? await URLSession.shared.data(for: request),
+           let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let reply = json["reply"] as? String {
+            entry = reply.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        isExpanding = false
+    }
+}
+
+// MARK: - Share Sheet
+struct ShareSheet: UIViewControllerRepresentable {
+    let items: [Any]
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: items, applicationActivities: nil)
+    }
+    func updateUIViewController(_ uvc: UIActivityViewController, context: Context) {}
 }
