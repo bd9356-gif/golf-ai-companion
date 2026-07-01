@@ -185,10 +185,20 @@ struct NineteenthHoleView: View {
             } else {
                 ForEach(groupedMemories, id: \.month) { group in
                     VStack(alignment: .leading, spacing: 8) {
-                        Text(group.month)
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(Color(hex: "#888888"))
-                            .padding(.horizontal, 16)
+                        HStack {
+                            Rectangle()
+                                .fill(Color(hex: "#1B5E20").opacity(0.3))
+                                .frame(height: 1)
+                            Text(group.month.uppercased())
+                                .font(.system(size: 10, weight: .bold))
+                                .tracking(1.6)
+                                .foregroundColor(Color(hex: "#1B5E20"))
+                                .fixedSize()
+                            Rectangle()
+                                .fill(Color(hex: "#1B5E20").opacity(0.3))
+                                .frame(height: 1)
+                        }
+                        .padding(.horizontal, 16)
 
                         ForEach(group.items) { memory in
                             MemoryCard(memory: memory, onDelete: {
@@ -212,10 +222,20 @@ struct NineteenthHoleView: View {
             } else {
                 ForEach(groupedJournal, id: \.month) { group in
                     VStack(alignment: .leading, spacing: 8) {
-                        Text(group.month)
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(Color(hex: "#888888"))
-                            .padding(.horizontal, 16)
+                        HStack {
+                            Rectangle()
+                                .fill(Color(hex: "#1B5E20").opacity(0.3))
+                                .frame(height: 1)
+                            Text(group.month.uppercased())
+                                .font(.system(size: 10, weight: .bold))
+                                .tracking(1.6)
+                                .foregroundColor(Color(hex: "#1B5E20"))
+                                .fixedSize()
+                            Rectangle()
+                                .fill(Color(hex: "#1B5E20").opacity(0.3))
+                                .frame(height: 1)
+                        }
+                        .padding(.horizontal, 16)
 
                         ForEach(group.items) { entry in
                             JournalCard(entry: entry, onDelete: {
@@ -390,13 +410,14 @@ struct MemoryCard: View {
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: 8) {
                 Text(memory.caption)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.system(size: 15))
                     .foregroundColor(Color(hex: "#1A1A1A"))
+                    .lineSpacing(3)
 
                 HStack {
                     Text(formattedDate)
                         .font(.system(size: 12))
-                        .foregroundColor(Color(hex: "#888888"))
+                        .foregroundColor(Color(hex: "#AAAAAA"))
                     Spacer()
                     HStack(spacing: 20) {
                         if memory.photoUrl != nil {
@@ -434,7 +455,16 @@ struct MemoryCard: View {
         }
         .background(Color.white)
         .cornerRadius(14)
-        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+        .overlay(
+            HStack {
+                Rectangle()
+                    .fill(Color(hex: "#1B5E20"))
+                    .frame(width: 4)
+                Spacer()
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+        )
+        .shadow(color: Color.black.opacity(0.04), radius: 4, x: 0, y: 2)
         .alert("Delete this memory?", isPresented: $showDeleteConfirm) {
             Button("Delete", role: .destructive, action: onDelete)
             Button("Cancel", role: .cancel) {}
