@@ -149,7 +149,7 @@ struct NineteenthHoleView: View {
                 Image("19th-hole")
                     .resizable()
                     .scaledToFit()
-                    .frame(height: 60)
+                    .frame(maxWidth: .infinity)
                 Spacer()
             }
             .padding(.horizontal, 16).padding(.vertical, 14)
