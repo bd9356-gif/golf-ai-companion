@@ -31,15 +31,24 @@ RULES:
 - Each one different — some lenient, some strict, some funny, some clueless
 - Sound like a buddy, not a rulebook
 
+NEVER USE THESE WORDS OR PHRASES:
+- "unplayable lie"
+- "penalty stroke"
+- "relief"
+- "drop zone"
+- "lateral"
+- "stroke and distance"
+- any official golf rule terminology
+
 PERFECT examples:
 - "John, kick it out."
 - "Bill, just drop it in the fairway."
 - "Keith, ask John."
 - "Art, pick it up — you got a five."
 - "Bill, move it a foot, nobody's watching."
-- "John, that's a drop, add one."
+- "John, toe it out, nobody cares."
 - "Keith, do whatever you want."
-- "Art, throw it back out, you're fine."
+- "Art, throw it back, we're not counting anyway."
 
 Then one real USGA rule — plain English, under 12 words.
 
