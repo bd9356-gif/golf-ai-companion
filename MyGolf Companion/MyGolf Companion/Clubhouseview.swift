@@ -32,6 +32,13 @@ struct ClubhouseView: View {
             subtitle: "Your golf address book",
             destination: .myCourses
         ),
+        ClubhouseSection(
+            icon: "i-had-a-five",
+            iconColor: Color(hex: "#C8401A"),
+            title: "19th Hole",
+            subtitle: "A golf life in moments",
+            destination: .nineteenthHole
+        ),
     ]
 
     private let aiClubhouseSections: [ClubhouseSection] = [
@@ -129,13 +136,14 @@ struct ClubhouseView: View {
     @ViewBuilder
     private func destinationView(for destination: ClubhouseDestination) -> some View {
         switch destination {
-        case .iHadAFive:    IHadAFiveView()
-        case .myBag:        MyBagView()
-        case .myCourses:    MyCoursesView()
-        case .askThePro:    AskTheProView()
-        case .golfTV:       GolfTVView()
-        case .golfLibrary:  GolfLibraryView()
-        case .myPlaybook:   MyPlaybookView()
+        case .iHadAFive:       IHadAFiveView()
+        case .myBag:           MyBagView()
+        case .myCourses:       MyCoursesView()
+        case .nineteenthHole:  NineteenthHoleView()
+        case .askThePro:       AskTheProView()
+        case .golfTV:          GolfTVView()
+        case .golfLibrary:     GolfLibraryView()
+        case .myPlaybook:      MyPlaybookView()
         }
     }
 
@@ -228,13 +236,14 @@ struct ClubhouseTile: View {
     @ViewBuilder
     private func destinationView(for destination: ClubhouseDestination) -> some View {
         switch destination {
-        case .iHadAFive:    IHadAFiveView()
-        case .myBag:        MyBagView()
-        case .myCourses:    MyCoursesView()
-        case .askThePro:    AskTheProView()
-        case .golfTV:       GolfTVView()
-        case .golfLibrary: GolfLibraryView()
-        case .myPlaybook:   MyPlaybookView()
+        case .iHadAFive:       IHadAFiveView()
+        case .myBag:           MyBagView()
+        case .myCourses:       MyCoursesView()
+        case .nineteenthHole:  NineteenthHoleView()
+        case .askThePro:       AskTheProView()
+        case .golfTV:          GolfTVView()
+        case .golfLibrary:     GolfLibraryView()
+        case .myPlaybook:      MyPlaybookView()
         }
     }
 }
@@ -283,6 +292,7 @@ enum ClubhouseDestination {
     case iHadAFive
     case myBag
     case myCourses
+    case nineteenthHole
     case askThePro
     case golfTV
     case golfLibrary
