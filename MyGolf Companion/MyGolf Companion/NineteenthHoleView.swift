@@ -51,7 +51,15 @@ struct NineteenthHoleView: View {
 
     private let supabase = SupabaseClient.shared.client
 
-    var timeline: [TimelineItem] {
+    var groupedTimeline: [(month: String, items: [TimelineItem])] {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMMM yyyy"
+        let grouped = Dictionary(grouping: timeline) { formatter.string(from: $0.date) }
+        return grouped.keys.sorted { a, b in
+            let f = DateFormatter(); f.dateFormat = "MMMM yyyy"
+            return (f.date(from: a) ?? Date.distantPast) > (f.date(from: b) ?? Date.distantPast)
+        }.map { (month: $0, items: grouped[$0]!) }
+    }
         let memoryItems = memories.map { TimelineItem.memory($0) }
         let cardItems = gameCards.map { TimelineItem.gameCard($0) }
         return (memoryItems + cardItems).sorted { $0.date > $1.date }
@@ -65,22 +73,43 @@ struct NineteenthHoleView: View {
 
                     if isLoading {
                         ProgressView().padding(48)
-                    } else if timeline.isEmpty {
+                    } else if groupedTimeline.isEmpty {
                         emptyState
                     } else {
-                        LazyVStack(spacing: 16) {
-                            ForEach(timeline) { item in
-                                switch item {
-                                case .memory(let memory):
-                                    MemoryCard(memory: memory, onDelete: {
-                                        Task { await deleteMemory(memory) }
-                                    })
-                                case .gameCard(let card):
-                                    GameCardMemoryView(card: card)
+                        LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
+                            ForEach(groupedTimeline, id: \.month) { group in
+                                Section {
+                                    VStack(spacing: 12) {
+                                        ForEach(group.items) { item in
+                                            switch item {
+                                            case .memory(let memory):
+                                                MemoryCard(memory: memory, onDelete: {
+                                                    Task { await deleteMemory(memory) }
+                                                })
+                                            case .gameCard(let card):
+                                                GameCardMemoryView(card: card)
+                                            }
+                                        }
+                                    }
+                                    .padding(.horizontal, 16)
+                                    .padding(.bottom, 16)
+                                } header: {
+                                    HStack {
+                                        Text(group.month.uppercased())
+                                            .font(.system(size: 11, weight: .bold))
+                                            .tracking(1.4)
+                                            .foregroundColor(Color(hex: "#1B5E20"))
+                                        Spacer()
+                                        Text("\(group.items.count) moment\(group.items.count == 1 ? "" : "s")")
+                                            .font(.system(size: 11))
+                                            .foregroundColor(Color(hex: "#888888"))
+                                    }
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 8)
+                                    .background(Color(hex: "#F9F6F0"))
                                 }
                             }
                         }
-                        .padding(16)
                     }
                 }
             }
@@ -189,6 +218,7 @@ struct NineteenthHoleView: View {
 // MARK: - Game Card Memory View
 struct GameCardMemoryView: View {
     let card: GameCard
+    @State private var isExpanded = false
 
     var formattedDate: String {
         let display = DateFormatter()
@@ -198,29 +228,39 @@ struct GameCardMemoryView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Header
-            HStack(spacing: 10) {
-                Text("🏆").font(.system(size: 20))
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(card.situationTitle ?? "I Had a Five™")
-                        .font(.system(size: 15, weight: .bold))
+            // Header — always visible, tap to expand
+            Button {
+                withAnimation(.easeInOut(duration: 0.2)) { isExpanded.toggle() }
+            } label: {
+                HStack(spacing: 10) {
+                    Text("🏆").font(.system(size: 18))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(card.situationTitle ?? "I Had a Five™")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundColor(Color(hex: "#1B5E20"))
+                        Text("Created by \(card.createdBy) · \(formattedDate)")
+                            .font(.system(size: 11))
+                            .foregroundColor(Color(hex: "#888888"))
+                    }
+                    Spacer()
+                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                        .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(Color(hex: "#1B5E20"))
-                    Text("Created by \(card.createdBy) · \(formattedDate)")
-                        .font(.system(size: 11))
-                        .foregroundColor(Color(hex: "#888888"))
                 }
-                Spacer()
-            }
-            .padding(14)
-            .background(Color(hex: "#E8F5E9"))
-
-            // Card content
-            Text(card.gameContent)
-                .font(.system(size: 14))
-                .foregroundColor(Color(hex: "#2C2C2C"))
                 .padding(14)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.white)
+                .background(Color(hex: "#E8F5E9"))
+            }
+            .buttonStyle(PlainButtonStyle())
+
+            // Content — collapsible
+            if isExpanded {
+                Text(card.gameContent)
+                    .font(.system(size: 14))
+                    .foregroundColor(Color(hex: "#2C2C2C"))
+                    .padding(14)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.white)
+            }
         }
         .cornerRadius(16)
         .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
@@ -233,6 +273,7 @@ struct MemoryCard: View {
     let onDelete: () -> Void
     @State private var showDeleteConfirm = false
     @State private var showShareSheet = false
+    @State private var showPhoto = false
 
     var formattedDate: String {
         let f = DateFormatter()
@@ -247,31 +288,8 @@ struct MemoryCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Photo
-            if let photoUrl = memory.photoUrl, let url = URL(string: photoUrl) {
-                AsyncImage(url: url) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(maxWidth: .infinity)
-                        .frame(maxHeight: 280)
-                        .clipped()
-                } placeholder: {
-                    Rectangle()
-                        .fill(Color(hex: "#E8F5E9"))
-                        .frame(height: 200)
-                        .overlay(ProgressView())
-                }
-            } else {
-                Rectangle()
-                    .fill(Color(hex: "#E8F5E9"))
-                    .frame(height: 120)
-                    .overlay(
-                        Text("⛳").font(.system(size: 40))
-                    )
-            }
 
-            // Caption + date + actions
+            // Caption + date + actions (always visible)
             VStack(alignment: .leading, spacing: 8) {
                 Text(memory.caption)
                     .font(.system(size: 16, weight: .semibold))
@@ -282,6 +300,15 @@ struct MemoryCard: View {
                         .font(.system(size: 12))
                         .foregroundColor(Color(hex: "#888888"))
                     Spacer()
+                    if memory.photoUrl != nil {
+                        Button {
+                            withAnimation(.easeInOut(duration: 0.2)) { showPhoto.toggle() }
+                        } label: {
+                            Image(systemName: showPhoto ? "photo.fill" : "photo")
+                                .font(.system(size: 15))
+                                .foregroundColor(Color(hex: "#1B5E20"))
+                        }
+                    }
                     Button {
                         showShareSheet = true
                     } label: {
@@ -299,6 +326,23 @@ struct MemoryCard: View {
                 }
             }
             .padding(14)
+
+            // Photo — collapsible
+            if showPhoto, let photoUrl = memory.photoUrl, let url = URL(string: photoUrl) {
+                AsyncImage(url: url) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(maxWidth: .infinity)
+                        .frame(maxHeight: 280)
+                        .clipped()
+                } placeholder: {
+                    Rectangle()
+                        .fill(Color(hex: "#E8F5E9"))
+                        .frame(height: 200)
+                        .overlay(ProgressView())
+                }
+            }
         }
         .background(Color.white)
         .cornerRadius(16)

@@ -135,10 +135,7 @@ struct IHadAFiveView: View {
                             if let card = currentCard, currentOptions == nil {
                                 savedCardView(card: card)
                                 nextWeekSection
-                            }
-
-                            if !gameCards.isEmpty && currentOptions == nil {
-                                historySection
+                                pastRoundsHint
                             }
                         }
                         .padding(.top, 16)
@@ -493,25 +490,22 @@ struct IHadAFiveView: View {
     }
 
     // MARK: - History
-    private var historySection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("PAST ROUNDS")
-                .font(.system(size: 11, weight: .bold)).tracking(1.4)
-                .foregroundColor(Color(hex: "#1B5E20")).padding(.horizontal, 16)
-
-            let grouped = Dictionary(grouping: gameCards) { card -> String in
-                let f = DateFormatter(); f.dateFormat = "MMMM yyyy"
-                return f.string(from: card.createdAt ?? Date())
-            }
-            ForEach(grouped.keys.sorted().reversed(), id: \.self) { month in
-                MonthSection(month: month, cards: grouped[month] ?? [], group: group!, onDelete: { card in
-                    Task { await deleteCard(card) }
-                })
-                .padding(.horizontal, 16)
-            }
+    private var pastRoundsHint: some View {
+        HStack(spacing: 10) {
+            Text("🍺").font(.system(size: 20))
+            Text("Past rounds live in the 19th Hole")
+                .font(.system(size: 13))
+                .foregroundColor(Color(hex: "#5C5C5C"))
+                .italic()
+            Spacer()
         }
-        .padding(.top, 8)
+        .padding(14)
+        .background(Color.white)
+        .cornerRadius(14)
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color(hex: "#E0EAE0"), lineWidth: 1))
+        .padding(.horizontal, 16)
     }
+
 
     func deleteCard(_ card: GameCard) async {
         guard let id = card.id else { return }
