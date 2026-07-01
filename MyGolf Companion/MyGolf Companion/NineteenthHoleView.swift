@@ -19,13 +19,43 @@ struct GolfMemory: Codable, Identifiable {
     }
 }
 
+// Timeline item — wraps either a photo memory or a game card
+enum TimelineItem: Identifiable {
+    case memory(GolfMemory)
+    case gameCard(GameCard)
+
+    var id: String {
+        switch self {
+        case .memory(let m): return "memory-\(m.id?.uuidString ?? UUID().uuidString)"
+        case .gameCard(let g): return "card-\(g.id?.uuidString ?? UUID().uuidString)"
+        }
+    }
+
+    var date: Date {
+        switch self {
+        case .memory(let m):
+            let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"
+            return f.date(from: m.memoryDate) ?? Date.distantPast
+        case .gameCard(let g):
+            return g.createdAt ?? Date.distantPast
+        }
+    }
+}
+
 struct NineteenthHoleView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
     @State private var memories: [GolfMemory] = []
+    @State private var gameCards: [GameCard] = []
     @State private var isLoading = true
     @State private var showAddMemory = false
 
     private let supabase = SupabaseClient.shared.client
+
+    var timeline: [TimelineItem] {
+        let memoryItems = memories.map { TimelineItem.memory($0) }
+        let cardItems = gameCards.map { TimelineItem.gameCard($0) }
+        return (memoryItems + cardItems).sorted { $0.date > $1.date }
+    }
 
     var body: some View {
         NavigationStack {
@@ -35,14 +65,19 @@ struct NineteenthHoleView: View {
 
                     if isLoading {
                         ProgressView().padding(48)
-                    } else if memories.isEmpty {
+                    } else if timeline.isEmpty {
                         emptyState
                     } else {
                         LazyVStack(spacing: 16) {
-                            ForEach(memories) { memory in
-                                MemoryCard(memory: memory, onDelete: {
-                                    Task { await deleteMemory(memory) }
-                                })
+                            ForEach(timeline) { item in
+                                switch item {
+                                case .memory(let memory):
+                                    MemoryCard(memory: memory, onDelete: {
+                                        Task { await deleteMemory(memory) }
+                                    })
+                                case .gameCard(let card):
+                                    GameCardMemoryView(card: card)
+                                }
                             }
                         }
                         .padding(16)
@@ -123,6 +158,16 @@ struct NineteenthHoleView: View {
             .execute()
             .value) ?? []
         memories = result
+
+        let cards: [GameCard] = (try? await supabase
+            .from("game_cards")
+            .select()
+            .eq("user_id", value: userId)
+            .order("created_at", ascending: false)
+            .execute()
+            .value) ?? []
+        gameCards = cards
+
         isLoading = false
     }
 
@@ -138,6 +183,47 @@ struct NineteenthHoleView: View {
         guard let id = memory.id else { return }
         try? await supabase.from("golf_memories").delete().eq("id", value: id).execute()
         memories.removeAll { $0.id == id }
+    }
+}
+
+// MARK: - Game Card Memory View
+struct GameCardMemoryView: View {
+    let card: GameCard
+
+    var formattedDate: String {
+        let display = DateFormatter()
+        display.dateStyle = .long
+        return display.string(from: card.createdAt ?? Date())
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // Header
+            HStack(spacing: 10) {
+                Text("🏆").font(.system(size: 20))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(card.situationTitle ?? "I Had a Five™")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundColor(Color(hex: "#1B5E20"))
+                    Text("Created by \(card.createdBy) · \(formattedDate)")
+                        .font(.system(size: 11))
+                        .foregroundColor(Color(hex: "#888888"))
+                }
+                Spacer()
+            }
+            .padding(14)
+            .background(Color(hex: "#E8F5E9"))
+
+            // Card content
+            Text(card.gameContent)
+                .font(.system(size: 14))
+                .foregroundColor(Color(hex: "#2C2C2C"))
+                .padding(14)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.white)
+        }
+        .cornerRadius(16)
+        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
     }
 }
 
