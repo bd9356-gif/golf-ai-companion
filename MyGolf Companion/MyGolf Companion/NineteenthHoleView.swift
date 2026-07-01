@@ -168,10 +168,12 @@ struct MemoryCard: View {
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                         .frame(maxWidth: .infinity)
+                        .frame(maxHeight: 280)
+                        .clipped()
                 } placeholder: {
                     Rectangle()
                         .fill(Color(hex: "#E8F5E9"))
-                        .frame(height: 240)
+                        .frame(height: 200)
                         .overlay(ProgressView())
                 }
             } else {
