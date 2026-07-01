@@ -356,13 +356,19 @@ struct AddMemoryView: View {
         var photoUrl: String? = nil
 
         if let image = selectedImage,
-           let data = image.jpegData(compressionQuality: 0.8) {
+           let data = image.jpegData(compressionQuality: 0.7) {
             let filename = "\(userId)/\(UUID().uuidString).jpg"
-            try? await supabase.storage
-                .from("golf-memories")
-                .upload(filename, data: data, options: FileOptions(contentType: "image/jpeg"))
-            let urlResult = try? supabase.storage.from("golf-memories").getPublicURL(path: filename)
-            photoUrl = urlResult?.absoluteString
+            do {
+                try await supabase.storage
+                    .from("golf-memories")
+                    .upload(filename, data: data, options: FileOptions(contentType: "image/jpeg"))
+                let urlResult = try? supabase.storage.from("golf-memories").getPublicURL(path: filename)
+                photoUrl = urlResult?.absoluteString
+                print("✅ Photo uploaded: \(photoUrl ?? "no url")")
+            } catch {
+                print("❌ Photo upload failed: \(error) — saving without photo")
+                // Save continues without photo rather than hanging
+            }
         }
 
         let formatter = DateFormatter()
