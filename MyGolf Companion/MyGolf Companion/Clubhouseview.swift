@@ -33,7 +33,7 @@ struct ClubhouseView: View {
             destination: .myCourses
         ),
         ClubhouseSection(
-            icon: "i-had-a-five",
+            icon: "19th-icon",
             iconColor: Color(hex: "#C8401A"),
             title: "19th Hole",
             subtitle: "A golf life in moments",
@@ -83,6 +83,7 @@ struct ClubhouseView: View {
                     // MARK: Your Game
                     sectionGroup(
                         title: "Your Game",
+                        icon: "your-game-icon",
                         sections: yourGameSections
                     )
                     .padding(.top, 24)
@@ -104,7 +105,7 @@ struct ClubhouseView: View {
         VStack(alignment: .leading, spacing: 10) {
             // Section header
             HStack(spacing: 10) {
-                Image("pro-bill")
+                Image("clubhouse-icon")
                     .resizable().scaledToFit()
                     .frame(width: 44, height: 44)
                     .cornerRadius(10)
@@ -162,15 +163,17 @@ struct ClubhouseView: View {
     }
 
     // MARK: - Section Group
-    private func sectionGroup(title: String, sections: [ClubhouseSection]) -> some View {
+    private func sectionGroup(title: String, icon: String, sections: [ClubhouseSection]) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             // Section header
-            HStack {
-                Text(title.uppercased())
-                    .font(.system(size: 11, weight: .bold))
-                    .tracking(1.4)
+            HStack(spacing: 10) {
+                Image(icon)
+                    .resizable().scaledToFit()
+                    .frame(width: 44, height: 44)
+                    .cornerRadius(10)
+                Text(title)
+                    .font(.system(size: 15, weight: .bold))
                     .foregroundColor(Color(hex: "#1B5E20"))
-                Spacer()
             }
             .padding(.horizontal, 16)
             .padding(.bottom, 10)

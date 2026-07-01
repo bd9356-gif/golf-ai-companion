@@ -199,9 +199,7 @@ struct IHadAFiveView: View {
     // MARK: - Situation Picker
     private var situationPicker: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("This Round's Situation")
-                .font(.system(size: 15, weight: .bold))
-                .foregroundColor(Color(hex: "#1A1A1A"))
+            // removed label — picker is self-explanatory
 
             Menu {
                 ForEach(situations) { situation in
@@ -421,42 +419,8 @@ struct IHadAFiveView: View {
 
     // MARK: - Saved Card View
     private func savedCardView(card: GameCard) -> some View {
-        VStack(spacing: 0) {
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("🏆 \(card.situationTitle ?? "This Round")")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(Color(hex: "#1B5E20"))
-                    Text("Created by \(card.createdBy)")
-                        .font(.system(size: 12)).foregroundColor(Color(hex: "#5C5C5C")).italic()
-                }
-                Spacer()
-                Button {
-                    let shareText = card.gameContent
-                    let av = UIActivityViewController(activityItems: [shareText], applicationActivities: nil)
-                    if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                       let vc = scene.windows.first?.rootViewController {
-                        vc.present(av, animated: true)
-                    }
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "square.and.arrow.up").font(.system(size: 13))
-                        Text("Share").font(.system(size: 13, weight: .semibold))
-                    }
-                    .foregroundColor(.white).padding(.horizontal, 14).padding(.vertical, 8)
-                    .background(Color(hex: "#1B5E20")).cornerRadius(20)
-                }
-            }
-            .padding(16).background(Color(hex: "#E8F5E9"))
-
-            Text(card.gameContent)
-                .font(.system(size: 14)).foregroundColor(Color(hex: "#1A1A1A"))
-                .padding(16).frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.white)
-        }
-        .cornerRadius(16)
-        .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
-        .padding(.horizontal, 16)
+        CollapsibleGameCard(card: card)
+            .padding(.horizontal, 16)
     }
 
     // MARK: - Next Week
@@ -602,6 +566,59 @@ struct IHadAFiveView: View {
 }
 
 // MARK: - Group Setup
+// MARK: - Collapsible Game Card
+struct CollapsibleGameCard: View {
+    let card: GameCard
+    @State private var isExpanded = false
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Button {
+                withAnimation(.easeInOut(duration: 0.2)) { isExpanded.toggle() }
+            } label: {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("🏆 \(card.situationTitle ?? "This Round")")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(Color(hex: "#1B5E20"))
+                        Text("Created by \(card.createdBy)")
+                            .font(.system(size: 12)).foregroundColor(Color(hex: "#5C5C5C")).italic()
+                    }
+                    Spacer()
+                    HStack(spacing: 10) {
+                        Button {
+                            let shareText = card.gameContent
+                            let av = UIActivityViewController(activityItems: [shareText], applicationActivities: nil)
+                            if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                               let vc = scene.windows.first?.rootViewController {
+                                vc.present(av, animated: true)
+                            }
+                        } label: {
+                            Image(systemName: "square.and.arrow.up")
+                                .font(.system(size: 16))
+                                .foregroundColor(Color(hex: "#1B5E20"))
+                        }
+                        Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(Color(hex: "#1B5E20"))
+                    }
+                }
+                .padding(16).background(Color(hex: "#E8F5E9"))
+            }
+            .buttonStyle(PlainButtonStyle())
+
+            if isExpanded {
+                Text(card.gameContent)
+                    .font(.system(size: 14)).foregroundColor(Color(hex: "#1A1A1A"))
+                    .padding(16).frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.white)
+            }
+        }
+        .cornerRadius(16)
+        .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
+    }
+}
+
 struct GroupSetupView: View {
     var existing: GolfGroup? = nil
     let onSave: (GolfGroup) -> Void
