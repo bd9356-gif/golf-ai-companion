@@ -122,15 +122,10 @@ struct NineteenthHoleView: View {
     private var headerBanner: some View {
         VStack(spacing: 0) {
             HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("19th Hole")
-                        .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(Color(hex: "#1B5E20"))
-                    Text("A golf life in moments")
-                        .font(.system(size: 13))
-                        .foregroundColor(Color(hex: "#5C5C5C"))
-                        .italic()
-                }
+                Image("19th-hole")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(height: 60)
                 Spacer()
                 Menu {
                     Button { showAddMemory = true } label: {
@@ -171,16 +166,7 @@ struct NineteenthHoleView: View {
     // MARK: - Photo Memories
     private var photoMemoriesSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                sectionHeader(title: "PHOTO MEMORIES", icon: "📸")
-                Spacer()
-                Button { showAddMemory = true } label: {
-                    Image(systemName: "plus.circle")
-                        .font(.system(size: 20))
-                        .foregroundColor(Color(hex: "#1B5E20"))
-                }
-                .padding(.trailing, 16)
-            }
+            sectionHeader(title: "PHOTO MEMORIES", icon: "📸")
 
             if memories.isEmpty {
                 emptyCard(icon: "📸", message: "Add your first golf photo memory.")
@@ -207,16 +193,7 @@ struct NineteenthHoleView: View {
     // MARK: - Golf Journal
     private var golfJournalSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                sectionHeader(title: "GOLF JOURNAL", icon: "📓")
-                Spacer()
-                Button { showAddJournal = true } label: {
-                    Image(systemName: "plus.circle")
-                        .font(.system(size: 20))
-                        .foregroundColor(Color(hex: "#1B5E20"))
-                }
-                .padding(.trailing, 16)
-            }
+            sectionHeader(title: "GOLF JOURNAL", icon: "📓")
 
             if journalEntries.isEmpty {
                 emptyCard(icon: "📓", message: "Your private golf reflections live here.")
