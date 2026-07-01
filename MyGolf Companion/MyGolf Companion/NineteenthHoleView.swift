@@ -409,24 +409,26 @@ struct MemoryCard: View {
                         .font(.system(size: 12))
                         .foregroundColor(Color(hex: "#888888"))
                     Spacer()
-                    if memory.photoUrl != nil {
-                        Button {
-                            withAnimation(.easeInOut(duration: 0.2)) { showPhoto.toggle() }
-                        } label: {
-                            Image(systemName: showPhoto ? "photo.fill" : "photo")
-                                .font(.system(size: 14))
+                    HStack(spacing: 20) {
+                        if memory.photoUrl != nil {
+                            Button {
+                                withAnimation(.easeInOut(duration: 0.2)) { showPhoto.toggle() }
+                            } label: {
+                                Image(systemName: showPhoto ? "photo.fill" : "photo")
+                                    .font(.system(size: 20))
+                                    .foregroundColor(Color(hex: "#1B5E20"))
+                            }
+                        }
+                        Button { showShareSheet = true } label: {
+                            Image(systemName: "square.and.arrow.up")
+                                .font(.system(size: 20))
                                 .foregroundColor(Color(hex: "#1B5E20"))
                         }
-                    }
-                    Button { showShareSheet = true } label: {
-                        Image(systemName: "square.and.arrow.up")
-                            .font(.system(size: 14))
-                            .foregroundColor(Color(hex: "#1B5E20"))
-                    }
-                    Button { showDeleteConfirm = true } label: {
-                        Image(systemName: "trash")
-                            .font(.system(size: 14))
-                            .foregroundColor(Color(hex: "#CCCCCC"))
+                        Button { showDeleteConfirm = true } label: {
+                            Image(systemName: "trash")
+                                .font(.system(size: 20))
+                                .foregroundColor(Color(hex: "#CCCCCC"))
+                        }
                     }
                 }
             }
