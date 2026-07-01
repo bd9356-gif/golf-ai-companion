@@ -166,10 +166,8 @@ struct MemoryCard: View {
                 AsyncImage(url: url) { image in
                     image
                         .resizable()
-                        .aspectRatio(contentMode: .fill)
+                        .aspectRatio(contentMode: .fit)
                         .frame(maxWidth: .infinity)
-                        .frame(height: 240)
-                        .clipped()
                 } placeholder: {
                     Rectangle()
                         .fill(Color(hex: "#E8F5E9"))
@@ -256,10 +254,8 @@ struct AddMemoryView: View {
                         if let image = selectedImage {
                             Image(uiImage: image)
                                 .resizable()
-                                .aspectRatio(contentMode: .fill)
+                                .aspectRatio(contentMode: .fit)
                                 .frame(maxWidth: .infinity)
-                                .frame(height: 220)
-                                .clipped()
                                 .cornerRadius(16)
                         } else {
                             ZStack {
