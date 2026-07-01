@@ -12,7 +12,7 @@ export async function POST(request) {
     })
   }
 
-  const { situationTitle, golferNames } = await request.json()
+  const { situationTitle, golferNames, oneRuleForAll } = await request.json()
   if (!situationTitle || !Array.isArray(golferNames) || golferNames.length === 0) {
     return Response.json({ error: 'Missing situationTitle or golferNames' }, { status: 400 })
   }
@@ -20,7 +20,35 @@ export async function POST(request) {
   const names = golferNames.join(', ')
   const [g1, g2, g3, g4] = golferNames
 
-  const prompt = `Four weekend golfers: ${names}. Situation: ${situationTitle}.
+  let prompt
+
+  if (oneRuleForAll) {
+    prompt = `Four weekend golfers: ${names}. Situation: ${situationTitle}.
+
+The group needs ONE ruling they all play by. Write what the most vocal guy in the group says to everyone.
+
+RULES:
+- Address the whole group, not one person
+- Maximum 10 words
+- No rulebook language
+- Sound like a buddy making the call
+
+PERFECT examples:
+- "Alright everyone, kick it out, no penalty."
+- "We're all dropping in the fairway, move it."
+- "Everyone gets a foot, that's it, let's go."
+- "Pick it up, give yourself a five, keep moving."
+
+Then one real USGA rule — plain English, under 12 words.
+
+Return ONLY valid JSON:
+{
+  "situation": "${situationTitle}",
+  "group_rule": "the one ruling for everyone",
+  "real_rule": "the real rule"
+}`
+  } else {
+    prompt = `Four weekend golfers: ${names}. Situation: ${situationTitle}.
 
 Each golfer gets one ruling. Write exactly what their buddy says to them on the course.
 
@@ -63,6 +91,7 @@ Return ONLY valid JSON:
   ],
   "real_rule": "the real rule"
 }`
+  }
 
   const response = await anthropic.messages.create({
     model: 'claude-sonnet-4-6',
