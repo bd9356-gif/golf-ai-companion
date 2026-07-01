@@ -60,10 +60,6 @@ struct NineteenthHoleView: View {
             return (f.date(from: a) ?? Date.distantPast) > (f.date(from: b) ?? Date.distantPast)
         }.map { (month: $0, items: grouped[$0]!) }
     }
-        let memoryItems = memories.map { TimelineItem.memory($0) }
-        let cardItems = gameCards.map { TimelineItem.gameCard($0) }
-        return (memoryItems + cardItems).sorted { $0.date > $1.date }
-    }
 
     var body: some View {
         NavigationStack {
