@@ -20,35 +20,39 @@ export async function POST(request) {
   const names = golferNames.join(', ')
   const [g1, g2, g3, g4] = golferNames
 
-  const prompt = `You are writing what four weekend golfers actually say to each other on the course when ${situationTitle} happens. Not what the rules say — what the guys in the group actually say.
+  const prompt = `Four weekend golfers: ${names}. Situation: ${situationTitle}.
 
-Golfers: ${names}.
+Each golfer gets one ruling. Write exactly what their buddy says to them on the course.
 
-Write one line for each golfer. Each line is what THAT golfer says out loud to the group. Use their name at the start. Sound exactly like these real examples:
-- "Bill, you hit it in the water — it doesn't count. Just drop one up by the green."
-- "John, just throw another ball over there. Nobody cares where it crossed."
-- "Keith, it's a red stake, you can drop anywhere over here, just add one."
-- "Art, that's a lateral — drop within two club lengths and keep moving."
+RULES:
+- Start with the golfer's name
+- Maximum 8 words after the name
+- No explanation, no story, just the call
+- Each one different — some lenient, some strict, some funny, some clueless
+- Sound like a buddy, not a rulebook
 
-NEVER write:
-- Formal phrases like "drop at crossing point" or "relief options" or "provisional"
-- Anything that sounds like a rule book
-- More than one sentence per golfer
+PERFECT examples:
+- "John, kick it out."
+- "Bill, just drop it in the fairway."
+- "Keith, ask John."
+- "Art, pick it up — you got a five."
+- "Bill, move it a foot, nobody's watching."
+- "John, that's a drop, add one."
+- "Keith, do whatever you want."
+- "Art, throw it back out, you're fine."
 
-Each golfer should sound like a DIFFERENT person — one who waves it off, one who half-knows the rule, one who just makes something up, one who's seen it on TV once.
-
-Then write the real USGA rule in one plain casual sentence.
+Then one real USGA rule — plain English, under 12 words.
 
 Return ONLY valid JSON:
 {
   "situation": "${situationTitle}",
   "takes": [
-    { "golfer": "${g1}", "rule": "what ${g1} actually says" },
-    { "golfer": "${g2}", "rule": "what ${g2} actually says" },
-    { "golfer": "${g3}", "rule": "what ${g3} actually says" },
-    { "golfer": "${g4}", "rule": "what ${g4} actually says" }
+    { "golfer": "${g1}", "rule": "ruling" },
+    { "golfer": "${g2}", "rule": "ruling" },
+    { "golfer": "${g3}", "rule": "ruling" },
+    { "golfer": "${g4}", "rule": "ruling" }
   ],
-  "real_rule": "the actual rule in plain English"
+  "real_rule": "the real rule"
 }`
 
   const response = await anthropic.messages.create({
