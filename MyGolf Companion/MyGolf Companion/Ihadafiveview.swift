@@ -153,15 +153,10 @@ struct IHadAFiveView: View {
     private var headerBanner: some View {
         VStack(spacing: 0) {
             HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("I Had a Five™")
-                        .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(Color(hex: "#1B5E20"))
-                    Text("The App Settles the Debate")
-                        .font(.system(size: 13))
-                        .foregroundColor(Color(hex: "#5C5C5C"))
-                        .italic()
-                }
+                Image("had-five-hero")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxWidth: .infinity)
                 Spacer()
                 Button { showGroupSetup = true } label: {
                     Text("Edit Group")
@@ -170,8 +165,9 @@ struct IHadAFiveView: View {
                         .padding(.horizontal, 12).padding(.vertical, 6)
                         .background(Color(hex: "#E8F5E9")).cornerRadius(20)
                 }
+                .padding(.trailing, 16)
             }
-            .padding(.horizontal, 16).padding(.vertical, 14)
+            .padding(.vertical, 8)
             Divider()
         }
         .background(Color.white)
