@@ -301,7 +301,7 @@ struct AddMemoryView: View {
                                         Image(systemName: "sparkles")
                                             .font(.system(size: 12))
                                     }
-                                    Text("Help me write it")
+                                    Text("Expand it")
                                         .font(.system(size: 12, weight: .semibold))
                                 }
                                 .foregroundColor(Color(hex: "#1B5E20"))
@@ -309,7 +309,7 @@ struct AddMemoryView: View {
                             .disabled(isGeneratingCaption)
                         }
 
-                        TextField("What made this moment special...", text: $caption, axis: .vertical)
+                        TextField("A few words... AI will expand it", text: $caption, axis: .vertical)
                             .font(.system(size: 15))
                             .lineLimit(3...6)
                             .padding(12)
@@ -394,8 +394,9 @@ struct AddMemoryView: View {
     }
 
     func generateCaption() async {
+        guard !caption.trimmingCharacters(in: .whitespaces).isEmpty else { return }
         isGeneratingCaption = true
-        let prompt = "A golfer wants to write a short caption for a golf memory photo. Help them write one sentence that captures a special golf moment. Keep it warm, personal, under 15 words. Just return the caption, nothing else."
+        let prompt = "A golfer typed these quick notes about a golf memory: \"\(caption)\". Rewrite this into one warm, personal sentence that captures the moment. Keep it natural, under 20 words. Return only the sentence, nothing else."
 
         guard let url = URL(string: "https://golf-ai-companion.vercel.app/api/ask-the-pro") else { return }
         var request = URLRequest(url: url)
