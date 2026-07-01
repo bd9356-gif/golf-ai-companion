@@ -98,7 +98,7 @@ Return ONLY valid JSON:
   }
 
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: 'claude-opus-4-6',
     max_tokens: 1024,
     system: 'You are a JSON API. Return only raw valid JSON with no markdown, no code fences, no backticks, no preamble, no text after the JSON object.',
     messages: [{ role: 'user', content: prompt }],
