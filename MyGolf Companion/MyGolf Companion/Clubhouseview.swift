@@ -80,6 +80,10 @@ struct ClubhouseView: View {
                     )
                     .padding(.top, 24)
 
+                    // MARK: AI Clubhouse
+                    aiClubhouseGrid
+                        .padding(.top, 8)
+
                     Spacer(minLength: 32)
                 }
             }
