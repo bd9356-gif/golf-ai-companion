@@ -2,58 +2,70 @@ import SwiftUI
 import Supabase
 
 // MARK: - Models
-struct GolfGroup: Codable {
-    var id: UUID?
-    var userId: UUID?
-    var golfer1: String
-    var golfer2: String
-    var golfer3: String
-    var golfer4: String
-
-    enum CodingKeys: String, CodingKey {
-        case id, golfer1 = "golfer_1", golfer2 = "golfer_2",
-             golfer3 = "golfer_3", golfer4 = "golfer_4", userId = "user_id"
-    }
-
-    var names: [String] { [golfer1, golfer2, golfer3, golfer4].filter { !$0.isEmpty } }
-}
-
-struct Situation: Codable, Identifiable, Hashable {
+struct IHAFChallenge: Codable, Identifiable {
     var id: UUID
-    var category: String
-    var title: String
-}
-
-struct GameCard: Codable, Identifiable {
-    var id: UUID?
-    var userId: UUID?
-    var createdBy: String
-    var gameContent: String
-    var createdAt: Date?
-    var situationTitle: String?
-
+    var name: String
+    var description: String
+    var emoji: String
+    var sortOrder: Int?
     enum CodingKeys: String, CodingKey {
-        case id, userId = "user_id", createdBy = "created_by",
-             gameContent = "game_content", createdAt = "created_at",
-             situationTitle = "situation_title"
+        case id, name, description, emoji
+        case sortOrder = "sort_order"
     }
 }
 
-struct OptionsCardData {
-    var situation: String
-    var options: [String]
-    var realRule: String
+struct IHAFWeekly: Codable, Identifiable {
+    var id: UUID?
+    var userId: UUID?
+    var challengeId: UUID?
+    var challengeName: String
+    var challengeDesc: String
+    var challengeEmoji: String
+    var pickedBy: String
+    var weekStart: String
+    var createdAt: Date?
+    enum CodingKeys: String, CodingKey {
+        case id, userId = "user_id", challengeId = "challenge_id"
+        case challengeName = "challenge_name"
+        case challengeDesc = "challenge_desc"
+        case challengeEmoji = "challenge_emoji"
+        case pickedBy = "picked_by"
+        case weekStart = "week_start"
+        case createdAt = "created_at"
+    }
+}
 
-    static func parse(from json: String) -> OptionsCardData? {
-        guard let data = json.data(using: .utf8),
-              let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let options = obj["options"] as? [String],
-              let realRule = obj["real_rule"] as? String else { return nil }
-        return OptionsCardData(
-            situation: obj["situation"] as? String ?? "",
-            options: options,
-            realRule: realRule
-        )
+struct PlayerScore: Codable, Identifiable {
+    var id = UUID()
+    var name: String
+    var score: Int
+    enum CodingKeys: String, CodingKey { case name, score }
+}
+
+struct IHAFRound: Codable, Identifiable {
+    var id: UUID?
+    var userId: UUID?
+    var weeklyId: UUID?
+    var challengeName: String
+    var challengeEmoji: String
+    var courseName: String?
+    var playedOn: String
+    var scores: [PlayerScore]
+    var winnerName: String?
+    var winnerScore: Int?
+    var aiCallout: String?
+    var createdAt: Date?
+    enum CodingKeys: String, CodingKey {
+        case id, userId = "user_id", weeklyId = "weekly_id"
+        case challengeName = "challenge_name"
+        case challengeEmoji = "challenge_emoji"
+        case courseName = "course_name"
+        case playedOn = "played_on"
+        case scores
+        case winnerName = "winner_name"
+        case winnerScore = "winner_score"
+        case aiCallout = "ai_callout"
+        case createdAt = "created_at"
     }
 }
 
@@ -61,94 +73,62 @@ struct OptionsCardData {
 struct IHadAFiveView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
     @State private var group: GolfGroup? = nil
-    @State private var gameCards: [GameCard] = []
-    @State private var situations: [Situation] = []
+    @State private var currentWeekly: IHAFWeekly? = nil
+    @State private var recentRounds: [IHAFRound] = []
     @State private var isLoading = true
-    @State private var isGenerating = false
-    @State private var showGroupSetup = false
-    @State private var currentCard: GameCard? = nil
+    @State private var showChallengePicker = false
+    @State private var showEnterScores = false
     @State private var nextCreator: String = ""
-    @State private var errorMessage: String? = nil
-    @State private var selectedSituation: Situation? = nil
-    @State private var oneRuleForAll: Bool = false
-    @State private var groupPick: String? = nil
-    @State private var currentOptions: OptionsCardData? = nil
-    @State private var golferPicks: [String: String] = [:] // golfer name -> picked option
 
     private let supabase = SupabaseClient.shared.client
-
-    var allPicksMade: Bool {
-        if oneRuleForAll { return groupPick != nil }
-        guard let g = group else { return false }
-        return g.names.allSatisfy { golferPicks[$0] != nil }
-    }
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // Sticky header
                 headerBanner
 
                 ScrollView {
-                    VStack(spacing: 0) {
-                    if isLoading {
-                        ProgressView().padding(48)
-                    } else if group == nil {
-                        VStack(spacing: 12) {
-                            Text("Set up your foursome first!")
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(Color(hex: "#1B5E20"))
-                                .padding(.top, 24)
-                            GroupSetupView(onSave: { newGroup in
-                                Task { await saveGroup(newGroup) }
-                            })
-                        }
-                        .padding(16)
-                    } else if showGroupSetup {
-                        GroupSetupView(existing: group, onSave: { newGroup in
-                            Task { await saveGroup(newGroup) }
-                        })
-                        .padding(16)
-                    } else {
-                        VStack(spacing: 16) {
-                            whosUpCard
-                            situationPicker
+                    VStack(spacing: 20) {
+                        if isLoading {
+                            ProgressView().padding(48)
+                        } else {
+                            // This Week's Challenge
+                            thisWeeksChallenge
 
-                            if selectedSituation != nil && currentOptions == nil {
-                                modeToggle
-                                getOptionsButton
+                            // Action Buttons
+                            actionButtons
+
+                            // Recent Rounds
+                            if !recentRounds.isEmpty {
+                                recentRoundsSection
                             }
 
-                            if let error = errorMessage {
-                                Text(error)
-                                    .font(.system(size: 13))
-                                    .foregroundColor(.red)
-                                    .padding(.horizontal, 16)
-                            }
-
-                            if let options = currentOptions {
-                                optionsSection(options: options)
-
-                                if allPicksMade {
-                                    saveCardButton
-                                }
-                            }
-
-                            if let card = currentCard, currentOptions == nil {
-                                savedCardView(card: card)
-                                nextWeekSection
-                                pastRoundsHint
+                            // Season Summary
+                            if !recentRounds.isEmpty {
+                                seasonSummary
                             }
                         }
-                        .padding(.top, 16)
-                        .padding(.bottom, 32)
                     }
+                    .padding(.top, 16)
+                    .padding(.bottom, 32)
                 }
-                } // ScrollView
                 .background(Color(hex: "#F9F6F0"))
-            } // outer VStack
+            }
+            .background(Color(hex: "#F9F6F0"))
             .navigationBarHidden(true)
             .onAppear { Task { await loadData() } }
+            .sheet(isPresented: $showChallengePicker) {
+                ChallengePicker(group: group, currentCreator: nextCreator, onConfirm: { weekly in
+                    Task { await saveWeekly(weekly) }
+                    showChallengePicker = false
+                })
+            }
+            .sheet(isPresented: $showEnterScores) {
+                EnterScoresView(group: group, weekly: currentWeekly, onSave: { round in
+                    Task { await saveRound(round) }
+                    showEnterScores = false
+                })
+            }
         }
     }
 
@@ -159,571 +139,723 @@ struct IHadAFiveView: View {
                 .resizable()
                 .scaledToFit()
                 .frame(maxWidth: .infinity)
-
-            HStack {
-                Spacer()
-                Button { showGroupSetup = true } label: {
-                    Text("Edit Group")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(Color(hex: "#1B5E20"))
-                        .padding(.horizontal, 12).padding(.vertical, 6)
-                        .background(Color(hex: "#E8F5E9")).cornerRadius(20)
-                }
-                .padding(.horizontal, 16).padding(.vertical, 8)
-            }
             Divider()
         }
         .background(Color.white)
     }
 
-    // MARK: - Who's Up
-    private var whosUpCard: some View {
-        HStack(spacing: 12) {
-            Text("🎯").font(.system(size: 28))
-            VStack(alignment: .leading, spacing: 2) {
-                Text(nextCreator.isEmpty ? (group?.golfer1 ?? "") : nextCreator)
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(Color(hex: "#1A1A1A"))
-                Text("picks this week's situation")
-                    .font(.system(size: 13))
-                    .foregroundColor(Color(hex: "#5C5C5C"))
-            }
-            Spacer()
-        }
-        .padding(16)
-        .background(Color(hex: "#E8F5E9"))
-        .cornerRadius(14)
-        .padding(.horizontal, 16)
-    }
-
-    // MARK: - Situation Picker
-    private var situationPicker: some View {
+    // MARK: - This Week's Challenge
+    private var thisWeeksChallenge: some View {
         VStack(alignment: .leading, spacing: 10) {
-            // removed label — picker is self-explanatory
+            Text("THIS WEEK'S CHALLENGE")
+                .font(.system(size: 11, weight: .bold))
+                .tracking(1.4)
+                .foregroundColor(Color(hex: "#1B5E20"))
+                .padding(.horizontal, 16)
 
-            Menu {
-                ForEach(situations) { situation in
-                    Button(situation.title) {
-                        selectedSituation = situation
-                        currentOptions = nil
-                        golferPicks = [:]
-                        groupPick = nil
+            if let weekly = currentWeekly {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack(spacing: 12) {
+                        Text(weekly.challengeEmoji)
+                            .font(.system(size: 36))
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(weekly.challengeName)
+                                .font(.system(size: 20, weight: .bold))
+                                .foregroundColor(Color(hex: "#1A1A1A"))
+                            Text(weekly.challengeDesc)
+                                .font(.system(size: 14))
+                                .foregroundColor(Color(hex: "#5C5C5C"))
+                            Text("Lowest total wins.")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(Color(hex: "#1B5E20"))
+                        }
+                        Spacer()
                     }
+                    Text("Chosen by \(weekly.pickedBy) • \(formatDate(weekly.weekStart))")
+                        .font(.system(size: 12))
+                        .foregroundColor(Color(hex: "#AAAAAA"))
                 }
-            } label: {
-                HStack {
-                    Text(selectedSituation?.title ?? "Pick a situation...")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(selectedSituation == nil ? Color(hex: "#888888") : Color(hex: "#1A1A1A"))
+                .padding(16)
+                .background(Color(hex: "#E8F5E9"))
+                .cornerRadius(16)
+                .padding(.horizontal, 16)
+            } else {
+                HStack(spacing: 12) {
+                    Text("🏆").font(.system(size: 28))
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("No challenge set yet")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundColor(Color(hex: "#1A1A1A"))
+                        Text("Pick next week's challenge at the 19th hole")
+                            .font(.system(size: 13))
+                            .foregroundColor(Color(hex: "#5C5C5C"))
+                    }
                     Spacer()
-                    Image(systemName: "chevron.down")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(Color(hex: "#1B5E20"))
                 }
                 .padding(16)
                 .background(Color.white)
-                .cornerRadius(14)
-                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color(hex: "#D0E8D0"), lineWidth: 1.5))
-            }
-        }
-        .padding(.horizontal, 16)
-    }
-
-    // MARK: - Mode Toggle
-    private var modeToggle: some View {
-        HStack(spacing: 12) {
-            Text("Each Picks")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(!oneRuleForAll ? Color(hex: "#1B5E20") : Color(hex: "#888888"))
-            Toggle("", isOn: $oneRuleForAll)
-                .labelsHidden()
-                .tint(Color(hex: "#1B5E20"))
-                .onChange(of: oneRuleForAll) {
-                    golferPicks = [:]
-                    groupPick = nil
-                    currentOptions = nil
-                }
-            Text("One Rule for All")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(oneRuleForAll ? Color(hex: "#1B5E20") : Color(hex: "#888888"))
-        }
-        .padding(14)
-        .background(Color.white)
-        .cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color(hex: "#E0EAE0"), lineWidth: 1))
-        .padding(.horizontal, 16)
-    }
-
-    // MARK: - Get Options Button
-    private var getOptionsButton: some View {
-        Button { Task { await fetchOptions() } } label: {
-            HStack(spacing: 10) {
-                if isGenerating {
-                    ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .white)).scaleEffect(0.8)
-                } else {
-                    Text("⚖️").font(.system(size: 20))
-                }
-                Text(isGenerating ? "Getting options..." : "Get This Round's Options")
-                    .font(.system(size: 17, weight: .bold))
-                    .foregroundColor(.white)
-            }
-            .frame(maxWidth: .infinity).frame(height: 56)
-            .background(isGenerating ? Color(hex: "#4A7A4A") : Color(hex: "#1B5E20"))
-            .cornerRadius(16)
-        }
-        .disabled(isGenerating)
-        .padding(.horizontal, 16)
-    }
-
-    // MARK: - Options Section
-    private func optionsSection(options: OptionsCardData) -> some View {
-        VStack(spacing: 16) {
-            VStack(spacing: 4) {
-                Text("⛳ \(options.situation)")
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(Color(hex: "#1B5E20"))
-                Text(oneRuleForAll ? "Pick one rule for the whole group" : "Each golfer picks their rule for the round")
-                    .font(.system(size: 13))
-                    .foregroundColor(Color(hex: "#5C5C5C"))
-                    .italic()
-            }
-            .padding(.horizontal, 16)
-
-            if oneRuleForAll {
-                // Single pick for everyone
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(nextCreator.isEmpty ? (group?.golfer1 ?? "You") : nextCreator)
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundColor(Color(hex: "#1A1A1A"))
-                        .padding(.horizontal, 16)
-
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 8) {
-                            ForEach(options.options, id: \.self) { option in
-                                Button {
-                                    groupPick = option
-                                } label: {
-                                    Text(option)
-                                        .font(.system(size: 13, weight: .semibold))
-                                        .foregroundColor(groupPick == option ? .white : Color(hex: "#1B5E20"))
-                                        .padding(.horizontal, 14).padding(.vertical, 10)
-                                        .background(groupPick == option ? Color(hex: "#1B5E20") : Color(hex: "#E8F5E9"))
-                                        .cornerRadius(20)
-                                        .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color(hex: "#1B5E20"), lineWidth: groupPick == option ? 0 : 1))
-                                }
-                            }
-                        }
-                        .padding(.horizontal, 16)
-                    }
-
-                    if let pick = groupPick {
-                        Text("Everyone plays: \"\(pick)\"")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(Color(hex: "#1B5E20"))
-                            .padding(.horizontal, 16)
-                    }
-                }
-                .padding(.vertical, 8)
-                .background(Color.white)
-                .cornerRadius(14)
-                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color(hex: "#E0EAE0"), lineWidth: 1))
+                .cornerRadius(16)
+                .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color(hex: "#E0EAE0"), style: StrokeStyle(lineWidth: 1, dash: [5])))
                 .padding(.horizontal, 16)
-            } else {
-                // Individual picks
-                if let g = group {
-                    ForEach(g.names, id: \.self) { golfer in
-                        golferPickSection(golfer: golfer, options: options.options)
-                    }
-                }
             }
-
-            // Real rule
-            HStack(alignment: .top, spacing: 10) {
-                Text("⚖️").font(.system(size: 16))
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Official USGA Ruling")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(Color(hex: "#C8401A"))
-                    Text(options.realRule)
-                        .font(.system(size: 14))
-                        .foregroundColor(Color(hex: "#1A1A1A"))
-                }
-                Spacer()
-            }
-            .padding(14)
-            .background(Color(hex: "#FFF4EC"))
-            .cornerRadius(12)
-            .padding(.horizontal, 16)
         }
     }
 
-    private func golferPickSection(golfer: String, options: [String]) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text(golfer)
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundColor(Color(hex: "#1A1A1A"))
-                Spacer()
-                if let pick = golferPicks[golfer] {
-                    Text("✓ Picked")
-                        .font(.system(size: 11, weight: .semibold))
+    // MARK: - Action Buttons
+    private var actionButtons: some View {
+        HStack(spacing: 12) {
+            Button {
+                showChallengePicker = true
+            } label: {
+                VStack(spacing: 6) {
+                    Text("🎯").font(.system(size: 24))
+                    Text("Pick Challenge")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundColor(.white)
+                }
+                .frame(maxWidth: .infinity).padding(.vertical, 14)
+                .background(Color(hex: "#1B5E20")).cornerRadius(14)
+            }
+
+            Button {
+                showEnterScores = true
+            } label: {
+                VStack(spacing: 6) {
+                    Text("🏁").font(.system(size: 24))
+                    Text("Enter Scores")
+                        .font(.system(size: 13, weight: .bold))
                         .foregroundColor(Color(hex: "#1B5E20"))
                 }
+                .frame(maxWidth: .infinity).padding(.vertical, 14)
+                .background(Color(hex: "#E8F5E9")).cornerRadius(14)
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color(hex: "#1B5E20"), lineWidth: 1))
+            }
+        }
+        .padding(.horizontal, 16)
+    }
+
+    // MARK: - Recent Rounds
+    private var recentRoundsSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("RECENT ROUNDS")
+                    .font(.system(size: 11, weight: .bold))
+                    .tracking(1.4)
+                    .foregroundColor(Color(hex: "#1B5E20"))
+                Spacer()
             }
             .padding(.horizontal, 16)
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    ForEach(options, id: \.self) { option in
-                        Button {
-                            golferPicks[golfer] = option
-                        } label: {
-                            Text(option)
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundColor(golferPicks[golfer] == option ? .white : Color(hex: "#1B5E20"))
-                                .padding(.horizontal, 14).padding(.vertical, 10)
-                                .background(golferPicks[golfer] == option ? Color(hex: "#1B5E20") : Color(hex: "#E8F5E9"))
-                                .cornerRadius(20)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 20)
-                                        .stroke(Color(hex: "#1B5E20"), lineWidth: golferPicks[golfer] == option ? 0 : 1)
-                                )
-                        }
-                    }
+            VStack(spacing: 10) {
+                ForEach(recentRounds.prefix(5)) { round in
+                    RoundCard(round: round, group: group)
                 }
+            }
+            .padding(.horizontal, 16)
+        }
+    }
+
+    // MARK: - Season Summary
+    private var seasonSummary: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("SEASON SUMMARY")
+                .font(.system(size: 11, weight: .bold))
+                .tracking(1.4)
+                .foregroundColor(Color(hex: "#1B5E20"))
                 .padding(.horizontal, 16)
-            }
-        }
-        .padding(.vertical, 8)
-        .background(Color.white)
-        .cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color(hex: "#E0EAE0"), lineWidth: 1))
-        .padding(.horizontal, 16)
-    }
 
-    // MARK: - Save Card Button
-    private var saveCardButton: some View {
-        Button { Task { await saveCard() } } label: {
-            HStack(spacing: 8) {
-                Text("🏆")
-                Text("Lock In This Round's Rules")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(.white)
-            }
-            .frame(maxWidth: .infinity).frame(height: 54)
-            .background(Color(hex: "#1B5E20"))
-            .cornerRadius(14)
-        }
-        .padding(.horizontal, 16)
-    }
-
-    // MARK: - Saved Card View
-    private func savedCardView(card: GameCard) -> some View {
-        CollapsibleGameCard(card: card)
-            .padding(.horizontal, 16)
-    }
-
-    // MARK: - Next Week
-    private var nextWeekSection: some View {
-        VStack(spacing: 12) {
-            Text("19th Hole — Who's Up Next Week?")
-                .font(.system(size: 15, weight: .bold))
-                .foregroundColor(Color(hex: "#1A1A1A"))
-            if let g = group {
-                HStack(spacing: 10) {
-                    ForEach(g.names, id: \.self) { name in
-                        Button {
-                            nextCreator = name
-                            Task { await saveNextCreator(name) }
-                        } label: {
-                            Text(name)
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(nextCreator == name ? .white : Color(hex: "#1B5E20"))
-                                .padding(.horizontal, 14).padding(.vertical, 10)
-                                .background(nextCreator == name ? Color(hex: "#1B5E20") : Color(hex: "#E8F5E9"))
-                                .cornerRadius(20)
+            VStack(spacing: 12) {
+                HStack {
+                    VStack(spacing: 4) {
+                        Text("\(recentRounds.count)")
+                            .font(.system(size: 28, weight: .bold))
+                            .foregroundColor(Color(hex: "#1B5E20"))
+                        Text("Rounds")
+                            .font(.system(size: 12))
+                            .foregroundColor(Color(hex: "#5C5C5C"))
+                    }
+                    Spacer()
+                    if let avg = averageScore {
+                        VStack(spacing: 4) {
+                            Text(String(format: "%.1f", avg))
+                                .font(.system(size: 28, weight: .bold))
+                                .foregroundColor(Color(hex: "#1B5E20"))
+                            Text("Avg Per Round")
+                                .font(.system(size: 12))
+                                .foregroundColor(Color(hex: "#5C5C5C"))
+                        }
+                    }
+                    Spacer()
+                    if let topWinner = topWinner {
+                        VStack(spacing: 4) {
+                            playerCircle(topWinner, color: Color(hex: "#1B5E20"), size: 36)
+                            Text("Most Wins")
+                                .font(.system(size: 12))
+                                .foregroundColor(Color(hex: "#5C5C5C"))
                         }
                     }
                 }
             }
+            .padding(16)
+            .background(Color.white)
+            .cornerRadius(16)
+            .padding(.horizontal, 16)
         }
-        .padding(16).background(Color.white).cornerRadius(16)
-        .shadow(color: Color.black.opacity(0.04), radius: 4, x: 0, y: 2)
-        .padding(.horizontal, 16)
     }
 
-    // MARK: - History
-    private var pastRoundsHint: some View {
-        HStack(spacing: 10) {
-            Text("🍺").font(.system(size: 20))
-            Text("Past rounds live in the 19th Hole")
-                .font(.system(size: 13))
-                .foregroundColor(Color(hex: "#5C5C5C"))
-                .italic()
-            Spacer()
-        }
-        .padding(14)
-        .background(Color.white)
-        .cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color(hex: "#E0EAE0"), lineWidth: 1))
-        .padding(.horizontal, 16)
+    // MARK: - Helpers
+    var averageScore: Double? {
+        let allScores = recentRounds.flatMap { $0.scores }.map { $0.score }
+        guard !allScores.isEmpty else { return nil }
+        return Double(allScores.reduce(0, +)) / Double(allScores.count)
     }
 
+    var topWinner: String? {
+        let winners = recentRounds.compactMap { $0.winnerName }
+        guard !winners.isEmpty else { return nil }
+        return Dictionary(grouping: winners, by: { $0 })
+            .max(by: { $0.value.count < $1.value.count })?.key
+    }
 
-    func deleteCard(_ card: GameCard) async {
-        guard let id = card.id else { return }
-        try? await supabase.from("game_cards").delete().eq("id", value: id).execute()
-        gameCards.removeAll { $0.id == id }
-        if currentCard?.id == id { currentCard = gameCards.first }
+    func playerCircle(_ name: String, color: Color, size: CGFloat) -> some View {
+        ZStack {
+            Circle().fill(color)
+                .frame(width: size, height: size)
+            Text(String(name.prefix(1)))
+                .font(.system(size: size * 0.45, weight: .bold))
+                .foregroundColor(.white)
+        }
+    }
+
+    func formatDate(_ dateStr: String) -> String {
+        let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"
+        if let date = f.date(from: dateStr) {
+            let d = DateFormatter(); d.dateStyle = .medium
+            return d.string(from: date)
+        }
+        return dateStr
     }
 
     // MARK: - Data
-    func fetchOptions() async {
-        guard let situation = selectedSituation else { return }
-        isGenerating = true
-        errorMessage = nil
-
-        guard let url = URL(string: "https://golf-ai-companion.vercel.app/api/generate-game-card") else { return }
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        let body: [String: Any] = ["situationTitle": situation.title]
-        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-
-        do {
-            let (data, _) = try await URLSession.shared.data(for: request)
-            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-               var text = json["result"] as? String {
-                text = text.trimmingCharacters(in: .whitespacesAndNewlines)
-                if text.hasPrefix("```") {
-                    text = text.components(separatedBy: "\n").dropFirst().joined(separator: "\n")
-                    if text.hasSuffix("```") { text = String(text.dropLast(3)) }
-                }
-                currentOptions = OptionsCardData.parse(from: text.trimmingCharacters(in: .whitespacesAndNewlines))
-                if currentOptions == nil { errorMessage = "Couldn't parse options. Please try again." }
-            } else {
-                errorMessage = "Failed to get options. Please try again."
-            }
-        } catch {
-            errorMessage = "Network error. Please try again."
-        }
-        isGenerating = false
-    }
-
-    func saveCard() async {
-        guard let g = group, let options = currentOptions,
-              let userId = authViewModel.currentUser?.id else { return }
-        let creator = nextCreator.isEmpty ? g.golfer1 : nextCreator
-
-        var content = "⛳ \(options.situation)\n\n"
-        if oneRuleForAll, let pick = groupPick {
-            content += "Everyone: \(pick)\n"
-        } else {
-            for name in g.names {
-                if let pick = golferPicks[name] {
-                    content += "\(name): \(pick)\n"
-                }
-            }
-        }
-        content += "\n⚖️ Real rule: \(options.realRule)"
-
-        var card = GameCard(createdBy: creator, gameContent: content, situationTitle: options.situation)
-        card.userId = userId
-        let saved: GameCard? = try? await supabase.from("game_cards").insert(card).select().single().execute().value
-        currentCard = saved ?? card
-        gameCards.insert(currentCard!, at: 0)
-        currentOptions = nil
-        golferPicks = [:]
-        groupPick = nil
-    }
-
     func loadData() async {
         guard let userId = authViewModel.currentUser?.id else { return }
         isLoading = true
+
         let groups: [GolfGroup] = (try? await supabase.from("golf_group").select().eq("user_id", value: userId).limit(1).execute().value) ?? []
         group = groups.first
-        nextCreator = UserDefaults.standard.string(forKey: "next_creator_\(userId)") ?? ""
-        let sits: [Situation] = (try? await supabase.from("situations").select().eq("active", value: true).order("sort_order").execute().value) ?? []
-        situations = sits
-        let cards: [GameCard] = (try? await supabase.from("game_cards").select().eq("user_id", value: userId).order("created_at", ascending: false).execute().value) ?? []
-        gameCards = cards
-        currentCard = cards.first
+        nextCreator = UserDefaults.standard.string(forKey: "ihaf_next_creator_\(userId)") ?? (group?.golfer1 ?? "")
+
+        let weeklies: [IHAFWeekly] = (try? await supabase
+            .from("ihaf_weekly")
+            .select()
+            .eq("user_id", value: userId)
+            .order("created_at", ascending: false)
+            .limit(1)
+            .execute()
+            .value) ?? []
+        currentWeekly = weeklies.first
+
+        let rounds: [IHAFRound] = (try? await supabase
+            .from("ihaf_rounds")
+            .select()
+            .eq("user_id", value: userId)
+            .order("played_on", ascending: false)
+            .limit(20)
+            .execute()
+            .value) ?? []
+        recentRounds = rounds
+
         isLoading = false
     }
 
-    func saveGroup(_ newGroup: GolfGroup) async {
+    func saveWeekly(_ weekly: IHAFWeekly) async {
         guard let userId = authViewModel.currentUser?.id else { return }
-        var g = newGroup; g.userId = userId
-        try? await supabase.from("golf_group").upsert(g, onConflict: "user_id").execute()
-        group = g
-        showGroupSetup = false
+        var w = weekly; w.userId = userId
+        try? await supabase.from("ihaf_weekly").insert(w).execute()
+
+        // Rotate next creator
+        if let g = group {
+            let names = g.names
+            let current = names.firstIndex(of: weekly.pickedBy) ?? 0
+            let next = names[(current + 1) % names.count]
+            UserDefaults.standard.set(next, forKey: "ihaf_next_creator_\(userId)")
+            nextCreator = next
+        }
+        await loadData()
     }
 
-    func saveNextCreator(_ name: String) async {
+    func saveRound(_ round: IHAFRound) async {
         guard let userId = authViewModel.currentUser?.id else { return }
-        UserDefaults.standard.set(name, forKey: "next_creator_\(userId)")
+        var r = round; r.userId = userId; r.weeklyId = currentWeekly?.id
+        try? await supabase.from("ihaf_rounds").insert(r).execute()
+        await loadData()
     }
 }
 
-// MARK: - Group Setup
-// MARK: - Collapsible Game Card
-struct CollapsibleGameCard: View {
-    let card: GameCard
+// MARK: - Round Card
+struct RoundCard: View {
+    let round: IHAFRound
+    let group: GolfGroup?
     @State private var isExpanded = false
+
+    var formattedDate: String {
+        let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"
+        if let date = f.date(from: round.playedOn) {
+            let d = DateFormatter(); d.dateStyle = .medium
+            return d.string(from: date)
+        }
+        return round.playedOn
+    }
+
+    var sortedScores: [PlayerScore] {
+        round.scores.sorted { $0.score < $1.score }
+    }
 
     var body: some View {
         VStack(spacing: 0) {
             Button {
                 withAnimation(.easeInOut(duration: 0.2)) { isExpanded.toggle() }
             } label: {
-                HStack {
+                HStack(spacing: 12) {
+                    Text(round.challengeEmoji).font(.system(size: 20))
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("🏆 \(card.situationTitle ?? "This Round")")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(Color(hex: "#1B5E20"))
-                        Text("Created by \(card.createdBy)")
-                            .font(.system(size: 12)).foregroundColor(Color(hex: "#5C5C5C")).italic()
-                    }
-                    Spacer()
-                    HStack(spacing: 10) {
-                        Button {
-                            let shareText = card.gameContent
-                            let av = UIActivityViewController(activityItems: [shareText], applicationActivities: nil)
-                            if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                               let vc = scene.windows.first?.rootViewController {
-                                vc.present(av, animated: true)
-                            }
-                        } label: {
-                            Image(systemName: "square.and.arrow.up")
-                                .font(.system(size: 16))
-                                .foregroundColor(Color(hex: "#1B5E20"))
-                        }
-                        Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(Color(hex: "#1B5E20"))
-                    }
-                }
-                .padding(16).background(Color(hex: "#E8F5E9"))
-            }
-            .buttonStyle(PlainButtonStyle())
-
-            if isExpanded {
-                Text(card.gameContent)
-                    .font(.system(size: 14)).foregroundColor(Color(hex: "#1A1A1A"))
-                    .padding(16).frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.white)
-            }
-        }
-        .cornerRadius(16)
-        .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
-    }
-}
-
-struct GroupSetupView: View {
-    var existing: GolfGroup? = nil
-    let onSave: (GolfGroup) -> Void
-    @State private var golfer1 = ""
-    @State private var golfer2 = ""
-    @State private var golfer3 = ""
-    @State private var golfer4 = ""
-
-    var body: some View {
-        VStack(spacing: 20) {
-            VStack(spacing: 4) {
-                Text("Your Foursome")
-                    .font(.system(size: 22, weight: .bold)).foregroundColor(Color(hex: "#1A1A1A"))
-                Text("Enter your golf group names")
-                    .font(.system(size: 14)).foregroundColor(Color(hex: "#5C5C5C"))
-            }
-            .padding(.top, 24)
-
-            VStack(spacing: 12) {
-                ForEach(Array(zip(["Golfer 1", "Golfer 2", "Golfer 3", "Golfer 4"],
-                                  [$golfer1, $golfer2, $golfer3, $golfer4])), id: \.0) { label, binding in
-                    HStack(spacing: 12) {
-                        Text("🏌️").font(.system(size: 20))
-                        TextField(label, text: binding)
-                            .font(.system(size: 16)).padding(14)
-                            .background(Color.white).cornerRadius(12)
-                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(hex: "#D0E8D0"), lineWidth: 1))
-                    }
-                }
-            }
-
-            Button {
-                onSave(GolfGroup(golfer1: golfer1, golfer2: golfer2, golfer3: golfer3, golfer4: golfer4))
-            } label: {
-                Text("Save My Group")
-                    .font(.system(size: 17, weight: .bold)).foregroundColor(.white)
-                    .frame(maxWidth: .infinity).frame(height: 54)
-                    .background(golfer1.isEmpty ? Color.gray : Color(hex: "#1B5E20")).cornerRadius(14)
-            }
-            .disabled(golfer1.isEmpty).padding(.top, 8)
-        }
-        .padding(20).background(Color.white).cornerRadius(20)
-        .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
-        .onAppear {
-            if let g = existing {
-                golfer1 = g.golfer1; golfer2 = g.golfer2
-                golfer3 = g.golfer3; golfer4 = g.golfer4
-            }
-        }
-    }
-}
-
-// MARK: - Month Section
-struct MonthSection: View {
-    let month: String
-    let cards: [GameCard]
-    let group: GolfGroup
-    let onDelete: (GameCard) -> Void
-    @State private var isExpanded = false
-
-    var body: some View {
-        VStack(spacing: 0) {
-            Button {
-                withAnimation(.easeInOut(duration: 0.2)) { isExpanded.toggle() }
-            } label: {
-                HStack {
-                    Text(month).font(.system(size: 15, weight: .semibold)).foregroundColor(Color(hex: "#1A1A1A"))
-                    Spacer()
-                    Text("\(cards.count) round\(cards.count == 1 ? "" : "s")").font(.system(size: 12)).foregroundColor(Color(hex: "#5C5C5C"))
-                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down").font(.system(size: 12, weight: .semibold)).foregroundColor(Color(hex: "#1B5E20"))
-                }
-                .padding(14).background(Color.white).cornerRadius(12)
-            }
-            .buttonStyle(PlainButtonStyle())
-
-            if isExpanded {
-                VStack(spacing: 10) {
-                    ForEach(cards) { card in
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack {
-                                Text("⛳ \(card.situationTitle ?? "Round")")
-                                    .font(.system(size: 14, weight: .bold))
+                        Text(round.courseName ?? round.challengeName)
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(Color(hex: "#1A1A1A"))
+                        HStack(spacing: 6) {
+                            if let winner = round.winnerName {
+                                Text("🏆 \(winner)")
+                                    .font(.system(size: 12))
                                     .foregroundColor(Color(hex: "#1B5E20"))
+                            }
+                            Text("• \(formattedDate)")
+                                .font(.system(size: 12))
+                                .foregroundColor(Color(hex: "#AAAAAA"))
+                        }
+                    }
+                    Spacer()
+                    // Player circles
+                    HStack(spacing: -6) {
+                        ForEach(round.scores.prefix(4)) { score in
+                            ZStack {
+                                Circle().fill(Color(hex: "#1B5E20"))
+                                    .frame(width: 26, height: 26)
+                                Text(String(score.name.prefix(1)))
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundColor(.white)
+                            }
+                        }
+                    }
+                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(Color(hex: "#1B5E20"))
+                }
+                .padding(14)
+            }
+            .buttonStyle(PlainButtonStyle())
+
+            if isExpanded {
+                VStack(spacing: 8) {
+                    ForEach(Array(sortedScores.enumerated()), id: \.element.id) { index, score in
+                        HStack {
+                            if index == 0 {
+                                Text("🏆").font(.system(size: 14))
+                            } else {
+                                Text("\(index + 1)").font(.system(size: 14))
+                                    .foregroundColor(Color(hex: "#888888"))
+                                    .frame(width: 20)
+                            }
+                            Text(score.name)
+                                .font(.system(size: 14, weight: index == 0 ? .bold : .regular))
+                                .foregroundColor(index == 0 ? Color(hex: "#1B5E20") : Color(hex: "#1A1A1A"))
+                            Spacer()
+                            Text("\(score.score)")
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundColor(index == 0 ? Color(hex: "#1B5E20") : Color(hex: "#1A1A1A"))
+                        }
+                    }
+                    if let callout = round.aiCallout {
+                        Text(callout)
+                            .font(.system(size: 13))
+                            .foregroundColor(Color(hex: "#5C5C5C"))
+                            .italic()
+                            .multilineTextAlignment(.center)
+                            .padding(.top, 4)
+                    }
+                }
+                .padding(14)
+                .background(Color(hex: "#F9F6F0"))
+            }
+        }
+        .background(Color.white)
+        .cornerRadius(14)
+        .shadow(color: Color.black.opacity(0.04), radius: 4, x: 0, y: 2)
+    }
+}
+
+// MARK: - Challenge Picker
+struct ChallengePicker: View {
+    let group: GolfGroup?
+    let currentCreator: String
+    let onConfirm: (IHAFWeekly) -> Void
+    @Environment(\.dismiss) var dismiss
+    @State private var challenges: [IHAFChallenge] = []
+    @State private var selected: IHAFChallenge? = nil
+    @State private var isLoadingSurprise = false
+    @State private var surpriseChallenge: IHAFChallenge? = nil
+
+    private let supabase = SupabaseClient.shared.client
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 0) {
+                VStack(spacing: 4) {
+                    Text("Choose Next Week's")
+                        .font(.system(size: 18))
+                        .foregroundColor(Color(hex: "#5C5C5C"))
+                    Text("I Had a Five™ Challenge")
+                        .font(.system(size: 22, weight: .bold))
+                        .foregroundColor(Color(hex: "#1B5E20"))
+                    Text("\(currentCreator)'s turn to pick")
+                        .font(.system(size: 14))
+                        .foregroundColor(Color(hex: "#888888"))
+                        .italic()
+                }
+                .padding(.vertical, 20)
+
+                ScrollView {
+                    VStack(spacing: 10) {
+                        ForEach(challenges) { challenge in
+                            if challenge.name == "Surprise Me" {
+                                surpriseMeButton(challenge)
+                            } else {
+                                challengeRow(challenge)
+                            }
+                        }
+                    }
+                    .padding(16)
+                }
+
+                // Confirm button
+                Button {
+                    let pick = surpriseChallenge ?? selected
+                    guard let c = pick else { return }
+                    let formatter = DateFormatter(); formatter.dateFormat = "yyyy-MM-dd"
+                    let weekly = IHAFWeekly(
+                        challengeName: c.name,
+                        challengeDesc: c.description,
+                        challengeEmoji: c.emoji,
+                        pickedBy: currentCreator,
+                        weekStart: formatter.string(from: Date())
+                    )
+                    onConfirm(weekly)
+                } label: {
+                    Text("Confirm Challenge")
+                        .font(.system(size: 17, weight: .bold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity).padding(.vertical, 16)
+                        .background((selected != nil || surpriseChallenge != nil) ? Color(hex: "#1B5E20") : Color.gray)
+                        .cornerRadius(14)
+                }
+                .disabled(selected == nil && surpriseChallenge == nil)
+                .padding(16)
+            }
+            .background(Color(hex: "#F9F6F0"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+            }
+            .onAppear { Task { await loadChallenges() } }
+        }
+    }
+
+    func challengeRow(_ challenge: IHAFChallenge) -> some View {
+        Button {
+            selected = challenge
+            surpriseChallenge = nil
+        } label: {
+            HStack(spacing: 14) {
+                Text(challenge.emoji).font(.system(size: 28))
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(challenge.name)
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundColor(Color(hex: "#1A1A1A"))
+                    Text(challenge.description)
+                        .font(.system(size: 13))
+                        .foregroundColor(Color(hex: "#5C5C5C"))
+                }
+                Spacer()
+                Circle()
+                    .stroke(selected?.id == challenge.id ? Color(hex: "#1B5E20") : Color(hex: "#CCCCCC"), lineWidth: 2)
+                    .background(Circle().fill(selected?.id == challenge.id ? Color(hex: "#1B5E20") : Color.clear))
+                    .frame(width: 22, height: 22)
+                    .overlay(
+                        selected?.id == challenge.id ?
+                        Image(systemName: "checkmark").font(.system(size: 10, weight: .bold)).foregroundColor(.white) : nil
+                    )
+            }
+            .padding(14)
+            .background(Color.white)
+            .cornerRadius(14)
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(selected?.id == challenge.id ? Color(hex: "#1B5E20") : Color.clear, lineWidth: 2))
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+
+    func surpriseMeButton(_ challenge: IHAFChallenge) -> some View {
+        Button {
+            Task { await loadSurprise() }
+        } label: {
+            HStack(spacing: 14) {
+                Text(surpriseChallenge != nil ? surpriseChallenge!.emoji : challenge.emoji)
+                    .font(.system(size: 28))
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(surpriseChallenge != nil ? surpriseChallenge!.name : challenge.name)
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundColor(Color(hex: "#1B5E20"))
+                    Text(surpriseChallenge != nil ? surpriseChallenge!.description : challenge.description)
+                        .font(.system(size: 13))
+                        .foregroundColor(Color(hex: "#5C5C5C"))
+                }
+                Spacer()
+                if isLoadingSurprise {
+                    ProgressView().scaleEffect(0.8)
+                } else {
+                    Circle()
+                        .stroke(surpriseChallenge != nil ? Color(hex: "#1B5E20") : Color(hex: "#CCCCCC"), lineWidth: 2)
+                        .background(Circle().fill(surpriseChallenge != nil ? Color(hex: "#1B5E20") : Color.clear))
+                        .frame(width: 22, height: 22)
+                        .overlay(
+                            surpriseChallenge != nil ?
+                            Image(systemName: "checkmark").font(.system(size: 10, weight: .bold)).foregroundColor(.white) : nil
+                        )
+                }
+            }
+            .padding(14)
+            .background(Color(hex: "#E8F5E9"))
+            .cornerRadius(14)
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(surpriseChallenge != nil ? Color(hex: "#1B5E20") : Color.clear, lineWidth: 2))
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+
+    func loadChallenges() async {
+        let result: [IHAFChallenge] = (try? await supabase
+            .from("ihaf_challenges")
+            .select()
+            .order("sort_order")
+            .execute()
+            .value) ?? []
+        challenges = result
+    }
+
+    func loadSurprise() async {
+        isLoadingSurprise = true
+        selected = nil
+        guard let url = URL(string: "https://golf-ai-companion.vercel.app/api/ihaf-generate") else { return }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: ["mode": "surprise"])
+
+        if let (data, _) = try? await URLSession.shared.data(for: request),
+           let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let c = json["challenge"] as? [String: Any],
+           let name = c["name"] as? String,
+           let desc = c["description"] as? String,
+           let emoji = c["emoji"] as? String {
+            surpriseChallenge = IHAFChallenge(id: UUID(), name: name, description: desc, emoji: emoji)
+        }
+        isLoadingSurprise = false
+    }
+}
+
+// MARK: - Enter Scores View
+struct EnterScoresView: View {
+    let group: GolfGroup?
+    let weekly: IHAFWeekly?
+    let onSave: (IHAFRound) -> Void
+    @Environment(\.dismiss) var dismiss
+    @EnvironmentObject var authViewModel: AuthViewModel
+
+    @State private var scores: [PlayerScore] = []
+    @State private var courseName = ""
+    @State private var playedOn = Date()
+    @State private var isSaving = false
+    @State private var winnerCard: (winner: String, score: Int, callout: String)? = nil
+
+    var sortedScores: [PlayerScore] { scores.sorted { $0.score < $1.score } }
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Challenge reminder
+                    if let weekly = weekly {
+                        HStack(spacing: 10) {
+                            Text(weekly.challengeEmoji).font(.system(size: 28))
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(weekly.challengeName)
+                                    .font(.system(size: 17, weight: .bold))
+                                    .foregroundColor(Color(hex: "#1B5E20"))
+                                Text(weekly.challengeDesc)
+                                    .font(.system(size: 13))
+                                    .foregroundColor(Color(hex: "#5C5C5C"))
+                            }
+                            Spacer()
+                        }
+                        .padding(14)
+                        .background(Color(hex: "#E8F5E9"))
+                        .cornerRadius(14)
+                    }
+
+                    // Winner announcement
+                    if let wc = winnerCard {
+                        VStack(spacing: 8) {
+                            Text("🏆").font(.system(size: 48))
+                            Text("I Had a Five™ Champion")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(Color(hex: "#888888"))
+                            Text(wc.winner)
+                                .font(.system(size: 28, weight: .bold))
+                                .foregroundColor(Color(hex: "#1B5E20"))
+                            Text("\(wc.score) \(weekly?.challengeName ?? "")")
+                                .font(.system(size: 16))
+                                .foregroundColor(Color(hex: "#5C5C5C"))
+                            Text(wc.callout)
+                                .font(.system(size: 14))
+                                .foregroundColor(Color(hex: "#5C5C5C"))
+                                .italic()
+                                .multilineTextAlignment(.center)
+                                .padding(.top, 4)
+                        }
+                        .padding(20)
+                        .background(Color(hex: "#E8F5E9"))
+                        .cornerRadius(20)
+                    }
+
+                    // Score entry
+                    VStack(spacing: 10) {
+                        ForEach($scores) { $score in
+                            HStack(spacing: 16) {
+                                ZStack {
+                                    Circle().fill(Color(hex: "#1B5E20")).frame(width: 36, height: 36)
+                                    Text(String(score.name.prefix(1)))
+                                        .font(.system(size: 15, weight: .bold))
+                                        .foregroundColor(.white)
+                                }
+                                Text(score.name)
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(Color(hex: "#1A1A1A"))
                                 Spacer()
-                                Button {
-                                    onDelete(card)
-                                } label: {
-                                    Image(systemName: "trash")
-                                        .font(.system(size: 13))
-                                        .foregroundColor(Color(hex: "#CCCCCC"))
+                                HStack(spacing: 16) {
+                                    Button {
+                                        if score.score > 0 { score.score -= 1 }
+                                    } label: {
+                                        Image(systemName: "minus.circle.fill")
+                                            .font(.system(size: 28))
+                                            .foregroundColor(Color(hex: "#1B5E20"))
+                                    }
+                                    Text("\(score.score)")
+                                        .font(.system(size: 24, weight: .bold))
+                                        .foregroundColor(Color(hex: "#1A1A1A"))
+                                        .frame(width: 36, alignment: .center)
+                                    Button {
+                                        score.score += 1
+                                    } label: {
+                                        Image(systemName: "plus.circle.fill")
+                                            .font(.system(size: 28))
+                                            .foregroundColor(Color(hex: "#1B5E20"))
+                                    }
                                 }
                             }
-                            Text(card.gameContent)
-                                .font(.system(size: 13))
-                                .foregroundColor(Color(hex: "#2C2C2C"))
+                            .padding(14)
+                            .background(Color.white)
+                            .cornerRadius(14)
                         }
-                        .padding(14).background(Color.white).cornerRadius(12)
-                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(hex: "#E0EAE0"), lineWidth: 1))
                     }
+
+                    // Course + date
+                    VStack(spacing: 10) {
+                        TextField("Course name (optional)", text: $courseName)
+                            .font(.system(size: 15)).padding(12)
+                            .background(Color.white).cornerRadius(12)
+                        DatePicker("Played on", selection: $playedOn, displayedComponents: .date)
+                            .padding(12).background(Color.white).cornerRadius(12)
+                    }
+
+                    // Save button
+                    Button {
+                        Task { await saveRound() }
+                    } label: {
+                        Text(isSaving ? "Saving..." : "Save Round")
+                            .font(.system(size: 17, weight: .bold))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity).padding(.vertical, 16)
+                            .background(Color(hex: "#1B5E20")).cornerRadius(14)
+                    }
+                    .disabled(isSaving)
                 }
-                .padding(.top, 8)
+                .padding(16)
             }
+            .background(Color(hex: "#F9F6F0"))
+            .navigationTitle("Enter Scores")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+            }
+            .onAppear { setupScores() }
         }
     }
+
+    func setupScores() {
+        guard let g = group else { return }
+        scores = g.names.map { PlayerScore(name: $0, score: 0) }
+    }
+
+    func saveRound() async {
+        isSaving = true
+        let winner = sortedScores.first
+        var callout = ""
+
+        // Get AI callout
+        if let w = winner, let weekly = weekly {
+            if let url = URL(string: "https://golf-ai-companion.vercel.app/api/ihaf-generate") {
+                var request = URLRequest(url: url)
+                request.httpMethod = "POST"
+                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                let body: [String: Any] = [
+                    "mode": "callout",
+                    "challenge": weekly.challengeName,
+                    "winner": w.name,
+                    "winnerScore": w.score,
+                    "golfers": scores.map { ["name": $0.name, "score": $0.score] }
+                ]
+                request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+                if let (data, _) = try? await URLSession.shared.data(for: request),
+                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                   let c = json["callout"] as? String {
+                    callout = c
+                }
+            }
+            winnerCard = (winner: w.name, score: w.score, callout: callout)
+        }
+
+        let formatter = DateFormatter(); formatter.dateFormat = "yyyy-MM-dd"
+        let round = IHAFRound(
+            challengeName: weekly?.challengeName ?? "Challenge",
+            challengeEmoji: weekly?.challengeEmoji ?? "🏆",
+            courseName: courseName.isEmpty ? nil : courseName,
+            playedOn: formatter.string(from: playedOn),
+            scores: scores,
+            winnerName: winner?.name,
+            winnerScore: winner?.score,
+            aiCallout: callout.isEmpty ? nil : callout
+        )
+
+        // Show winner for a moment then save
+        try? await Task.sleep(nanoseconds: 2_000_000_000)
+        onSave(round)
+        isSaving = false
+    }
 }
-
-// MARK: - Share Sheet
-
