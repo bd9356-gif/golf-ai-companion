@@ -172,9 +172,10 @@ struct NineteenthHoleView: View {
                 ThisWeeksGameCard(card: card)
                     .padding(.horizontal, 16)
             } else if !ihafRounds.isEmpty {
-                // Show most recent IHAF round as this week's game
-                RoundCard(round: ihafRounds[0], group: nil)
-                    .padding(.horizontal, 16)
+                RoundCard(round: ihafRounds[0], group: nil, onDelete: {
+                    Task { await deleteIHAFRound(ihafRounds[0]) }
+                })
+                .padding(.horizontal, 16)
             } else {
                 emptyCard(
                     icon: "🏆",
@@ -191,9 +192,11 @@ struct NineteenthHoleView: View {
                         .foregroundColor(Color(hex: "#1B5E20"))
                         .padding(.horizontal, 16)
 
-                    ForEach(ihafRounds.dropFirst().prefix(5)) { round in
-                        RoundCard(round: round, group: nil)
-                            .padding(.horizontal, 16)
+                    ForEach(Array(ihafRounds.dropFirst().prefix(5))) { round in
+                        RoundCard(round: round, group: nil, onDelete: {
+                            Task { await deleteIHAFRound(round) }
+                        })
+                        .padding(.horizontal, 16)
                     }
                 }
             }
@@ -315,6 +318,12 @@ struct NineteenthHoleView: View {
         journalEntries = entries
 
         isLoading = false
+    }
+
+    func deleteIHAFRound(_ round: IHAFRound) async {
+        guard let id = round.id else { return }
+        try? await supabase.from("ihaf_rounds").delete().eq("id", value: id).execute()
+        ihafRounds.removeAll { $0.id == id }
     }
 
     func saveMemory(_ memory: GolfMemory) async {

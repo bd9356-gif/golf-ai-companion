@@ -444,7 +444,9 @@ struct IHadAFiveView: View {
 struct RoundCard: View {
     let round: IHAFRound
     let group: GolfGroup?
+    var onDelete: (() -> Void)? = nil
     @State private var isExpanded = false
+    @State private var showDeleteConfirm = false
 
     var formattedDate: String {
         let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"
@@ -538,6 +540,19 @@ struct RoundCard: View {
         .background(Color.white)
         .cornerRadius(14)
         .shadow(color: Color.black.opacity(0.04), radius: 4, x: 0, y: 2)
+        .contextMenu {
+            if onDelete != nil {
+                Button(role: .destructive) {
+                    showDeleteConfirm = true
+                } label: {
+                    Label("Delete Round", systemImage: "trash")
+                }
+            }
+        }
+        .alert("Delete this round?", isPresented: $showDeleteConfirm) {
+            Button("Delete", role: .destructive) { onDelete?() }
+            Button("Cancel", role: .cancel) {}
+        }
     }
 }
 
