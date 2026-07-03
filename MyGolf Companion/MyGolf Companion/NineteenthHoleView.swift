@@ -42,6 +42,7 @@ struct NineteenthHoleView: View {
     @State private var memories: [GolfMemory] = []
     @State private var journalEntries: [GolfJournalEntry] = []
     @State private var currentGameCard: GameCard? = nil
+    @State private var ihafRounds: [IHAFRound] = []
     @State private var isLoading = true
     @State private var showAddMemory = false
     @State private var showAddJournal = false
@@ -170,11 +171,31 @@ struct NineteenthHoleView: View {
             if let card = currentGameCard {
                 ThisWeeksGameCard(card: card)
                     .padding(.horizontal, 16)
+            } else if !ihafRounds.isEmpty {
+                // Show most recent IHAF round as this week's game
+                RoundCard(round: ihafRounds[0], group: nil)
+                    .padding(.horizontal, 16)
             } else {
                 emptyCard(
                     icon: "🏆",
-                    message: "No game card yet — head to I Had a Five™ to settle it."
+                    message: "No game yet — head to I Had a Five™ to get started."
                 )
+            }
+
+            // Past IHAF rounds
+            if ihafRounds.count > 1 {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("RECENT ROUNDS")
+                        .font(.system(size: 11, weight: .bold))
+                        .tracking(1.4)
+                        .foregroundColor(Color(hex: "#1B5E20"))
+                        .padding(.horizontal, 16)
+
+                    ForEach(ihafRounds.dropFirst().prefix(5)) { round in
+                        RoundCard(round: round, group: nil)
+                            .padding(.horizontal, 16)
+                    }
+                }
             }
         }
     }
@@ -265,6 +286,15 @@ struct NineteenthHoleView: View {
             .execute()
             .value) ?? []
         currentGameCard = cards.first
+
+        let rounds: [IHAFRound] = (try? await supabase
+            .from("ihaf_rounds")
+            .select()
+            .eq("user_id", value: userId)
+            .order("played_on", ascending: false)
+            .execute()
+            .value) ?? []
+        ihafRounds = rounds
 
         let mems: [GolfMemory] = (try? await supabase
             .from("golf_memories")

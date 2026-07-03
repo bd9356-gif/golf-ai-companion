@@ -78,6 +78,8 @@ struct IHadAFiveView: View {
     @State private var isLoading = true
     @State private var showChallengePicker = false
     @State private var showEnterScores = false
+    @State private var showGroupSetup = false
+    @State private var showManageChallenges = false
     @State private var nextCreator: String = ""
 
     private let supabase = SupabaseClient.shared.client
@@ -91,6 +93,11 @@ struct IHadAFiveView: View {
                     VStack(spacing: 20) {
                         if isLoading {
                             ProgressView().padding(48)
+                        } else if group == nil || showGroupSetup {
+                            GroupSetupView(existing: group, onSave: { newGroup in
+                                Task { await saveGroup(newGroup) }
+                            })
+                            .padding(16)
                         } else {
                             // This Week's Challenge
                             thisWeeksChallenge
@@ -98,15 +105,25 @@ struct IHadAFiveView: View {
                             // Action Buttons
                             actionButtons
 
-                            // Recent Rounds
-                            if !recentRounds.isEmpty {
-                                recentRoundsSection
-                            }
-
                             // Season Summary
                             if !recentRounds.isEmpty {
                                 seasonSummary
                             }
+
+                            // 19th Hole hint
+                            HStack(spacing: 10) {
+                                Text("🍺").font(.system(size: 18))
+                                Text("Past rounds live in the 19th Hole")
+                                    .font(.system(size: 13))
+                                    .foregroundColor(Color(hex: "#5C5C5C"))
+                                    .italic()
+                                Spacer()
+                            }
+                            .padding(14)
+                            .background(Color.white)
+                            .cornerRadius(14)
+                            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color(hex: "#E0EAE0"), lineWidth: 1))
+                            .padding(.horizontal, 16)
                         }
                     }
                     .padding(.top, 16)
@@ -129,6 +146,9 @@ struct IHadAFiveView: View {
                     showEnterScores = false
                 })
             }
+            .sheet(isPresented: $showManageChallenges) {
+                ManageChallengesView()
+            }
         }
     }
 
@@ -139,6 +159,25 @@ struct IHadAFiveView: View {
                 .resizable()
                 .scaledToFit()
                 .frame(maxWidth: .infinity)
+
+            HStack {
+                Button { showGroupSetup = true } label: {
+                    Text("Edit Group")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(Color(hex: "#1B5E20"))
+                        .padding(.horizontal, 12).padding(.vertical, 6)
+                        .background(Color(hex: "#E8F5E9")).cornerRadius(20)
+                }
+                Spacer()
+                Button { showManageChallenges = true } label: {
+                    Text("Manage Challenges")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(Color(hex: "#1B5E20"))
+                        .padding(.horizontal, 12).padding(.vertical, 6)
+                        .background(Color(hex: "#E8F5E9")).cornerRadius(20)
+                }
+            }
+            .padding(.horizontal, 16).padding(.vertical, 8)
             Divider()
         }
         .background(Color.white)
@@ -208,9 +247,9 @@ struct IHadAFiveView: View {
                 showChallengePicker = true
             } label: {
                 VStack(spacing: 6) {
-                    Text("🎯").font(.system(size: 24))
+                    Text("🎯").font(.system(size: 22))
                     Text("Pick Challenge")
-                        .font(.system(size: 13, weight: .bold))
+                        .font(.system(size: 12, weight: .bold))
                         .foregroundColor(.white)
                 }
                 .frame(maxWidth: .infinity).padding(.vertical, 14)
@@ -221,9 +260,9 @@ struct IHadAFiveView: View {
                 showEnterScores = true
             } label: {
                 VStack(spacing: 6) {
-                    Text("🏁").font(.system(size: 24))
+                    Text("🏁").font(.system(size: 22))
                     Text("Enter Scores")
-                        .font(.system(size: 13, weight: .bold))
+                        .font(.system(size: 12, weight: .bold))
                         .foregroundColor(Color(hex: "#1B5E20"))
                 }
                 .frame(maxWidth: .infinity).padding(.vertical, 14)
@@ -337,6 +376,15 @@ struct IHadAFiveView: View {
     }
 
     // MARK: - Data
+    func saveGroup(_ newGroup: GolfGroup) async {
+        guard let userId = authViewModel.currentUser?.id else { return }
+        var g = newGroup; g.userId = userId
+        try? await supabase.from("golf_group").upsert(g, onConflict: "user_id").execute()
+        group = g
+        showGroupSetup = false
+        await loadData()
+    }
+
     func loadData() async {
         guard let userId = authViewModel.currentUser?.id else { return }
         isLoading = true
@@ -640,13 +688,26 @@ struct ChallengePicker: View {
     }
 
     func loadChallenges() async {
+        guard let userId = authViewModel.currentUser?.id else { return }
+
+        struct HiddenRow: Codable { var challengeId: UUID
+            enum CodingKeys: String, CodingKey { case challengeId = "challenge_id" }
+        }
+        let hidden: [HiddenRow] = (try? await supabase
+            .from("ihaf_challenge_hidden")
+            .select("challenge_id")
+            .eq("user_id", value: userId)
+            .execute()
+            .value) ?? []
+        let hiddenIds = Set(hidden.map { $0.challengeId })
+
         let result: [IHAFChallenge] = (try? await supabase
             .from("ihaf_challenges")
             .select()
             .order("sort_order")
             .execute()
             .value) ?? []
-        challenges = result
+        challenges = result.filter { !hiddenIds.contains($0.id) }
     }
 
     func loadSurprise() async {
@@ -857,5 +918,178 @@ struct EnterScoresView: View {
         try? await Task.sleep(nanoseconds: 2_000_000_000)
         onSave(round)
         isSaving = false
+    }
+}
+
+// MARK: - Group Setup View
+struct GroupSetupView: View {
+    var existing: GolfGroup? = nil
+    let onSave: (GolfGroup) -> Void
+    @State private var golfer1 = ""
+    @State private var golfer2 = ""
+    @State private var golfer3 = ""
+    @State private var golfer4 = ""
+
+    var body: some View {
+        VStack(spacing: 20) {
+            VStack(spacing: 4) {
+                Text("Your Foursome")
+                    .font(.system(size: 22, weight: .bold)).foregroundColor(Color(hex: "#1A1A1A"))
+                Text("Enter your golf group names")
+                    .font(.system(size: 14)).foregroundColor(Color(hex: "#5C5C5C"))
+            }
+            .padding(.top, 24)
+
+            VStack(spacing: 12) {
+                ForEach(Array(zip(["Golfer 1", "Golfer 2", "Golfer 3", "Golfer 4"],
+                                  [$golfer1, $golfer2, $golfer3, $golfer4])), id: \.0) { label, binding in
+                    HStack(spacing: 12) {
+                        Text("🏌️").font(.system(size: 20))
+                        TextField(label, text: binding)
+                            .font(.system(size: 16)).padding(14)
+                            .background(Color.white).cornerRadius(12)
+                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(hex: "#D0E8D0"), lineWidth: 1))
+                    }
+                }
+            }
+
+            Button {
+                onSave(GolfGroup(golfer1: golfer1, golfer2: golfer2, golfer3: golfer3, golfer4: golfer4))
+            } label: {
+                Text("Save My Group")
+                    .font(.system(size: 17, weight: .bold)).foregroundColor(.white)
+                    .frame(maxWidth: .infinity).frame(height: 54)
+                    .background(golfer1.isEmpty ? Color.gray : Color(hex: "#1B5E20")).cornerRadius(14)
+            }
+            .disabled(golfer1.isEmpty).padding(.top, 8)
+        }
+        .padding(20).background(Color.white).cornerRadius(20)
+        .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
+        .onAppear {
+            if let g = existing {
+                golfer1 = g.golfer1; golfer2 = g.golfer2
+                golfer3 = g.golfer3; golfer4 = g.golfer4
+            }
+        }
+    }
+}
+
+// MARK: - Manage Challenges View
+struct ManageChallengesView: View {
+    @EnvironmentObject var authViewModel: AuthViewModel
+    @Environment(\.dismiss) var dismiss
+    @State private var challenges: [IHAFChallenge] = []
+    @State private var hiddenIds: Set<UUID> = []
+    @State private var showAddChallenge = false
+    @State private var newName = ""
+    @State private var newDesc = ""
+    @State private var newEmoji = ""
+
+    private let supabase = SupabaseClient.shared.client
+
+    var body: some View {
+        NavigationStack {
+            List {
+                ForEach(challenges) { challenge in
+                    HStack(spacing: 12) {
+                        Text(challenge.emoji).font(.system(size: 24))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(challenge.name)
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(hiddenIds.contains(challenge.id) ? Color(hex: "#AAAAAA") : Color(hex: "#1A1A1A"))
+                            Text(challenge.description)
+                                .font(.system(size: 12))
+                                .foregroundColor(Color(hex: "#888888"))
+                                .lineLimit(1)
+                        }
+                        Spacer()
+                        Button {
+                            Task { await toggleHidden(challenge) }
+                        } label: {
+                            Image(systemName: hiddenIds.contains(challenge.id) ? "eye.slash" : "eye")
+                                .font(.system(size: 16))
+                                .foregroundColor(hiddenIds.contains(challenge.id) ? Color(hex: "#CCCCCC") : Color(hex: "#1B5E20"))
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
+                    .padding(.vertical, 4)
+                }
+
+                if showAddChallenge {
+                    VStack(spacing: 10) {
+                        TextField("Emoji", text: $newEmoji).frame(width: 60)
+                        TextField("Challenge Name", text: $newName)
+                        TextField("Description", text: $newDesc)
+                        Button("Add") { Task { await addChallenge() } }
+                            .disabled(newName.isEmpty || newEmoji.isEmpty)
+                    }
+                    .padding(.vertical, 8)
+                }
+            }
+            .navigationTitle("Manage Challenges")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Done") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button { showAddChallenge.toggle() } label: {
+                        Image(systemName: "plus")
+                    }
+                }
+            }
+            .onAppear { Task { await loadChallenges() } }
+        }
+    }
+
+    func loadChallenges() async {
+        guard let userId = authViewModel.currentUser?.id else { return }
+        let result: [IHAFChallenge] = (try? await supabase
+            .from("ihaf_challenges")
+            .select()
+            .order("sort_order")
+            .execute()
+            .value) ?? []
+        challenges = result
+
+        struct HiddenRow: Codable { var challengeId: UUID
+            enum CodingKeys: String, CodingKey { case challengeId = "challenge_id" }
+        }
+        let hidden: [HiddenRow] = (try? await supabase
+            .from("ihaf_challenge_hidden")
+            .select("challenge_id")
+            .eq("user_id", value: userId)
+            .execute()
+            .value) ?? []
+        hiddenIds = Set(hidden.map { $0.challengeId })
+    }
+
+    func toggleHidden(_ challenge: IHAFChallenge) async {
+        guard let userId = authViewModel.currentUser?.id else { return }
+        if hiddenIds.contains(challenge.id) {
+            try? await supabase.from("ihaf_challenge_hidden")
+                .delete().eq("user_id", value: userId).eq("challenge_id", value: challenge.id).execute()
+            hiddenIds.remove(challenge.id)
+        } else {
+            struct Row: Codable { var userId: UUID; var challengeId: UUID
+                enum CodingKeys: String, CodingKey { case userId = "user_id"; case challengeId = "challenge_id" }
+            }
+            try? await supabase.from("ihaf_challenge_hidden")
+                .insert(Row(userId: userId, challengeId: challenge.id)).execute()
+            hiddenIds.insert(challenge.id)
+        }
+    }
+
+    func addChallenge() async {
+        guard let userId = authViewModel.currentUser?.id else { return }
+        struct NewChallenge: Codable {
+            var userId: UUID; var name: String; var description: String; var emoji: String; var sortOrder: Int
+            enum CodingKeys: String, CodingKey {
+                case userId = "user_id", name, description, emoji, sortOrder = "sort_order"
+            }
+        }
+        let c = NewChallenge(userId: userId, name: newName, description: newDesc, emoji: newEmoji, sortOrder: 99)
+        try? await supabase.from("ihaf_challenges").insert(c).execute()
+        newName = ""; newDesc = ""; newEmoji = ""
+        showAddChallenge = false
+        await loadChallenges()
     }
 }
