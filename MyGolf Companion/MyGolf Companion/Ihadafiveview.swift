@@ -547,6 +547,7 @@ struct ChallengePicker: View {
     let currentCreator: String
     let onConfirm: (IHAFWeekly) -> Void
     @Environment(\.dismiss) var dismiss
+    @EnvironmentObject var authViewModel: AuthViewModel
     @State private var challenges: [IHAFChallenge] = []
     @State private var selected: IHAFChallenge? = nil
     @State private var isLoadingSurprise = false
