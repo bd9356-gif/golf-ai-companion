@@ -39,7 +39,8 @@ struct PlayerScore: Codable, Identifiable {
     var id = UUID()
     var name: String
     var score: Int
-    enum CodingKeys: String, CodingKey { case name, score }
+    var satOut: Bool = false
+    enum CodingKeys: String, CodingKey { case name, score, satOut = "sat_out" }
 }
 
 struct IHAFRound: Codable, Identifiable {
@@ -81,6 +82,7 @@ struct IHadAFiveView: View {
     @State private var showGroupSetup = false
     @State private var showManageChallenges = false
     @State private var nextCreator: String = ""
+    @State private var weeklyHasScores = false
 
     private let supabase = SupabaseClient.shared.client
 
@@ -102,8 +104,13 @@ struct IHadAFiveView: View {
                             // This Week's Challenge
                             thisWeeksChallenge
 
-                            // Action Buttons
-                            actionButtons
+                            // If challenge set but no scores yet — show Enter Scores prompt
+                            if currentWeekly != nil && !weeklyHasScores {
+                                readyToPlayCard
+                            } else {
+                                // Action Buttons
+                                actionButtons
+                            }
 
                             // Season Summary
                             if !recentRounds.isEmpty {
@@ -238,6 +245,39 @@ struct IHadAFiveView: View {
                 .padding(.horizontal, 16)
             }
         }
+    }
+
+    // MARK: - Action Buttons
+    // MARK: - Ready to Play Card
+    private var readyToPlayCard: some View {
+        VStack(spacing: 12) {
+            Text("⛳ Ready to Play!")
+                .font(.system(size: 18, weight: .bold))
+                .foregroundColor(Color(hex: "#1B5E20"))
+            if let weekly = currentWeekly {
+                Text("This week: \(weekly.challengeName)")
+                    .font(.system(size: 14))
+                    .foregroundColor(Color(hex: "#5C5C5C"))
+            }
+            Text("Enter scores when the round is done.")
+                .font(.system(size: 13))
+                .foregroundColor(Color(hex: "#888888"))
+                .italic()
+
+            Button {
+                showEnterScores = true
+            } label: {
+                Text("🏁 Enter Scores")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity).padding(.vertical, 14)
+                    .background(Color(hex: "#1B5E20")).cornerRadius(14)
+            }
+        }
+        .padding(16)
+        .background(Color(hex: "#E8F5E9"))
+        .cornerRadius(16)
+        .padding(.horizontal, 16)
     }
 
     // MARK: - Action Buttons
@@ -412,6 +452,13 @@ struct IHadAFiveView: View {
             .execute()
             .value) ?? []
         recentRounds = rounds
+
+        // Check if current weekly already has scores entered
+        if let weekly = currentWeekly {
+            weeklyHasScores = rounds.contains { $0.weeklyId == weekly.id }
+        } else {
+            weeklyHasScores = false
+        }
 
         isLoading = false
     }
@@ -761,7 +808,7 @@ struct EnterScoresView: View {
     @State private var isSaving = false
     @State private var winnerCard: (winner: String, score: Int, callout: String)? = nil
 
-    var sortedScores: [PlayerScore] { scores.sorted { $0.score < $1.score } }
+    var sortedScores: [PlayerScore] { scores.filter { !$0.satOut }.sorted { $0.score < $1.score } }
 
     var body: some View {
         NavigationStack {
@@ -814,39 +861,67 @@ struct EnterScoresView: View {
                     // Score entry
                     VStack(spacing: 10) {
                         ForEach($scores) { $score in
-                            HStack(spacing: 16) {
-                                ZStack {
-                                    Circle().fill(Color(hex: "#1B5E20")).frame(width: 36, height: 36)
-                                    Text(String(score.name.prefix(1)))
-                                        .font(.system(size: 15, weight: .bold))
-                                        .foregroundColor(.white)
-                                }
-                                Text(score.name)
-                                    .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(Color(hex: "#1A1A1A"))
-                                Spacer()
+                            VStack(spacing: 0) {
                                 HStack(spacing: 16) {
-                                    Button {
-                                        if score.score > 0 { score.score -= 1 }
-                                    } label: {
-                                        Image(systemName: "minus.circle.fill")
-                                            .font(.system(size: 28))
-                                            .foregroundColor(Color(hex: "#1B5E20"))
+                                    ZStack {
+                                        Circle()
+                                            .fill(score.satOut ? Color(hex: "#CCCCCC") : Color(hex: "#1B5E20"))
+                                            .frame(width: 36, height: 36)
+                                        Text(String(score.name.prefix(1)))
+                                            .font(.system(size: 15, weight: .bold))
+                                            .foregroundColor(.white)
                                     }
-                                    Text("\(score.score)")
-                                        .font(.system(size: 24, weight: .bold))
-                                        .foregroundColor(Color(hex: "#1A1A1A"))
-                                        .frame(width: 36, alignment: .center)
-                                    Button {
-                                        score.score += 1
-                                    } label: {
-                                        Image(systemName: "plus.circle.fill")
-                                            .font(.system(size: 28))
-                                            .foregroundColor(Color(hex: "#1B5E20"))
+                                    Text(score.name)
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundColor(score.satOut ? Color(hex: "#AAAAAA") : Color(hex: "#1A1A1A"))
+                                    Spacer()
+                                    if score.satOut {
+                                        Text("Sat Out")
+                                            .font(.system(size: 13, weight: .semibold))
+                                            .foregroundColor(Color(hex: "#AAAAAA"))
+                                    } else {
+                                        HStack(spacing: 16) {
+                                            Button {
+                                                if score.score > 0 { score.score -= 1 }
+                                            } label: {
+                                                Image(systemName: "minus.circle.fill")
+                                                    .font(.system(size: 28))
+                                                    .foregroundColor(Color(hex: "#1B5E20"))
+                                            }
+                                            Text("\(score.score)")
+                                                .font(.system(size: 24, weight: .bold))
+                                                .foregroundColor(Color(hex: "#1A1A1A"))
+                                                .frame(width: 36, alignment: .center)
+                                            Button {
+                                                score.score += 1
+                                            } label: {
+                                                Image(systemName: "plus.circle.fill")
+                                                    .font(.system(size: 28))
+                                                    .foregroundColor(Color(hex: "#1B5E20"))
+                                            }
+                                        }
                                     }
                                 }
+                                .padding(14)
+
+                                // Sat Out toggle
+                                Button {
+                                    score.satOut.toggle()
+                                    if score.satOut { score.score = 0 }
+                                } label: {
+                                    HStack(spacing: 6) {
+                                        Image(systemName: score.satOut ? "checkmark.circle.fill" : "circle")
+                                            .font(.system(size: 14))
+                                            .foregroundColor(score.satOut ? Color(hex: "#888888") : Color(hex: "#CCCCCC"))
+                                        Text("Sat out this week")
+                                            .font(.system(size: 12))
+                                            .foregroundColor(Color(hex: "#888888"))
+                                        Spacer()
+                                    }
+                                    .padding(.horizontal, 14).padding(.bottom, 10)
+                                }
+                                .buttonStyle(PlainButtonStyle())
                             }
-                            .padding(14)
                             .background(Color.white)
                             .cornerRadius(14)
                         }
@@ -892,7 +967,8 @@ struct EnterScoresView: View {
 
     func saveRound() async {
         isSaving = true
-        let winner = sortedScores.first
+        let activePlayers = scores.filter { !$0.satOut }
+        let winner = activePlayers.sorted { $0.score < $1.score }.first
         var callout = ""
 
         // Get AI callout
@@ -906,7 +982,7 @@ struct EnterScoresView: View {
                     "challenge": weekly.challengeName,
                     "winner": w.name,
                     "winnerScore": w.score,
-                    "golfers": scores.map { ["name": $0.name, "score": $0.score] }
+                    "golfers": activePlayers.map { ["name": $0.name, "score": $0.score] }
                 ]
                 request.httpBody = try? JSONSerialization.data(withJSONObject: body)
                 if let (data, _) = try? await URLSession.shared.data(for: request),
