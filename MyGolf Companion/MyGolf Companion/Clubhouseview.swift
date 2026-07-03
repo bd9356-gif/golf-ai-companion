@@ -86,13 +86,13 @@ struct ClubhouseView: View {
                         icon: "your-game-icon",
                         sections: yourGameSections
                     )
-                    .padding(.top, 24)
+                    .padding(.top, 12)
 
                     // MARK: AI Clubhouse
                     aiClubhouseGrid
-                        .padding(.top, 8)
+                        .padding(.top, 4)
 
-                    Spacer(minLength: 32)
+                    Spacer(minLength: 16)
                 }
             }
             .background(Color(hex: "#F9F6F0"))
@@ -165,7 +165,6 @@ struct ClubhouseView: View {
     // MARK: - Section Group
     private func sectionGroup(title: String, icon: String, sections: [ClubhouseSection]) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Section header
             HStack(spacing: 10) {
                 Image(icon)
                     .resizable().scaledToFit()
@@ -176,17 +175,16 @@ struct ClubhouseView: View {
                     .foregroundColor(Color(hex: "#1B5E20"))
             }
             .padding(.horizontal, 16)
-            .padding(.bottom, 10)
+            .padding(.bottom, 8)
 
-            // Tiles
-            VStack(spacing: 10) {
+            VStack(spacing: 8) {
                 ForEach(sections) { section in
                     ClubhouseTile(section: section)
                 }
             }
             .padding(.horizontal, 16)
         }
-        .padding(.bottom, 16)
+        .padding(.bottom, 12)
     }
 }
 
