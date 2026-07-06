@@ -16,12 +16,18 @@ export async function POST(request) {
     })
   }
 
-  const { question } = await request.json()
+  const { question, videoTitle, videoContext } = await request.json()
   if (!question || typeof question !== 'string') {
     return Response.json({ error: 'Missing question' }, { status: 400 })
   }
 
-  const prompt = `You are a friendly, knowledgeable golf pro. Answer this golfer's question clearly and practically, with actionable tips. Keep it conversational, under 150 words.\n\nQuestion: ${question}`
+  // When called from My Bag's focused "Ask about this" box, videoTitle
+  // (and optionally videoContext, the existing AI explanation if one was
+  // generated) are included so the answer stays anchored to the specific
+  // skill/video the golfer is actively working on, not a generic answer.
+  const prompt = videoTitle
+    ? `You are a friendly, knowledgeable golf pro. A golfer is actively working on a specific skill using this video as their focus: "${videoTitle}".${videoContext ? `\n\nHere's the explanation already given for this video:\n${videoContext}` : ''}\n\nThey have a follow-up question about it. Answer clearly and practically, staying anchored to this specific video/skill rather than giving a generic answer. Keep it conversational, under 150 words.\n\nQuestion: ${question}`
+    : `You are a friendly, knowledgeable golf pro. Answer this golfer's question clearly and practically, with actionable tips. Keep it conversational, under 150 words.\n\nQuestion: ${question}`
 
   const response = await anthropic.messages.create({
     model: 'claude-sonnet-4-6',
